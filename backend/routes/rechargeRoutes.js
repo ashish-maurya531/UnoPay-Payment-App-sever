@@ -2,7 +2,13 @@ const express = require('express');
 const { pool } = require('../config/database');
 const axios = require('axios');
 const router = express.Router();
+const dotenv = require('dotenv');
+
 const generateTransactionId = require('../utills/generateTxnId');
+dotenv.config();
+const username = process.env.username;
+const pwd = process.env.pwd;
+
 
 //api for mobile recharge
 
@@ -41,8 +47,7 @@ const containsSQLInjectionWords = (input) => {
     const regex = new RegExp(sqlKeywords.join('|'), 'i');
     return regex.test(input);
 };
-const username="504414";
-const pwd="Mamta@123";
+
 
 router.post('/doMobileRecharge', async (req, res) => {
     const { circlecode, operatorcode, number, amount, member_id } = req.body;
