@@ -66,9 +66,11 @@ const BankDetails = () => {
       const response = await axios.post(`http://localhost:3000/api/auth/get${imageType}Image`, {
         member_id: selectedRecord.member_id
       }, { responseType: 'blob' });
+      console.log(response);
 
       if (response.status === 200) {
         const imageUrl = URL.createObjectURL(response.data);
+        
         setSelectedImage(imageUrl);
         setImageType(imageType);
         setImageModalVisible(true);
@@ -315,7 +317,7 @@ const BankDetails = () => {
       </div>
 
       {/* Conditionally render image view buttons only when KYC status is pending */}
-      {selectedRecord.Kyc_status === 'pending' && (
+      {(selectedRecord.Kyc_status === 'pending' || selectedRecord.Kyc_status === 'approved') && (
         <Space style={{ marginTop: "20%", flexDirection: "column", gap: 50 }}>
           <Button 
             type="primary" 

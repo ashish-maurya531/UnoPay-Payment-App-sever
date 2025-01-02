@@ -37,15 +37,15 @@ async function getCommissionList(memberId) {
     return rows;
 }
 
-async function addCommission(super_upline, member_id, transaction_id, credit, debit,level) {
+async function addCommission(super_upline, member_id, transaction_id,txn_id_of_commissionBy ,credit, debit,level) {
     await pool.query(
-        `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id, credit, debit, level)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [super_upline,member_id, transaction_id, credit, debit,level]
+        `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id,transaction_id_of_commissionBy, credit, debit, level)
+         VALUES (?, ?, ?, ?, ?, ?,?)`,
+        [super_upline,member_id, transaction_id,txn_id_of_commissionBy, credit, debit,level]
     );
 }
 
-async function commisionPayout(type, memberId, amount) {
+async function commisionPayout(txn_id_of_commissionBy,type, memberId, amount) {
 
     //
     // Get commission rates from the database
@@ -66,7 +66,7 @@ async function commisionPayout(type, memberId, amount) {
 
 
         // Add commission record for the current upline
-        await addCommission(super_upline, member, transaction_id, commission, 0.00, level);
+        await addCommission(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.00, level);
     }
 
     

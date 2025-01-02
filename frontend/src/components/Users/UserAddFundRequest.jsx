@@ -278,7 +278,7 @@ const UserAddFundRequest = () => {
                 </Tag>
               </p>
               
-              {selectedRecord.status === 'pending' && (
+              {(selectedRecord.status === 'pending') && (
                 <>
                   <Button
                     type="primary"
@@ -293,6 +293,7 @@ const UserAddFundRequest = () => {
                   </Button>
                   <Button 
                     type="danger" 
+                   
                     onClick={() => setRejectConfirmModal(true)}
                     style={{ 
                       backgroundColor: '#ff4d4f', 
@@ -306,6 +307,8 @@ const UserAddFundRequest = () => {
             </div>
             <div style={{ flex: 1, textAlign: 'center' }}>
               <Image
+            
+
                 src={selectedRecord?.screenshotUrl}
                 alt="Screenshot"
                 style={{ maxHeight: '400px', objectFit: 'contain' }}

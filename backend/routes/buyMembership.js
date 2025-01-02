@@ -70,6 +70,7 @@ router.post('/buymembership', async (req, res) => {
         
       
         const price = packageRows[0].price;
+        //total price with gst
         const total_price = packageRows[0].total_price;
 
         // Check if balance is sufficient
@@ -112,7 +113,7 @@ router.post('/buymembership', async (req, res) => {
                 }
             // call the function to update the commission table
 
-            await commisionPayout(package_name, member_id, price);
+            await commisionPayout(txn_id,package_name, member_id, price);
 
 
             
