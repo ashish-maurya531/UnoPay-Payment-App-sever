@@ -1,6 +1,9 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
+const {sendOtpEmail} = require('../utills/sendOtpMail');
+
+// console.log(sendOtpEmail("UP100070"));
 
 
 

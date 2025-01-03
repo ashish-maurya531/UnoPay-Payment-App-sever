@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const axios = require('axios');
+const { rmSync } = require('fs');
 
 const router = express.Router();
 
@@ -85,6 +86,33 @@ console.log(newMember, upline);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+/////////////
+// async function getDatafromMembertable(){
+//   const [rows] = await pool.query('SELECT * FROM member');
+//   console.log(rows)
+//   // Perform API calls to get data from Membertable
+//   // and return the data in the required format
+//   // for elements of rows run /addmember api
+//   // for elements of rows run /addmember api
+//   // for elements of rows run /addmember api
+//   // for elements of rows run /addmember ap
+//   for (let i = 0; i < rows.length; i++) {
+//     const response = await axios.post('http://localhost:3000/api/auth/addmember', {
+//       newMember: rows[i].member_id,
+//       upline: rows[i].sponser_id
+//       });
+//     console.log(response.data);
+//   }
+
+    
+// }
+
+// do not run this function directly
+
+// getDatafromMembertable();
+
+///////
 
 
 

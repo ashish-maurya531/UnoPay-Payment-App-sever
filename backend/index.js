@@ -11,6 +11,7 @@ const forgetPassword = require('./routes/forgetPassword');//
 const { connectToDatabase } = require('./config/database');
 const buyMembership = require('./routes/buyMembership');
 const userBalanceTransactionList = require('./routes/userBalanceTransactionList');
+const userTeamAndDirect = require('./routes/userTeamAndDirect');
 // const {authenticateToken}=require('./middleware/auth');
 
 // const bodyParser = require('body-parser');
@@ -55,6 +56,7 @@ app.use('/api/auth',rechargeRoutes);
 app.use('/api/auth',forgetPassword);
 app.use('/api/auth',buyMembership);
 app.use('/api/auth',userBalanceTransactionList);
+app.use('/api/auth',userTeamAndDirect);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
