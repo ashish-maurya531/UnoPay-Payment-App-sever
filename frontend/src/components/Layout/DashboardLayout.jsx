@@ -63,6 +63,16 @@ export default function DashboardLayout({ children }) {
   ]
 
 
+  const useHelpDesk=[
+    {
+      key: 'UserHelpDesk',
+      label: 'User Help Desk',
+      onClick: () => navigate('/dashboard/user-help-desk'),
+
+    }
+  ]
+
+
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center justify-between bg-white px-6 shadow-md">
@@ -84,6 +94,11 @@ export default function DashboardLayout({ children }) {
             <Dropdown menu={{ items: paymentMenuItems }} placement="bottomLeft">
               <Button type="primary" icon={<CreditCardOutlined />}>
                 Payment
+              </Button>
+            </Dropdown>
+            <Dropdown menu={{ items: useHelpDesk }} placement="bottomLeft">
+            <Button type="primary" icon={<UserOutlined />}>
+                User Help
               </Button>
             </Dropdown>
           </Space>
