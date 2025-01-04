@@ -98,8 +98,8 @@ async function sendOtpEmail(member_id) {
             return { success: false, message: 'Member not found' };
         }
 
-        // const { email } = rows[0];
-        const email="rootleo1571995@gmail.com";
+        const { email } = rows[0];
+        // const email="rootleo1571995@gmail.com";
         // const email="apskumar24@gmail.com";
 
 

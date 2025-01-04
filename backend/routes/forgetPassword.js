@@ -51,38 +51,38 @@ router.post("/send-otp", async (req, res) => {
     }
 });
 
-// Route to verify OTP
-router.post("/verify-otp", async (req, res) => {
-    const { member_id, otp } = req.body;
+// // Route to verify OTP
+// router.post("/verify-otp", async (req, res) => {
+//     const { member_id, otp } = req.body;
 
-    if (!member_id || !otp) {
-        return res.status(400).json({ success: false, message: "Member ID and OTP are required" });
-    }
-    if (containsSQLInjectionWords(member_id + otp)) {
-        return res.status(400).json({ success: false, message: "Don't try to hack." });
-    }
+//     if (!member_id || !otp) {
+//         return res.status(400).json({ success: false, message: "Member ID and OTP are required" });
+//     }
+//     if (containsSQLInjectionWords(member_id + otp)) {
+//         return res.status(400).json({ success: false, message: "Don't try to hack." });
+//     }
 
-    try {
-        const isValid = await verifyOtp(member_id, otp);
-        console.log("isValid:", isValid?.success);
-        if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
-            res.status(200).json({ success: true, message: "OTP verified successfully" });
+//     try {
+//         const isValid = await verifyOtp(member_id, otp);
+//         console.log("isValid:", isValid?.success);
+//         if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
+//             res.status(200).json({ success: true, message: "OTP verified successfully" });
 
-        }
-        else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
-            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
-        }
-        else if(isValid?.success===false && isValid?.message==="OTP expired") {
-            res.status(400).json({ success: false, message: "Otp expired" });
+//         }
+//         else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
+//             res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+//         }
+//         else if(isValid?.success===false && isValid?.message==="OTP expired") {
+//             res.status(400).json({ success: false, message: "Otp expired" });
 
-        } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
-            res.status(400).json({ success: false, message: "Invalid OTP" });
-        }
-    } catch (error) {
-        console.error("Error verifying OTP:", error);
-        res.status(500).json({ success: false, message: "Failed to verify OTP", error });
-    }
-});
+//         } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
+//             res.status(400).json({ success: false, message: "Invalid OTP" });
+//         }
+//     } catch (error) {
+//         console.error("Error verifying OTP:", error);
+//         res.status(500).json({ success: false, message: "Failed to verify OTP", error });
+//     }
+// });
 
 
 
@@ -178,6 +178,119 @@ router.post('/changeUserTpin', async (req, res) => {
    
  
 });  
+
+
+
+
+// Route to reset password after OTP verification
+router.post('/forgetPassword', async (req, res) => {
+    const { member_id, newPassword, otp } = req.body;
+
+    // Validate input fields
+    if (!member_id || !newPassword || !otp) {
+        return res.status(400).json({ status: 'false', error: 'Some fields are empty' });
+    }
+
+    // Check for SQL injection attempts
+    const checkthedata = [member_id, newPassword, otp].join(" ");
+    if (containsSQLInjectionWords(checkthedata)) {
+        return res.status(400).json({ status: 'false', error: 'Don’t try to hack' });
+    }
+      // Check for member existence
+      const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`, [member_id]);
+      if (checkMember.length === 0) {
+          return res.status(404).json({ status: 'false', error: 'Invalid member ID' });
+      }
+
+    // Verify OTP
+    try {
+        const isValid = await verifyOtp(member_id, otp);
+        console.log("isValid:", isValid?.success);
+        if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
+            // Update password
+            const updatePassword = await pool.query(`UPDATE security_details_of_user SET password = ? WHERE member_id=?`, [newPassword, member_id]);
+            if (updatePassword.affectedRows === 0) {
+                return res.status(404).json({ status: 'false', error: 'Failed to update password' });
+            }
+            res.status(200).json({ status: 'true', message: 'Password updated successfully' });
+    
+
+        }
+        else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
+            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+        }
+        else if(isValid?.success===false && isValid?.message==="OTP expired") {
+            res.status(400).json({ success: false, message: "Otp expired" });
+
+        } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
+            res.status(400).json({ success: false, message: "Invalid OTP" });
+        }
+        
+      
+
+        
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).json({ status: 'false', error: 'Internal server error.' });
+    }
+});
+
+// Route to reset TPin after OTP verification
+router.post('/forgetTpin', async (req, res) => {
+    const { member_id, newTpin, otp } = req.body;
+
+    // Validate input fields
+    if (!member_id || !newTpin || !otp) {
+        return res.status(400).json({ status: 'false', error: 'Some fields are empty' });
+    }
+
+    // Check for SQL injection attempts
+    const checkthedata = [member_id, newTpin, otp].join(" ");
+    if (containsSQLInjectionWords(checkthedata)) {
+        return res.status(400).json({ status: 'false', error: 'Don’t try to hack' });
+    }
+    // Check for member existence
+    const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`, [member_id]);
+    if (checkMember.length === 0) {
+        return res.status(404).json({ status: 'false', error: 'Invalid member ID' });
+    }
+
+    // Verify OTP
+    try {
+        const isValid = await verifyOtp(member_id, otp);
+        console.log("isValid:", isValid?.success);
+        if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
+            // Update password
+            const updateTpin = await pool.query(`UPDATE security_details_of_user SET tpin = ? WHERE member_id=?`, [newTpin, member_id]);
+            if (updateTpin.affectedRows === 0) {
+                return res.status(404).json({ status: 'false', error: 'Failed to update tpin' });
+            }
+            res.status(200).json({ status: 'true', message: 'tpin updated successfully' });
+
+        }
+        else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
+            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+        }
+        else if(isValid?.success===false && isValid?.message==="OTP expired") {
+            res.status(400).json({ success: false, message: "Otp expired" });
+
+        } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
+            res.status(400).json({ success: false, message: "Invalid OTP" });
+        }
+
+        
+
+       
+
+        res.status(200).json({ status: 'true', message: 'TPin updated successfully' });
+    } catch (error) {
+        console.error('Error resetting TPin:', error);
+        res.status(500).json({ status: 'false', error: 'Internal server error.' });
+    }
+});
+
+
+
 
 
 module.exports = router;
