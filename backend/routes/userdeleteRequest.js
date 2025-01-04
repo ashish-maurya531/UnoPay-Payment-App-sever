@@ -2,6 +2,7 @@ const express=require('express');
 const router=express.Router();
 const { pool } = require('../config/database');
 
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
 // Create or Update Delete Request
@@ -13,6 +14,14 @@ router.post('/deleteRequest', async (req, res) => {
         return res.status(400).json({ 
             success: false, 
             message: 'Member ID is required' 
+        });
+    }
+    
+    // Check for SQL injection
+    if (containsSQLInjectionWords(memberid)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Don\'t try to hack!' 
         });
     }
 

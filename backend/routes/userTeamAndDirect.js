@@ -1,10 +1,19 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
 router.post("/getDirectMemberList", async (req, res) => {
     const { member_id } = req.body;
+    //check input not empty
+    if (!member_id) {
+        return res.status(400).json({ success: false, message: 'Member ID is required' });
+    }
+    //check for sql injection
+    if (containsSQLInjectionWords(member_id)) {
+        return res.status(400).json({ success: false, message: 'Dont try to hack' });
+    }
     try {
         // Query to fetch direct members from member_hierarchy
         const [rows] = await pool.query(
@@ -52,6 +61,14 @@ router.post("/getDirectMemberList", async (req, res) => {
 
 router.post("/getTeamList", async (req, res) => {
     const { member_id } = req.body;
+    //check input not empty
+    if (!member_id) {
+        return res.status(400).json({ success: false, message: 'Member ID is required' });
+    }
+    //check for sql injection
+    if (containsSQLInjectionWords(member_id)) {
+        return res.status(400).json({ success: false, message: 'Dont try to hack' });
+    }
     try {
         // Query to fetch team members based on super_upline
         const [rows] = await pool.query(

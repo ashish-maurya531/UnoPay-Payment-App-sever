@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 // Create directories if they don't exist
 const baseDir = path.join(__dirname, 'user_kyc_images');
@@ -45,14 +46,6 @@ const handleMulterErrors = (err, req, res, next) => {
   next(err);
 };
 
-// Helper function to check for SQL injection
-const containsSQLInjectionWords = (input) => {
-  const sqlKeywords = [
-    "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-  ];
-  const regex = new RegExp(sqlKeywords.join('|'), 'i');
-  return regex.test(input);
-};
 
 router.post('/submitUserBankKycDetails', 
   upload.fields([
@@ -497,6 +490,10 @@ router.post('/getPassbookImage', async (req, res) => {
   if (!member_id) {
       return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
+  //check sql injection
+  if (containsSQLInjectionWords(member_id)) {
+      return res.status(400).json({ status: "error", message: "Don't try to hack." });
+  }
 
   try {
       const [rows] = await pool.query(
@@ -528,6 +525,10 @@ router.post('/getPancardImage', async (req, res) => {
   if (!member_id) {
       return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
+  //check sql injection
+  if (containsSQLInjectionWords(member_id)) {
+      return res.status(400).json({ status: "error", message: "Don't try to hack." });
+  }
 
   try {
       const [rows] = await pool.query(
@@ -558,6 +559,11 @@ router.post('/getAadharcardFrontImage', async (req, res) => {
   if (!member_id) {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
+  //check sql injection
+  if (containsSQLInjectionWords(member_id)) {
+    return res.status(400).json({ status: "error", message: "Don't try to hack." });
+  }
+
 
   try {
     const [rows] = await pool.query(
@@ -587,6 +593,11 @@ router.post('/getAadharcardBackImage', async (req, res) => {
   if (!member_id) {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
+  //check sql injection
+  if (containsSQLInjectionWords(member_id)) {
+    return res.status(400).json({ status: "error", message: "Don't try to hack." });
+  }
+
 
   try {
     const [rows] = await pool.query(
@@ -618,6 +629,10 @@ router.post('/getUserImage', async (req, res) => {
       return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
 
+  //check sql injection
+  if (containsSQLInjectionWords(member_id)) {
+      return res.status(400).json({ status: "error", message: "Don't try to hack." });
+  }
   try {
       const [rows] = await pool.query(
           'SELECT user_image FROM user_kyc_images WHERE member_id = ?',

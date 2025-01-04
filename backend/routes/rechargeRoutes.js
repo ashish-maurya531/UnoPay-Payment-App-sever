@@ -3,6 +3,7 @@ const { pool } = require('../config/database');
 const axios = require('axios');
 const router = express.Router();
 const dotenv = require('dotenv');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 const generateTransactionId = require('../utills/generateTxnId');
 dotenv.config();
@@ -39,14 +40,6 @@ async function getRechargeBalance(username, pwd, format) {
 }
 
 
-// Helper function to check for SQL injection
-const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-        "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-};
 
 
 router.post('/doMobileRecharge', async (req, res) => {
@@ -196,6 +189,11 @@ router.get('/checkAdminRechargeApiBalance', async (req, res) => {
     if (!username || !pwd) {
         return res.status(400).json({ status: false, error: 'Username and password are required.' });
     }
+    // Check for SQL injection
+    if (containsSQLInjectionWords(username) || containsSQLInjectionWords(pwd)) {
+        return res.status(400).json({ status: false, error: "Don't try to hack " });
+    }
+
 
     try {
         const amountThreshold = 500; // Set threshold for balance comparison
@@ -240,10 +238,7 @@ router.post('/checkRechargeStatus', async (req, res) => {
   }
 
   // Check for SQL injection
-  if (
-
-      containsSQLInjectionWords(order_id)
-  ) {
+  if (containsSQLInjectionWords(order_id)) {
       return res.status(400).json({ status: 'false', error: "Don't try to hack " });
   }
 

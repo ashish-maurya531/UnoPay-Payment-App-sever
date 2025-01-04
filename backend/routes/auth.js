@@ -2,6 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database');
 const axios = require('axios');
 const { rmSync } = require('fs');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 const router = express.Router();
 
@@ -9,13 +10,7 @@ const router = express.Router();
 router.post('/adminLogin', async (req, res) => {
   const { name, password } = req.body;
   console.log(name, password);
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
+  
   // Validate inputs
   if (containsSQLInjectionWords(name) || containsSQLInjectionWords(password)) {
     return res.status(400).json({ error: "Don't try to hack." });
@@ -158,7 +153,11 @@ const checkSponserId = async (id) => {
 };
 router.post('/checkSponserId', async(req, res) => {
   const { sponser_id } = req.body;
-  console.log("gandu se aya "+sponser_id);
+  //check for sql injection using function imported
+  if (containsSQLInjectionWords(sponser_id)) {
+    return res.status(400).json({ error: "Don't try to hack." });
+  }
+  console.log("check this  "+sponser_id);
   try {
     const isSponserIdValid = await checkSponserId(sponser_id);
     var sponserName=[{ username: 'Invalid Sponsor Id' }]
@@ -287,19 +286,6 @@ router.post('/checkSponserId', async(req, res) => {
 
 router.post('/register', async (req, res) => {
   const { sponser_id, phoneno, username, email, password, tpin } = req.body;
-
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    console.log(regex.test(input));
-    return regex.test(input);
-  };
-
-
-
-
   // Validate inputs
   const checktheData = [sponser_id, phoneno, username, email, password, tpin].join(' ');
   console.log(checktheData);
@@ -449,14 +435,6 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { identifier, password } = req.body; 
 
-  // Function to check for SQL injection-related words
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password)) {
     return res.status(400).json({ status:"false",error: "Don't try to hack." });
@@ -536,15 +514,7 @@ router.post('/getmembershipStatus', async (req, res) => {
   if (!member_id) {
     return res.status(400).json({ status:"false",error: 'MemberID is required' });
   }
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    console.log(regex.test(input));
-    return regex.test(input);
-  };
-
+ 
 
 
 
@@ -577,6 +547,13 @@ router.post('/getmembershipStatus', async (req, res) => {
 //to check tpin is correct or not 
 router.post('/checktpin', async(req,res)=>{
   const {member_id,tpin} = req.body;
+  if (!member_id || !tpin) {
+    return res.status(400).json({ error: 'Member ID and TPIN are required' });
+  }
+  // Validate inputs
+  if (containsSQLInjectionWords(member_id) || containsSQLInjectionWords(tpin)) {
+    return res.status(400).json({ error: "Don't try to hack." });
+  }
   const [tpinRows] = await pool.query('SELECT tpin FROM security_details_of_user WHERE member_id = ?', [member_id]);
   if(tpinRows.length === 0){
     return res.status(404).json({error:'User not registered'});
@@ -626,6 +603,10 @@ router.post('/toggleStatus', async (req, res) => {
 
   if (!memberid) {
     return res.status(400).json({ error: 'Member ID is required' });
+  }
+  // Validate inputs
+  if (containsSQLInjectionWords(memberid)) {
+    return res.status(400).json({ error: "Don't try to hack." });
   }
 
   try {

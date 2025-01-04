@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList } = require('../utills/checkUserBalance');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
 
 // Route to get flexi wallet transactions
 router.post('/flexiWalletTransactions', async (req, res) => {
     const {member_id} = req.body;
+    if(containsSQLInjectionWords(member_id)){
+        return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
+    }
     try {
         const transactions = await getFlexiWalletTransactionList(member_id);
         res.status(200).json({ success: true, transactions });
@@ -18,6 +22,9 @@ router.post('/flexiWalletTransactions', async (req, res) => {
 // Route to get commission wallet transactions
 router.post('/commissionWalletTransactions', async (req, res) => {
     const {member_id} = req.body;
+    if(containsSQLInjectionWords(member_id)){
+        return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
+    }
     try {
         const transactions = await getCommissionWalletTransactionList(member_id);
         res.status(200).json({ success: true, transactions });
@@ -29,6 +36,10 @@ router.post('/commissionWalletTransactions', async (req, res) => {
 // Route to get self transactions
 router.post('/selfTransactions', async (req, res) => {
     const {member_id} = req.body;
+    if(containsSQLInjectionWords(member_id)){
+        return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
+    }
+
     try {
         const transactions = await selfTransactionsList(member_id);
         if (transactions?.message) {
@@ -47,6 +58,9 @@ router.post('/selfTransactions', async (req, res) => {
 //get all income transactions
 router.post('/incomeTransactions', async (req, res) => {
     const {member_id} = req.body;
+    if(containsSQLInjectionWords(member_id)){
+        return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
+    }
     try {
         const transactions = await incomeTransactionsList(member_id);
         if (transactions?.message) {

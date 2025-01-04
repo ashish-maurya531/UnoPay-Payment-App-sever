@@ -5,6 +5,8 @@ const router = express.Router();
 const generateTransactionId = require('../utills/generateTxnId');
 const {getFlexiWalletBalance} = require('../utills/checkUserBalance');
 const {commisionPayout} = require('../utills/commisionPayout');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+
 
 //api for mobile recharge
 
@@ -14,14 +16,7 @@ const {commisionPayout} = require('../utills/commisionPayout');
 // const balance = getFlexiWalletBalance("UP100070");
 // console.log(balance);
 
-// Helper function to check for SQL injection
-const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-        "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-};
+
 
 
 // route to by membership plan 

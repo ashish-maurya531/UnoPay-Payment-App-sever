@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const generateTransactionId = require('../utills/generateTxnId');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
 
@@ -46,14 +47,6 @@ router.post('/userAddFundRequest',upload.single('screenshot'), async (req, res) 
   if (!to_upi_id || !amount || !member_id) {
     return res.status(404).json({ status: 'false', error: 'All required fields. Some fields are empty' });
   }
-
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
 
   const checktheData = [ utr_number, to_upi_id, amount, member_id].join(' ');
   // console.log(checktheData)
@@ -158,18 +151,6 @@ router.post('/getUserAddFundRequest', async (req, res) => {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
   }
 
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    console.log(regex.test(input));
-    return regex.test(input);
-  };
-
-
-
-
   // Validate inputs
   if (containsSQLInjectionWords(member_id)){
     return res.status(400).json({ status:"false",error: "Don't try to hack." });
@@ -195,13 +176,7 @@ router.post('/getUserAddFundRequestSS', async (req, res) => {
   if (!utr_number) {
     return res.status(400).json({ status: "error", message: "Utr Number is required" });
   }
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
+
   // Validate inputs
   if (containsSQLInjectionWords(utr_number)) {
     return res.status(400).json({ status:"false",error: "Don't try to hack." });
@@ -241,13 +216,6 @@ router.post('/updateFundRequestStatus', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
   // Validate inputs
   if (containsSQLInjectionWords(utr_number)|| containsSQLInjectionWords(status)) {
     return res.status(400).json({ status:"false",error: "Don't try to hack." });
@@ -354,14 +322,7 @@ router.post('/userBalance', async (req, res) => {
   const { member_id } = req.body;
   //member_id is not empty
   if (!member_id || member_id==="") return res.status(400).json({ status: 'error', message: 'Member ID is required.' });
-  const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    console.log(regex.test(input));
-    return regex.test(input);
-  };
+
 
 
 

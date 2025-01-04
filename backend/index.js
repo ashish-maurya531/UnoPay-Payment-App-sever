@@ -13,6 +13,7 @@ const buyMembership = require('./routes/buyMembership');
 const userBalanceTransactionList = require('./routes/userBalanceTransactionList');
 const userTeamAndDirect = require('./routes/userTeamAndDirect');
 const user_delete_requests = require('./routes/userdeleteRequest');
+const userRaiseTicket=require('./routes/userRaiseTicket');
 // const {authenticateToken}=require('./middleware/auth');
 
 // const bodyParser = require('body-parser');
@@ -59,6 +60,7 @@ app.use('/api/auth',buyMembership);
 app.use('/api/auth',userBalanceTransactionList);
 app.use('/api/auth',userTeamAndDirect);
 app.use('/api/auth',user_delete_requests);
+app.use('/api/auth',userRaiseTicket);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

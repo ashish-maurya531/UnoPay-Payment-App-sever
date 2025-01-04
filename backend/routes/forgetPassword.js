@@ -2,6 +2,8 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 const {sendOtpEmail,verifyOtp} = require('../utills/sendOtpMail');
+const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+
 
 // console.log(sendOtpEmail("UP100070"));
 // console.log(verifyOtp("UP100070","123456"));
@@ -36,6 +38,9 @@ router.post("/send-otp", async (req, res) => {
     if (!member_id) {
         return res.status(400).json({ success: false, message: "Member ID is required" });
     }
+    if (containsSQLInjectionWords(member_id)) {
+        return res.status(400).json({ success: false, message: "Don't try to hack." });
+    }
 
     try {
         const result = await sendOtpEmail(member_id);
@@ -52,6 +57,9 @@ router.post("/verify-otp", async (req, res) => {
 
     if (!member_id || !otp) {
         return res.status(400).json({ success: false, message: "Member ID and OTP are required" });
+    }
+    if (containsSQLInjectionWords(member_id + otp)) {
+        return res.status(400).json({ success: false, message: "Don't try to hack." });
     }
 
     try {
@@ -80,15 +88,6 @@ router.post("/verify-otp", async (req, res) => {
 
 
 
-
-// Helper function to check for SQL injection
-const containsSQLInjectionWords = (input) => {
-    const sqlKeywords = [
-      "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-    ];
-    const regex = new RegExp(sqlKeywords.join('|'), 'i');
-    return regex.test(input);
-  };
 //change password
 router.post('/changeUserPassword', async (req, res) => {
     const { member_id,oldPassword, newPassword } = req.body;
