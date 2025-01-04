@@ -4,16 +4,23 @@ const axios = require('axios');
 const router = express.Router();
 const dotenv = require('dotenv');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
-
+const {commisionPayout_2} = require('../utills/commisionPayout_2'); //
 const generateTransactionId = require('../utills/generateTxnId');
 dotenv.config();
-const username = process.env.username;
-const pwd = process.env.pwd;
-
+const username = process.env.unopay_username;
+const pwd = process.env.unopay_pwd;
+// await commisionPayout(orderid,membership_status,MOBILE_RECHARGE,member_id,amount);
 
 //api for mobile recharge
 
+ //chekc the membership_status of user 
+//  async function abc(){
+//  const [membership_status] = await pool.query(`SELECT membership FROM usersdetails WHERE memberid = ?`,["UP136786"]);
+//  console.log(membership_status);
+//  console.log(membership_status[0]?.membership);
 
+//  }
+//  abc()
 // // Utility function to check for SQL injection
 // function containsSQLInjectionWords(input) {
 //     const sqlInjectionPatterns = [
@@ -23,10 +30,11 @@ const pwd = process.env.pwd;
 // }
 
 // Function to fetch recharge balance from third-party API
-async function getRechargeBalance(username, pwd, format) {
+async function getRechargeBalance(format) {
+    console.log(username , pwd)
     try {
         // Third-party API endpoint
-        const apiUrl = `https://business.a1topup.com/recharge/balance?username=${encodeURIComponent(username)}&pwd=${encodeURIComponent(pwd)}&format=${encodeURIComponent(format)}`;
+        const apiUrl = `https://business.a1topup.com/recharge/balance?username=${(username)}&pwd=${encodeURIComponent(pwd)}&format=${encodeURIComponent(format)}`;
 
         // Make GET request to the API
         const response = await axios.get(apiUrl);
@@ -50,11 +58,11 @@ router.post('/doMobileRecharge', async (req, res) => {
         return res.status(400).json({ status: 'false', error: 'All required fields must be provided.' });
     }
 
-    // Check for SQL injection
-    const checkFields = [username, pwd, circlecode, operatorcode, number, amount, member_id].join(' ');
-    if (containsSQLInjectionWords(checkFields)) {
-        return res.status(400).json({ status: "false", error: "Don't try to hack !" });
-    }
+    // // Check for SQL injection
+    // const checkFields = [username, pwd, circlecode, operatorcode, number, amount, member_id].join(' ');
+    // if (containsSQLInjectionWords(checkFields)) {
+    //     return res.status(400).json({ status: "false", error: "Don't try to hack !" });
+    // }
 
     try {
         // Check if member_id exists
@@ -69,7 +77,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
       
         // Fetch balance data from the API
-        const balanceData = await getRechargeBalance(username, pwd, format);
+        const balanceData = await getRechargeBalance("json");
 
         // Check if the balance is below the threshold
         if (balanceData < parseFloat(amount)) {
@@ -79,8 +87,14 @@ router.post('/doMobileRecharge', async (req, res) => {
             return res.status(400).json({ status: false, error:'Insufficient balance in the unopay fund.' });
         }
 
+        //chekc the membership_status of user 
+        const [membership_row] = await pool.query(`SELECT membership FROM usersdetails WHERE memberid = ?`,[member_id]);
+        const membership_status = membership_row[0]?.membership;
+        console.log(membership_status);
+
 
         const userBalance = userRows[0].user_total_balance;
+        
 
         // Check if balance is sufficient
         if (parseFloat(userBalance) < parseFloat(amount)) {
@@ -108,6 +122,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
             // Parse response
             const apiData = apiResponse.data;
+            console.log(apiData);
             if (!apiData || !apiData.status) {
                 return res.status(500).json({
                     status: 'false',
@@ -117,11 +132,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
             // Save transaction details into the database
             const transactionStatus = apiData.status === 'Success' ? 'success' : 'failed';
-            await connection.query(
-                `INSERT INTO universal_transaction_table (order_id, member_id, type, recharge_to, amount, status, created_at) 
-            VALUES (?, ?, 'debit', ?, ?, ?, NOW())`,
-                [orderid, member_id, number, amount, transactionStatus]
-            );
+         
 
             // Update user's balance if the transaction was successful
             if (transactionStatus === 'success') {
@@ -142,9 +153,10 @@ router.post('/doMobileRecharge', async (req, res) => {
                 );
                 if (rows1.affectedRows > 0) {
                     console.log('Addition in flexi wallet done successfully');
+                    await commisionPayout_2(orderid,membership_status,"MOBILE_RECHARGE",member_id,amount);
                 }
 
-                // await commisionPayout("Recharge", member_id, amount);
+                
 
 
                 await connection.query(
@@ -152,7 +164,18 @@ router.post('/doMobileRecharge', async (req, res) => {
                     [amount, member_id]
                 );
             }
-
+            if (transactionStatus === "failed") {
+                const [rows] = await connection.query(
+                    `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,recharge_to,amount, status,message)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [orderid, member_id, 'Rechange', 'Mobile', number, amount, 'failed', 'Recharge failed']
+                );
+                if (rows.affectedRows > 0) {
+                    console.log('Addition in universal transaction done successfully');
+                }
+            }
+             //commit the transaction
+             await connection.commit();
             res.status(200).json({
                 status: 'true',
                 message: `Recharge ${transactionStatus}.`,
@@ -183,23 +206,23 @@ router.post('/doMobileRecharge', async (req, res) => {
 
 // Route: /checkAdminRechargeApiBalance
 router.get('/checkAdminRechargeApiBalance', async (req, res) => {
-    const { format = 'json' } = req.query; // Extract query parameters
+    // const { format = 'json' } = req.query; // Extract query parameters
 
     // Validate input
     if (!username || !pwd) {
         return res.status(400).json({ status: false, error: 'Username and password are required.' });
     }
-    // Check for SQL injection
-    if (containsSQLInjectionWords(username) || containsSQLInjectionWords(pwd)) {
-        return res.status(400).json({ status: false, error: "Don't try to hack " });
-    }
+    // // Check for SQL injection
+    // if (containsSQLInjectionWords(username) || containsSQLInjectionWords(pwd)) {
+    //     return res.status(400).json({ status: false, error: "Don't try to hack " });
+    // }
 
 
     try {
-        const amountThreshold = 500; // Set threshold for balance comparison
+        // const amountThreshold = 500; // Set threshold for balance comparison
 
         // Fetch balance data from the API
-        const balanceData = await getRechargeBalance(username, pwd, format);
+        const balanceData = await getRechargeBalance("json");
 
         // // Check if the balance is below the threshold
         // if (balanceData < amountThreshold) {
@@ -246,7 +269,7 @@ router.post('/checkRechargeStatus', async (req, res) => {
 
     //first check order_id present in universal_transaction_table
     const [orderRows] = await pool.query(
-        `SELECT * FROM universal_transaction_table WHERE order_id = ?`,
+        `SELECT * FROM universal_transaction_table WHERE transaction_id= ?`,
         [order_id]
     );
     if (orderRows.length === 0) {
