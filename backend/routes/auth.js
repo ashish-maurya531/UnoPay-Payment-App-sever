@@ -466,7 +466,7 @@ router.post('/login', async (req, res) => {
     
     // console.log(identifier);
     const [userRows] = await pool.query(
-      'SELECT memberid ,username ,status,membership FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+      'SELECT memberid ,username ,status,membership,phoneno,email,created_at FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
       [identifier, identifier, identifier]
     );
     // console.log(userRows)
@@ -521,7 +521,7 @@ router.post('/login', async (req, res) => {
 
 
     // Successful login
-    res.json({ status:"true",message: 'User logged in successfully', memberid ,username,membership });
+    res.json({ status:"true",message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
     console.log(username+" ka hogya login "+new Date())
   } catch (error) {
     console.error('User login error:', error);

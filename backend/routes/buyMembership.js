@@ -103,6 +103,14 @@ router.post('/buymembership', async (req, res) => {
             if (rows1.affectedRows>0) {
                 console.log('Addition in flexi wallet done successfully');
                 }
+            //UPDATE user_total_balance
+            const [rows3] = await connection.query(
+                `UPDATE users_total_balance SET user_total_balance = user_total_balance - ? WHERE member_id = ?`,
+                [total_price, member_id]
+                );
+            if (rows3.affectedRows>0) {
+                console.log('User total balance updated successfully');
+                }
             // update entry in userdetails table membership
             const [rows2] = await connection.query(
                 `UPDATE usersdetails SET membership = ? WHERE memberid = ?`,
@@ -110,10 +118,16 @@ router.post('/buymembership', async (req, res) => {
                 );
             if (rows2.affectedRows>0) {
                 console.log('Membership updated successfully');
+
+                const commission_done=await commisionPayout(txn_id,package_name, member_id, price);
+                if (commission_done) {
+                    console.log('Commision distributed successfully');
+                    }
+
                 }
             // call the function to update the commission table
 
-            await commisionPayout(txn_id,package_name, member_id, price);
+            
 
 
             

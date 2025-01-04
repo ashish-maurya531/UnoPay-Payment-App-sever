@@ -1,9 +1,81 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
-const {sendOtpEmail} = require('../utills/sendOtpMail');
+const {sendOtpEmail,verifyOtp} = require('../utills/sendOtpMail');
 
 // console.log(sendOtpEmail("UP100070"));
+// console.log(verifyOtp("UP100070","123456"));
+// (async () => {
+//     try {
+//         // const sendResult = await sendOtpEmail("UP100070");
+//         // console.log("Send OTP result:", sendResult);
+
+//         const verifyResult = await verifyOtp("UP100070", "844270");
+//         console.log("Verify OTP result:", verifyResult);
+//     } catch (error) {
+//         console.error("Error:", error);
+//     }
+// })();
+
+// (async () => {
+//     try {
+//         const sendResult = await sendOtpEmail("UP100070");
+//         console.log("Send OTP result:", sendResult);
+
+//         // const verifyResult = await verifyOtp("UP100070", "706242");
+//         // console.log("Verify OTP result:", verifyResult);
+//     } catch (error) {
+//         console.error("Error:", error);
+//     }
+// })();
+
+// Route to send OTP
+router.post("/send-otp", async (req, res) => {
+    const { member_id } = req.body;
+
+    if (!member_id) {
+        return res.status(400).json({ success: false, message: "Member ID is required" });
+    }
+
+    try {
+        const result = await sendOtpEmail(member_id);
+        res.status(200).json({ success: true, message: "OTP sent successfully", result });
+    } catch (error) {
+        console.error("Error sending OTP:", error);
+        res.status(500).json({ success: false, message: "Failed to send OTP", error });
+    }
+});
+
+// Route to verify OTP
+router.post("/verify-otp", async (req, res) => {
+    const { member_id, otp } = req.body;
+
+    if (!member_id || !otp) {
+        return res.status(400).json({ success: false, message: "Member ID and OTP are required" });
+    }
+
+    try {
+        const isValid = await verifyOtp(member_id, otp);
+        console.log("isValid:", isValid?.success);
+        if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
+            res.status(200).json({ success: true, message: "OTP verified successfully" });
+
+        }
+        else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
+            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+        }
+        else if(isValid?.success===false && isValid?.message==="OTP expired") {
+            res.status(400).json({ success: false, message: "Otp expired" });
+
+        } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
+            res.status(400).json({ success: false, message: "Invalid OTP" });
+        }
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        res.status(500).json({ success: false, message: "Failed to verify OTP", error });
+    }
+});
+
 
 
 

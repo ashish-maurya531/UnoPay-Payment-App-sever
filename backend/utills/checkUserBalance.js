@@ -140,7 +140,7 @@ async function selfTransactionsList(member_id) {
                 type: row.type,
                 subType: row.subType,
                 recharge_to: row.recharge_to,
-                ...(isCredit ? { credit: row.amount } : { debit: row.amount }),
+                ...(isCredit ? { credit: row.amount,debit:0.00 } : { credit:0.00,debit: row.amount }),
                 status: row.status,
                 created_at: row.created_at,
                 message: row.message,
