@@ -10,6 +10,8 @@ import QRList from '../components/Admin/QRList.jsx';
 import UserAddFundRequest from '../components/Users/UserAddFundRequest';
 import PaymentRequests from '../components/Payment/PaymentRequests';
 
+import UserDeleteRequest from '../components/Users/UserDeleteRequest';
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -30,6 +32,7 @@ export default function Dashboard() {
         <Route path="qr-list" element={<QRList />} />
         <Route path="payment-requests" element={<PaymentRequests />} />
         <Route path="user-add-fund-request" element={<UserAddFundRequest />} />
+        <Route path="user-delete-request" element={<UserDeleteRequest />} />
 
       </Routes>
     </DashboardLayout>

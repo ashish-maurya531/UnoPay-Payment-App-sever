@@ -29,6 +29,11 @@ export default function DashboardLayout({ children }) {
       label: 'User Add Fund Request',
       onClick: () => navigate('/dashboard/user-add-fund-request'),
     },
+    {
+      key: 'UserDeleteRequest',
+      label: 'User Account Delete Request',
+      onClick: () => navigate('/dashboard/user-delete-request'),
+    },
   ];
   
   const paymentMenuItems = [

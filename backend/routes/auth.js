@@ -620,34 +620,63 @@ router.get('/users', async (req, res) => {
 });
 
 // POST API to toggle status between active and inactive
+// POST API to toggle user status between active and inactive
 router.post('/toggleStatus', async (req, res) => {
   const { memberid } = req.body;
 
   if (!memberid) {
-    return res.status(400).json({ error: 'MemberID is required' });
+    return res.status(400).json({ error: 'Member ID is required' });
   }
 
   try {
-    // Check the current status of the user
-    const [user] = await pool.query('SELECT status FROM usersdetails WHERE memberid = ?', [memberid]);
+    // Check if the user exists and fetch their current status
+    const [userResult] = await pool.query('SELECT status FROM usersdetails WHERE memberid = ?', [memberid]);
 
-    if (user.length === 0) {
+    if (userResult.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Determine the new status
-    const currentStatus = user[0].status;
+    const currentStatus = userResult[0].status;
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
 
     // Update the user's status
     await pool.query('UPDATE usersdetails SET status = ? WHERE memberid = ?', [newStatus, memberid]);
 
-    res.status(200).json({ message: `Status changed to ${newStatus}` });
+    // Check for existing delete request
+    const [requestResult] = await pool.query('SELECT * FROM user_delete_requests WHERE member_id = ?', [memberid]);
+
+    if (newStatus === 'inactive') {
+      if (requestResult.length > 0) {
+        // Update delete request to 'done' if it exists
+        await pool.query('UPDATE user_delete_requests SET delete_request_status = ? WHERE member_id = ?', ['done', memberid]);
+      } else {
+        // Insert new entry with status 'done'
+        await pool.query(
+          'INSERT INTO user_delete_requests (member_id, delete_request_status) VALUES (?, ?)',
+          [memberid, 'done']
+        );
+      }
+    } else if (newStatus === 'active') {
+      if (requestResult.length === 0) {
+        // Insert new entry with status 'pending'
+        await pool.query(
+          'INSERT INTO user_delete_requests (member_id, delete_request_status, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
+          [memberid, 'pending']
+        );
+      }
+      else {
+        // Insert new entry with status 'done'
+        await pool.query('UPDATE user_delete_requests SET delete_request_status = ? WHERE member_id = ?', ['pending', memberid]);
+      }
+    }
+
+    res.status(200).json({ message: `User status changed to ${newStatus}`, newStatus });
   } catch (error) {
-    console.error('Error changing status:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error toggling user status:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
+
 
 
 
