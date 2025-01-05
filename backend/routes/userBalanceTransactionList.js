@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+
+const { pool } = require('../config/database');
 const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList } = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
@@ -75,6 +77,38 @@ router.post('/incomeTransactions', async (req, res) => {
     }
 }
 );
+
+
+router.get("/user-all-transactions",async(req,res)=>{
+    try{
+        // Get all users transactions from the univarsal_transactions_table
+        const [transactions]=await pool.query(`SELECT * FROM universal_transaction_table`);
+        res.status(200).json({success:true,transactions});
+    }catch(error){
+        res.status(500).json({success:false,message:"Error getting all transactions",error});
+    }
+});
+
+
+router.get("/user-flexi-wallet-all-transactions",async(req,res)=>{
+    try{
+        // Get all users transactions from the univarsal_transactions_table
+        const [transactions]=await pool.query(`SELECT * FROM flexi_wallet`);
+        res.status(200).json({success:true,transactions});
+    }catch(error){
+        res.status(500).json({success:false,message:"Error getting all transactions",error});
+    }
+});
+
+router.get("/user-commission-wallet-all-transactions",async(req,res)=>{
+    try{
+        // Get all users transactions from the univarsal_transactions_table
+        const [transactions]=await pool.query(`SELECT * FROM commission_wallet`);
+        res.status(200).json({success:true,transactions});
+    }catch(error){
+        res.status(500).json({success:false,message:"Error getting all transactions",error});
+    }
+});
 
 
 

@@ -47,6 +47,35 @@ export default function UserDeleteRequestList() {
       setLoading(false);
     }
   };
+  const handleDeleteRequest = async (memberId) => {
+    try {
+      const response = await axios.delete('http://localhost:3000/api/auth/deleteRequest', {
+        data: { member_id: memberId },
+      });
+  
+      if (response.data.success) {
+        notification.success({
+          message: 'Request Deleted',
+          description: `Delete request for Member ID: ${memberId} has been successfully deleted.`,
+        });
+  
+        // Refresh the table data
+        fetchDeleteRequests();
+      } else {
+        notification.error({
+          message: 'Error',
+          description: response.data.message || 'Failed to delete the request.',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting the delete request:', error);
+      notification.error({
+        message: 'Error',
+        description: 'An error occurred while deleting the request. Please try again later.',
+      });
+    }
+  };
+  
 
   // Filter data based on search text
   const filteredRequests = deleteRequests.filter(request =>
@@ -60,7 +89,7 @@ export default function UserDeleteRequestList() {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      width: 80,
+      render: (_, __, index) => index + 1,
     },
     {
       title: 'Member ID',
@@ -106,7 +135,28 @@ export default function UserDeleteRequestList() {
         />
       ),
     },
+    {
+      title: 'Actions',
+      dataIndex: 'actions',
+      key: 'actions',
+      render: (_, record) => (
+        <button
+          style={{
+            color: 'white',
+            backgroundColor: 'red',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 10px',
+            cursor: 'pointer',
+          }}
+          onClick={() => handleDeleteRequest(record.memberId)}
+        >
+          Delete
+        </button>
+      ),
+    },
   ];
+  
 
   const showConfirmationModal = (memberId, newStatus, sno) => {
     setCurrentMemberId(memberId);

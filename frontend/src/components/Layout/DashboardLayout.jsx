@@ -47,6 +47,17 @@ export default function DashboardLayout({ children }) {
       label: 'All Payment Details',
       onClick: () => navigate('/dashboard/payment-requests'),
     },
+
+    {
+      key: 'UserWalletDetails',
+      label: 'User wallet Payment List',
+      onClick: () => navigate('/dashboard/User-wallet-payment-list'),
+    },
+    {
+      key: 'UserCommissionWalletDetails',
+      label: 'User Commission List',
+      onClick: () => navigate('/dashboard/User-Commission-list'),
+    },
   ];
   
   const adminMenuItems = [

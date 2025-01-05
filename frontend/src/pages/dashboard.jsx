@@ -8,8 +8,12 @@ import BankDetails from '../components/Users/BankDetails.jsx';
 import GenerateIds from '../components/Users/GenerateIds';
 import QRList from '../components/Admin/QRList.jsx';
 import UserAddFundRequest from '../components/Users/UserAddFundRequest';
-import PaymentRequests from '../components/Payment/PaymentRequests';
+import PaymentAll from '../components/Payment/PaymentAll.jsx';
 import UserHelpDesk from '../components/Users/UserHelpDesk';
+
+import UserWalletPaymentList from '../components/Payment/UserWalletTransactions.jsx';
+import UserCommissionWalletPaymentList from '../components/Payment/UserCommissionWalletTransactions.jsx';
+
 
 import UserDeleteRequest from '../components/Users/UserDeleteRequest';
 
@@ -31,10 +35,12 @@ export default function Dashboard() {
         <Route path="bank-details" element={<BankDetails />} />
         <Route path="generate-ids" element={<GenerateIds />} />
         <Route path="qr-list" element={<QRList />} />
-        <Route path="payment-requests" element={<PaymentRequests />} />
+        <Route path="payment-requests" element={<PaymentAll />} />
         <Route path="user-add-fund-request" element={<UserAddFundRequest />} />
         <Route path="user-delete-request" element={<UserDeleteRequest />} />
         <Route path="user-help-desk" element={<UserHelpDesk />} />
+        <Route path="User-wallet-payment-list" element={<UserWalletPaymentList />} />
+        <Route path="User-Commission-list" element={<UserCommissionWalletPaymentList />} />
 
       </Routes>
     </DashboardLayout>

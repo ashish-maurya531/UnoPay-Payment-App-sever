@@ -99,10 +99,10 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
 
-// Utility function to generate ticket IDs
-function generateTicketId() {
-    return Math.random().toString(36).substr(2, 8).toUpperCase();
-}
+// // Utility function to generate ticket IDs
+// function generateTicketId() {
+//     return Math.random().toString(36).substr(2, 8).toUpperCase();
+// }
 
 // Routes
 

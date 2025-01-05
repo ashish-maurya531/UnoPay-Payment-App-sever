@@ -7,23 +7,33 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 // Create or Update Delete Request
 router.post('/deleteRequest', async (req, res) => {
-    const { memberid } = req.body;
+    const { memberid ,password,tpin} = req.body;
 
     // Validate input
-    if (!memberid) {
+    if (!memberid||!password||!tpin) {
         return res.status(400).json({ 
             success: false, 
             message: 'Member ID is required' 
         });
     }
     
-    // Check for SQL injection
-    if (containsSQLInjectionWords(memberid)) {
+  //sql injection
+  if (containsSQLInjectionWords(memberid+password+tpin)) {
         return res.status(400).json({ 
             success: false, 
             message: 'Don\'t try to hack!' 
         });
     }
+    // Check if member exists and password and tpin is valid
+    const [result] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =? AND password=? AND tpin = ?`, [memberid, password,tpin]);
+        
+    if (result.length === 0) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid member ID or password or tpin'
+        });
+        }
+
 
     try {
         const query = `
@@ -112,29 +122,29 @@ router.get('/deleteRequests', async (req, res) => {
 //     }
 // });
 
-// // Delete a request
-// router.delete('/deleteRequest', async (req, res) => {
-//     const { member_id } = req.body;
+// Delete a request
+router.delete('/deleteRequest', async (req, res) => {
+    const { member_id } = req.body;
 
-//     if (!member_id) {
-//         return res.status(400).json({ success: false, message: 'Member ID is required' });
-//     }
+    if (!member_id) {
+        return res.status(400).json({ success: false, message: 'Member ID is required' });
+    }
 
-//     try {
-//         const query = `
-//             DELETE FROM user_delete_requests
-//             WHERE member_id = ?
-//         `;
-//         const [result] = await pool.query(query, [member_id]);
+    try {
+        const query = `
+            DELETE FROM user_delete_requests
+            WHERE member_id = ?
+        `;
+        const [result] = await pool.query(query, [member_id]);
 
-//         if (result.affectedRows === 0) {
-//             return res.status(404).json({ success: false, message: 'Delete request not found' });
-//         }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Delete request not found' });
+        }
 
-//         res.status(200).json({ success: true, message: 'Delete request removed successfully' });
-//     } catch (error) {
-//         res.status(500).json({ success: false, message: 'Error deleting delete request', error });
-//     }
-// });
+        res.status(200).json({ success: true, message: 'Delete request removed successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error deleting delete request', error });
+    }
+});
 
 module.exports = router;

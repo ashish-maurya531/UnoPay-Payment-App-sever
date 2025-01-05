@@ -37,6 +37,8 @@ export default function UserList() {
         membership: user.membership,
         status: user.status || 'inactive',
       }));
+
+      formattedUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
       setUsers(formattedUsers);
       setTotalUsers(formattedUsers.length);
@@ -67,7 +69,7 @@ export default function UserList() {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      width: 80,
+      render: (_, __, index) => index + 1,
     },
     {
       title: 'Member ID',

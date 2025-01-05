@@ -5,42 +5,30 @@ const {sendOtpEmail,verifyOtp} = require('../utills/sendOtpMail');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
-// console.log(sendOtpEmail("UP100070"));
-// console.log(verifyOtp("UP100070","123456"));
-// (async () => {
-//     try {
-//         // const sendResult = await sendOtpEmail("UP100070");
-//         // console.log("Send OTP result:", sendResult);
-
-//         const verifyResult = await verifyOtp("UP100070", "844270");
-//         console.log("Verify OTP result:", verifyResult);
-//     } catch (error) {
-//         console.error("Error:", error);
-//     }
-// })();
-
-// (async () => {
-//     try {
-//         const sendResult = await sendOtpEmail("UP100070");
-//         console.log("Send OTP result:", sendResult);
-
-//         // const verifyResult = await verifyOtp("UP100070", "706242");
-//         // console.log("Verify OTP result:", verifyResult);
-//     } catch (error) {
-//         console.error("Error:", error);
-//     }
-// })();
 
 // Route to send OTP
 router.post("/send-otp", async (req, res) => {
-    const { member_id } = req.body;
+    const { identifier } = req.body;
 
-    if (!member_id) {
-        return res.status(400).json({ success: false, message: "Member ID is required" });
+    if (!identifier) {
+        return res.status(400).json({ success: false, message: "Fields is required" });
     }
-    if (containsSQLInjectionWords(member_id)) {
+    if (containsSQLInjectionWords(identifier)) {
         return res.status(400).json({ success: false, message: "Don't try to hack." });
     }
+    // Check for member existence
+    const [userRows] = await pool.query(
+        'SELECT memberid ,phoneno,email FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+        [identifier, identifier, identifier]
+      );
+      // console.log(userRows)
+  
+      if (userRows.length === 0) {
+        return res.status(404).json({ status:"false",error: `User with is ${identifier} not registered` });
+      }
+      //extract member_id 
+      const member_id = userRows[0].memberid;
+
 
     try {
         const result = await sendOtpEmail(member_id);
@@ -184,23 +172,31 @@ router.post('/changeUserTpin', async (req, res) => {
 
 // Route to reset password after OTP verification
 router.post('/forgetPassword', async (req, res) => {
-    const { member_id, newPassword, otp } = req.body;
+    const { identifier, newPassword, otp } = req.body;
 
     // Validate input fields
-    if (!member_id || !newPassword || !otp) {
+    if (!identifier || !newPassword || !otp) {
         return res.status(400).json({ status: 'false', error: 'Some fields are empty' });
     }
 
     // Check for SQL injection attempts
-    const checkthedata = [member_id, newPassword, otp].join(" ");
+    const checkthedata = [identifier, newPassword, otp].join(" ");
     if (containsSQLInjectionWords(checkthedata)) {
         return res.status(400).json({ status: 'false', error: 'Don’t try to hack' });
     }
       // Check for member existence
-      const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`, [member_id]);
-      if (checkMember.length === 0) {
-          return res.status(404).json({ status: 'false', error: 'Invalid member ID' });
+      const [userRows] = await pool.query(
+        'SELECT memberid ,phoneno,email FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+        [identifier, identifier, identifier]
+      );
+      // console.log(userRows)
+  
+      if (userRows.length === 0) {
+        return res.status(404).json({ status:"false",error: 'User not registered' });
       }
+      //extract member_id 
+      const member_id = userRows[0].memberid;
+     
 
     // Verify OTP
     try {
@@ -263,9 +259,11 @@ router.post('/forgetTpin', async (req, res) => {
             // Update password
             const updateTpin = await pool.query(`UPDATE security_details_of_user SET tpin = ? WHERE member_id=?`, [newTpin, member_id]);
             if (updateTpin.affectedRows === 0) {
-                return res.status(404).json({ status: 'false', error: 'Failed to update tpin' });
+                res.status(404).json({ status: 'false', error: 'Failed to update tpin' });
             }
-            res.status(200).json({ status: 'true', message: 'tpin updated successfully' });
+            res.status(200).json({ status: 'true', message: 'TPin updated successfully' });
+
+           
 
         }
         else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
@@ -282,7 +280,6 @@ router.post('/forgetTpin', async (req, res) => {
 
        
 
-        res.status(200).json({ status: 'true', message: 'TPin updated successfully' });
     } catch (error) {
         console.error('Error resetting TPin:', error);
         res.status(500).json({ status: 'false', error: 'Internal server error.' });

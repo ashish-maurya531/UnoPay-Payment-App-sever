@@ -118,7 +118,7 @@ const UserAddFundRequest = () => {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => (currentPage - 1) * 10 + index + 1,
+      render: (_, __, index) => index + 1,
     },
     {
       title: 'UTR Number',
@@ -193,7 +193,7 @@ const UserAddFundRequest = () => {
         <Row gutter={16} align="stretch">
           <Col span={12}>
             <div className="h-full" style={{display:"flex", flexDirection:"row", gap:20, justifyContent:"flex-start"}}>
-              <p>Total Users: {data.length}</p>
+              <p>Total Request: {data.length}</p>
               <p>Total Transactions: {totalRecords}</p>
               <p>Approved: {filteredData.filter(record => record.status === 'approved').length}</p>
               <p>Rejected: {filteredData.filter(record => record.status === 'rejected').length}</p>

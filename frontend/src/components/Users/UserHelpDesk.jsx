@@ -168,7 +168,7 @@ export default function UserChatSystem() {
         </Button>
         <Button
           type="default"
-          style={{ marginTop: '10px', marginLeft: '10px' }}
+          style={{ marginTop: '10px'}}
           onClick={handleRefreshChats}
           block
         >
