@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { pool } = require('../config/database');
-const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList } = require('../utills/checkUserBalance');
+const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
@@ -110,6 +110,84 @@ router.get("/user-commission-wallet-all-transactions",async(req,res)=>{
     }
 });
 
+//get user flexi wallet total and cummission wallet total 
+router.post("/user-wallet-wise-balance", async (req, res) => {
+    const { member_id } = req.body;
+  
+    // Check for missing member_id
+    if (!member_id) {
+      return res.status(400).json({ status: "false", message: "Member ID is required" });
+    }
+  
+    // Check for SQL injection
+    if (containsSQLInjectionWords(member_id)) {
+      return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
+    }
+  
+    // Check if member_id is valid
+    const [memberExist] = await pool.query('SELECT memberid, status FROM usersdetails WHERE memberid = ?', [member_id]);
+    if (memberExist.length === 0) {
+      return res.status(404).json({ status: "false", message: "Member not found" });
+    }
+  
+    try {
+      const flexi_wallet = await getFlexiWalletBalance(member_id);
+      const commission_wallet = await getCommisionWalletBalance(member_id);
+      return res.status(200).json({ success: "true", flexi_wallet, commission_wallet,"signup_bonus":649 });
+    } catch (error) {
+      return res.status(500).json({ success: "false", message: "Error getting user wallet" });
+    }
+  });
+
+
+
+  router.post("/all-user-wallet-wise-balance", async (req, res) => {
+    try {
+      // Fetch all member IDs from the usersdetails table
+      const [members] = await pool.query('SELECT memberid FROM usersdetails');
+      if (members.length === 0) {
+        return res.status(404).json({ status: "false", message: "No members found" });
+      }
+  
+      // Initialize an array to store wallet balances
+      const results = [];
+  
+      // Fetch wallet balances for each member
+      for (const member of members) {
+        const member_id = member.memberid;
+        try {
+          const flexi_wallet = await getFlexiWalletBalance(member_id);
+          const commission_wallet = await getCommisionWalletBalance(member_id);
+  
+          // Add the results to the array
+          results.push({
+            member_id,
+            flexi_wallet,
+            commission_wallet,
+          });
+        } catch (error) {
+          // Handle individual member errors and log them
+          console.error(`Error fetching wallet for member_id: ${member_id}`, error);
+          results.push({
+            member_id,
+            flexi_wallet: null,
+            commission_wallet: null,
+            error: "Error fetching wallet data",
+          });
+        }
+      }
+  
+      // Return all wallet balances
+      return res.status(200).json({ success: "true", data: results });
+    } catch (error) {
+      console.error("Error fetching user wallets:", error);
+      return res.status(500).json({ success: "false", message: "Error fetching user wallets" });
+    }
+  });
+  
+  
+    
+       
 
 
 module.exports = router;

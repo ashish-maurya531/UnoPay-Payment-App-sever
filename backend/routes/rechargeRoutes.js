@@ -52,6 +52,7 @@ async function getRechargeBalance(format) {
 
 router.post('/doMobileRecharge', async (req, res) => {
     const { circlecode, operatorcode, number, amount, member_id } = req.body;
+    console.log("doMobileRecharge Api hit ",circlecode, operatorcode, amount, member_id);
 
     // Validate input
     if (!username || !pwd || !circlecode || !operatorcode || !number || !amount || !member_id) {
@@ -84,7 +85,7 @@ router.post('/doMobileRecharge', async (req, res) => {
             console.log(balanceData);
             console.log(amount);
             console.log('Insufficient balance in the unopay fund.');
-            return res.status(400).json({ status: false, error:'Insufficient balance in the unopay fund.' });
+            return res.status(400).json({ status: false, message:'Insufficient balance in the unopay fund.' });
         }
 
         //chekc the membership_status of user 
@@ -94,11 +95,12 @@ router.post('/doMobileRecharge', async (req, res) => {
 
 
         const userBalance = userRows[0].user_total_balance;
+        console.log(userBalance);
         
 
         // Check if balance is sufficient
         if (parseFloat(userBalance) < parseFloat(amount)) {
-            return res.status(400).json({ status: 'false', error: 'Insufficient balance.' });
+            return res.status(400).json({ status: 'false', message: 'User has Insufficient balance.' });
         }
 
         //make a connection
@@ -131,7 +133,8 @@ router.post('/doMobileRecharge', async (req, res) => {
             }
 
             // Save transaction details into the database
-            const transactionStatus = apiData.status === 'Success' ? 'success' : 'failed';
+            const transactionStatus = (apiData.status === 'Success' || apiData.status === 'Pending') ? 'success' : 'failed';
+            console.log("transaction status",transactionStatus);
          
 
             // Update user's balance if the transaction was successful
@@ -164,14 +167,14 @@ router.post('/doMobileRecharge', async (req, res) => {
                     [amount, member_id]
                 );
             }
-            if (transactionStatus === "failed") {
+            else if (transactionStatus === "failed") {
                 const [rows] = await connection.query(
                     `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,recharge_to,amount, status,message)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                     [orderid, member_id, 'Rechange', 'Mobile', number, amount, 'failed', 'Recharge failed']
                 );
                 if (rows.affectedRows > 0) {
-                    console.log('Addition in universal transaction done successfully');
+                    console.log('only Addition in universal transaction done successfully');
                 }
             }
              //commit the transaction
@@ -209,6 +212,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
 router.post('/doDthRecharge', async (req, res) => {
     const { circlecode, operatorcode, number, amount, member_id } = req.body;
+    console.log("doMobileRecharge Api hit ",circlecode, operatorcode, amount, member_id);
 
     // Validate input
     if (!username || !pwd || !circlecode || !operatorcode || !number || !amount || !member_id) {
@@ -251,7 +255,7 @@ router.post('/doDthRecharge', async (req, res) => {
 
 
         const userBalance = userRows[0].user_total_balance;
-        
+        console.log(userBalance);
 
         // Check if balance is sufficient
         if (parseFloat(userBalance) < parseFloat(amount)) {
@@ -265,21 +269,17 @@ router.post('/doDthRecharge', async (req, res) => {
             // Begin transaction
             await connection.beginTransaction();
 
-
-
-
             // Generate unique order ID
             const orderid = generateTransactionId();
 
             // API URL with parameters
             const apiUrl = `https://business.a1topup.com/recharge/api?username=${encodeURIComponent(username)}&pwd=${encodeURIComponent(pwd)}&circlecode=${encodeURIComponent(circlecode)}&operatorcode=${encodeURIComponent(operatorcode)}&number=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}&orderid=${encodeURIComponent(orderid)}&format=json`;
-
             // Call third-party API using Axios
             const apiResponse = await axios.get(apiUrl);
 
             // Parse response
             const apiData = apiResponse.data;
-            console.log(apiData);
+            console.log("api ka response->",apiData);
             if (!apiData || !apiData.status) {
                 return res.status(500).json({
                     status: 'false',
@@ -288,7 +288,8 @@ router.post('/doDthRecharge', async (req, res) => {
             }
 
             // Save transaction details into the database
-            const transactionStatus = apiData.status === 'Success' ? 'success' : 'failed';
+            const transactionStatus = (apiData.status === 'Success' || apiData.status === 'Pending') ? 'success' : 'failed';
+            console.log("transaction status",transactionStatus);
          
 
             // Update user's balance if the transaction was successful
