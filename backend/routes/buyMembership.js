@@ -68,17 +68,15 @@ router.post('/buymembership', async (req, res) => {
         //total price with gst
         const total_price = packageRows[0].total_price;
 
-        // Check if balance is sufficient
+      
         const userflexiBalance = await getFlexiWalletBalance(member_id);
         if (userflexiBalance < total_price) {
             return res.status(400).json({ status: 'false', error: 'Insufficient balance.' });
         }
-        // update user balance and insert into transaction table
+       
         const txn_id = generateTransactionId();
         try {
-            //place the entry in universal table sno, transaction_id, member_id, type, subType, recharge_to, amount, status, created_at, message
-            //start transaction
-            // Get a connection from the pool
+           
             
             await connection.beginTransaction();
            
@@ -90,7 +88,7 @@ router.post('/buymembership', async (req, res) => {
             if (rows.affectedRows>0) {
                 console.log('Addition in universal transaction done successfully');
                 }
-            // place entry in flexi wallet table sno, member_id, credit, debit, message, created_at
+            
             const [rows1] = await connection.query(
                 `INSERT INTO flexi_wallet (member_id,transaction_id, credit, debit) VALUES (?, ?, ?, ?)`,
                 [member_id,txn_id, 0.00, total_price]
@@ -98,7 +96,7 @@ router.post('/buymembership', async (req, res) => {
             if (rows1.affectedRows>0) {
                 console.log('Addition in flexi wallet done successfully');
                 }
-            //UPDATE user_total_balance
+        
             const [rows3] = await connection.query(
                 `UPDATE users_total_balance SET user_total_balance = user_total_balance - ? WHERE member_id = ?`,
                 [total_price, member_id]
@@ -106,7 +104,7 @@ router.post('/buymembership', async (req, res) => {
             if (rows3.affectedRows>0) {
                 console.log('User total balance updated successfully');
                 }
-            // update entry in userdetails table membership
+           
             const [rows2] = await connection.query(
                 `UPDATE usersdetails SET membership = ? WHERE memberid = ?`,
                 [package_name, member_id]
@@ -120,7 +118,7 @@ router.post('/buymembership', async (req, res) => {
                     }
 
                 }
-            // call the function to update the commission table
+           
 
             
 

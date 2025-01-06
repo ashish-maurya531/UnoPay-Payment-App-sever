@@ -112,7 +112,7 @@ async function commisionPayout_2(txn_id_of_commissionBy, membership_status, serv
         const initiatorTransactionId = generateTransactionId();
 
         // Add commission for the initiator
-        await addCommission(member_id, member_id, initiatorTransactionId, txn_id_of_commissionBy, initiatorCommission, 0.00, 0);
+        await addCommission(member_id, member_id, initiatorTransactionId, txn_id_of_commissionBy, initiatorCommission, 0.0000000000, 0);
 
         console.log(`Commission for initiator (${member_id}) added: ${initiatorCommission}`);
 
@@ -128,16 +128,16 @@ async function commisionPayout_2(txn_id_of_commissionBy, membership_status, serv
             console.log(checkMember);
             console.log(checkMember?.status);
             if (super_upline==="UP100010"){
-                await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.00, level);
+                await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.0000000000, level);
             }
             else if(checkMember[0]?.status === 'inactive'){
                 // Add commission record for inactive user
-                await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.00, level);
+                await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.0000000000, level);
                 
             }
             else{
                 // Add commission record for the current upline
-                await addCommission(super_upline, member, transaction_id, txn_id_of_commissionBy, commission, 0.00, level);
+                await addCommission(super_upline, member, transaction_id, txn_id_of_commissionBy, commission, 0.0000000000, level);
                 
             }
         }

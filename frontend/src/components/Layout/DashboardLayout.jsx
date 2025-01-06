@@ -34,6 +34,12 @@ export default function DashboardLayout({ children }) {
       label: 'User Account Delete Request',
       onClick: () => navigate('/dashboard/user-delete-request'),
     },
+    {
+      key: 'UserWithdrawRequest',
+      label: 'User Money Withdraw Request',
+      onClick: () => navigate('/dashboard/user-withdraw-request'),
+    },
+    
   ];
   
   const paymentMenuItems = [
@@ -57,6 +63,11 @@ export default function DashboardLayout({ children }) {
       key: 'UserCommissionWalletDetails',
       label: 'User Commission List',
       onClick: () => navigate('/dashboard/User-Commission-list'),
+    },
+    {
+      key: 'UserAllTypeBalance',
+      label: 'User Balance',
+      onClick: () => navigate('/dashboard/User-all-type-balance'),
     },
   ];
   

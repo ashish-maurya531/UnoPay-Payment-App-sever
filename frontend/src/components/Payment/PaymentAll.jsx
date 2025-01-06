@@ -127,6 +127,12 @@ export default function UserTransactions() {
       key: 'created_at',
       render: (date) => date ? new Date(date).toLocaleString() : '-',
     },
+    {
+      title: 'Message',
+      dataIndex: 'message',
+      key: 'message',
+      render: renderEmptyValue,
+    },
   ];
 
   return (

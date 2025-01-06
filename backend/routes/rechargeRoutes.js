@@ -56,7 +56,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
     // Validate input
     if (!username || !pwd || !circlecode || !operatorcode || !number || !amount || !member_id) {
-        return res.status(400).json({ status: 'false', error: 'All required fields must be provided.' });
+        return res.status(200).json({ status: 'false', error: 'All required fields must be provided.' });
     }
 
     // // Check for SQL injection
@@ -73,7 +73,7 @@ router.post('/doMobileRecharge', async (req, res) => {
         );
 
         if (userRows.length === 0) {
-            return res.status(404).json({ status: 'false', error: 'Invalid member ID.' });
+            return res.status(200).json({ status: 'false', error: 'Invalid member ID.' });
         }
 
       
@@ -85,7 +85,7 @@ router.post('/doMobileRecharge', async (req, res) => {
             console.log(balanceData);
             console.log(amount);
             console.log('Insufficient balance in the unopay fund.');
-            return res.status(400).json({ status: false, message:'Insufficient balance in the unopay fund.' });
+            return res.status(200).json({ status: false, message:'Insufficient balance in the unopay fund.' });
         }
 
         //chekc the membership_status of user 
@@ -100,7 +100,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
         // Check if balance is sufficient
         if (parseFloat(userBalance) < parseFloat(amount)) {
-            return res.status(400).json({ status: 'false', message: 'User has Insufficient balance.' });
+            return res.status(200).json({ status: 'false', message: 'User has Insufficient balance.' });
         }
 
         //make a connection
@@ -126,7 +126,7 @@ router.post('/doMobileRecharge', async (req, res) => {
             const apiData = apiResponse.data;
             console.log(apiData);
             if (!apiData || !apiData.status) {
-                return res.status(500).json({
+                return res.status(200).json({
                     status: 'false',
                     error: 'Failed to get a valid response from the provider.'
                 });
@@ -188,7 +188,7 @@ router.post('/doMobileRecharge', async (req, res) => {
             console.error(error);
             // Rollback the transaction
             await connection.rollback();
-            return res.status(500).json({
+            return res.status(200).json({
                 status: 'false',
                 error: 'Error while processing recharge.'
             });
@@ -201,7 +201,7 @@ router.post('/doMobileRecharge', async (req, res) => {
 
     } catch (error) {
         console.error('Error processing mobile recharge:', error);
-        res.status(500).json({ status: 'false', error: 'Internal server error.' });
+        res.status(200).json({ status: 'false', error: 'Internal server error.' });
     }
 });
 

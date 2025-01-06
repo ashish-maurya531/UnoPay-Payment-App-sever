@@ -13,7 +13,9 @@ import UserHelpDesk from '../components/Users/UserHelpDesk';
 
 import UserWalletPaymentList from '../components/Payment/UserWalletTransactions.jsx';
 import UserCommissionWalletPaymentList from '../components/Payment/UserCommissionWalletTransactions.jsx';
+import UserWithdrawRequest from '../components/Users/UserWithdrawRequest.jsx';
 
+import UserAllTypeBalance from '../components/Payment/UserAllTypeBalance';
 
 import UserDeleteRequest from '../components/Users/UserDeleteRequest';
 
@@ -41,6 +43,8 @@ export default function Dashboard() {
         <Route path="user-help-desk" element={<UserHelpDesk />} />
         <Route path="User-wallet-payment-list" element={<UserWalletPaymentList />} />
         <Route path="User-Commission-list" element={<UserCommissionWalletPaymentList />} />
+        <Route path="user-withdraw-request" element={<UserWithdrawRequest />} />
+        <Route path="User-all-type-balance" element={<UserAllTypeBalance/>} />
 
       </Routes>
     </DashboardLayout>

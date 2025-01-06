@@ -132,8 +132,8 @@ export default function UserTransactions() {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Text strong>Total Transactions: {totalTransactions}</Text>
             <div style={{ display: 'flex', gap: 20 }}>
-              <Tag color="green">Successful: {successfulTransactions}</Tag>
-              <Tag color="red">Failed: {failedTransactions}</Tag>
+              <Tag color="green">Credited: {successfulTransactions}</Tag>
+              <Tag color="red">Debited: {failedTransactions}</Tag>
             </div>
           </div>
         </Col>

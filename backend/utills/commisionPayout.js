@@ -1,3 +1,4 @@
+//this is the commission payout for the package buy
 const { pool } = require('../config/database');
 const generateTransactionId = require('../utills/generateTxnId');
 
@@ -76,20 +77,26 @@ async function commisionPayout(txn_id_of_commissionBy,type, memberId, amount) {
         const transaction_id = generateTransactionId();
 
         //check if user is active or inactive 
-        const [checkMember] = await pool.query(`SELECT status FROM usersdetails WHERE memberid =?`,[super_upline]);
+        const [checkMember] = await pool.query(`SELECT status,membership FROM usersdetails WHERE memberid =?`,[super_upline]);
         console.log(checkMember);
-        console.log(checkMember?.status);
+        console.log(checkMember[0]?.status);
+        console.log(checkMember[0]?.membership);
         if (super_upline==="UP100010"){
-            await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.00, level);
+            await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.0000000000, level);
         }
         else if(checkMember[0]?.status === 'inactive'){
             // Add commission record for inactive user
-            await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.00, level);
+            await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.0000000000, level);
+            
+        }
+        else if(checkMember[0]?.membership === 'FREE'){
+            // Add commission record for inactive user
+            await addCommissionforInactive(super_upline, member, transaction_id,txn_id_of_commissionBy, commission, 0.0000000000, level);
             
         }
         else{
             // Add commission record for the current upline
-            await addCommission(super_upline, member, transaction_id, txn_id_of_commissionBy, commission, 0.00, level);
+            await addCommission(super_upline, member, transaction_id, txn_id_of_commissionBy, commission, 0.0000000000, level);
             
         }
 

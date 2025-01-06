@@ -65,7 +65,7 @@ export default function UserList() {
   const inactiveUsers = filteredUsers.filter(user => user.status === 'inactive').length;
 
   const columns = [
-    {
+     {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
