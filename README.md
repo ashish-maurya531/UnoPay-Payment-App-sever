@@ -1,6 +1,6 @@
 
 <body>
-	<h1>Unopay Payment App Backend Server</h1>
+	<h1>Unopay Payment Backend Server</h1>
 	<p>This is the backend server for the Unopay Payment App, built using Node.js, Express.js, and MySQL. The server provides APIs for user authentication, payment processing, and transaction management.</p>
 	<h2>Features</h2>
 	<ul>
