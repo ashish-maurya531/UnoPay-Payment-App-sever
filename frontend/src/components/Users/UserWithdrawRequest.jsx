@@ -155,7 +155,7 @@ const WithdrawRequests = () => {
       key: 'amount',
     },
     {
-      title: 'date_time',
+      title: 'date time',
       dataIndex: 'date_time',
       key: 'date_time',
       render: (text) => formatDate(text),
