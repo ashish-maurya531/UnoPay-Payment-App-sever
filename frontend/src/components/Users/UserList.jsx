@@ -23,7 +23,12 @@ export default function UserList() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/auth/users');
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get('http://localhost:3000/api/auth/users', {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      })
       const formattedUsers = response.data.map((user, index) => ({
         key: user.id || index.toString(),
         sno: index + 1,

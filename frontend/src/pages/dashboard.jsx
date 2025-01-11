@@ -18,16 +18,29 @@ import UserWithdrawRequest from '../components/Users/UserWithdrawRequest.jsx';
 import UserAllTypeBalance from '../components/Payment/UserAllTypeBalance';
 
 import UserDeleteRequest from '../components/Users/UserDeleteRequest';
+import * as jwt_decode from 'jwt-decode';
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const adminId = localStorage.getItem('adminId');
-    if (!adminId) {
-      navigate('/login');
+    // const adminId = localStorage.getItem('adminId');
+    var adminToken =null
+   
+      adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) {
+        adminToken=sessionStorage.getItem('adminToken');
+        if (!adminToken) {
+          navigate('/login');
+  
+      }
     }
+
   }, [navigate]);
+
+
+  
 
   return (
     <DashboardLayout>

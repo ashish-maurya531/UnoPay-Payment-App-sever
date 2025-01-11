@@ -22,7 +22,11 @@ export default function UserChatSystem() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await axios.get('http://localhost:3000/api/auth/get-all-the-users');
+      const response = await axios.get('http://localhost:3000/api/auth/get-all-the-users',{
+        headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+          }
+      });
       setUsers(response.data); // Adjust based on your API response structure
     } catch (error) {
       console.error('Error fetching users:', error);

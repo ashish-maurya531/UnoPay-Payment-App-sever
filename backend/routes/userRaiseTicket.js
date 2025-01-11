@@ -2,6 +2,8 @@ const express=require('express');
 const router=express.Router();
 const { pool } = require('../config/database');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const authenticateToken = require('../middleware/auth');
+
 
 // // Route to add a new ticket
 // router.post('/raiseTicket', async (req, res) => {
@@ -153,7 +155,7 @@ router.post('/get-user-admin-chat', async (req, res) => {
 });
 
 // Route: /get-all-the-users
-router.get('/get-all-the-users', async (req, res) => {
+router.get('/get-all-the-users', authenticateToken,async (req, res) => {
     try {
         // Replace this with your database query
         const query = `

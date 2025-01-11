@@ -3,34 +3,69 @@ const { pool } = require('../config/database');
 const axios = require('axios');
 const { rmSync } = require('fs');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
-
+const bcrypt = require('bcryptjs');
 const router = express.Router();
+const authenticateToken = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
 
-// Admin Login
-router.post('/adminLogin', async (req, res) => {
-  const { name, password } = req.body;
-  console.log(name, password);
+// // admin login jwt 
+// router.post('/adminLogin2', async (req, res) => {
+//   const { name, password } = req.body;
   
-  // Validate inputs
-  if (containsSQLInjectionWords(name) || containsSQLInjectionWords(password)) {
-    return res.status(400).json({ error: "Don't try to hack." });
-  }
+//   try {
+//     const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? LIMIT 1', [name]);
+    
+//     if (rows.length === 0) {
+//       return res.status(401).json({ error: 'Invalid credentials1' });
+//     }
+    
+//     const admin = rows[0];
+//     const isPasswordValid = (password===admin.password)
+
+    
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ error: 'Invalid credentials2' });
+//     }
+    
+//     // Generate JWT token
+//     const token = jwt.sign({ adminName:admin?.name,adminPass:admin?.password }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+//     res.json({ message: 'Admin logged in successfully', token });
+//   } catch (error) {
+//     console.error('Admin login error:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
 
-  try {
-    const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? AND password = ?', [name, password]);
 
-    if (rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+//
 
-    const admin = rows[0];
-    res.json({ message: 'Admin logged in successfully', adminId: admin.id });
-  } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// // Admin Login
+// router.post('/adminLogin', async (req, res) => {
+//   const { name, password } = req.body;
+//   console.log(name, password);
+  
+//   // Validate inputs
+//   if (containsSQLInjectionWords(name) || containsSQLInjectionWords(password)) {
+//     return res.status(400).json({ error: "Don't try to hack." });
+//   }
+
+
+//   try {
+//     const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? AND password = ?', [name, password]);
+
+//     if (rows.length === 0) {
+//       return res.status(401).json({ error: 'Invalid credentials' });
+//     }
+
+//     const admin = rows[0];
+//     res.json({ message: 'Admin logged in successfully', adminId: admin.id });
+//   } catch (error) {
+//     console.error('Admin login error:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
 
 ///////////////////////
@@ -568,7 +603,7 @@ router.post('/checktpin', async(req,res)=>{
 
 
 //to get all users details
-router.get('/users', async (req, res) => {
+router.get('/users', authenticateToken, async (req, res) => {
   try {
     const query = `
       SELECT 

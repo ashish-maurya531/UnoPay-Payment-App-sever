@@ -15,10 +15,11 @@ const userTeamAndDirect = require('./routes/userTeamAndDirect');
 const user_delete_requests = require('./routes/userdeleteRequest');
 const userRaiseTicket=require('./routes/userRaiseTicket');
 const userWithdrawAndTransfer = require('./routes/userWithdrawAndTransfer')
-// const {authenticateToken}=require('./middleware/auth');
 
-// const bodyParser = require('body-parser');
-// const rawBody = require('raw-body');
+const authenticateToken  = require('./middleware/auth');
+const adminLoginRoute = require('./routes/adminLoginRoute');
+
+
 
 
 dotenv.config();
@@ -28,41 +29,29 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+// index.js
+
+
 
 // Connect to the database
 connectToDatabase();
 
-// app.use(express.json({ limit: '50mb' })); // Adjust the limit as needed
-// app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Public routes (no authentication required)
+app.use('/', adminLoginRoute);
 
-
-// app.use((req, res, next) => {
-//   console.log('Request received:', req.method, req.url);
-//     rawBody(req, {
-//         length: req.headers['content-length'],
-//         limit: '50mb', // Increase the limit
-//     }, (err, string) => {
-//         if (err) return next(err);
-//         req.body = string;
-//         next();
-//     });
-//     console.log(req.body);
-//     res.json(req.body);
-// });
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/auth', transactionRoutes);
-app.use('/api/auth',  adminQR);
-app.use('/api/auth',userBankKyc);
-app.use('/api/auth',rechargeRoutes);
-app.use('/api/auth',forgetPassword);
-app.use('/api/auth',buyMembership);
-app.use('/api/auth',userBalanceTransactionList);
-app.use('/api/auth',userTeamAndDirect);
-app.use('/api/auth',user_delete_requests);
-app.use('/api/auth',userRaiseTicket);
-app.use('/api/auth', userWithdrawAndTransfer);
+// Apply authenticateToken middleware selectively to protected routes
+app.use('/api/auth', authRoutes); // Public routes (e.g., login, register)
+app.use('/api/auth', authenticateToken, transactionRoutes); // Protected
+app.use('/api/auth', authenticateToken, adminQR); // Protected
+app.use('/api/auth', authenticateToken, userBankKyc); // Protected
+app.use('/api/auth', authenticateToken, rechargeRoutes); // Protected
+app.use('/api/auth', authenticateToken, forgetPassword); // Protected
+app.use('/api/auth', authenticateToken, buyMembership); // Protected
+app.use('/api/auth', authenticateToken, userBalanceTransactionList); // Protected
+app.use('/api/auth', authenticateToken, userTeamAndDirect); // Protected
+app.use('/api/auth', authenticateToken, user_delete_requests); // Protected
+app.use('/api/auth', authenticateToken, userRaiseTicket); // Protected
+app.use('/api/auth', authenticateToken, userWithdrawAndTransfer); // Protected
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

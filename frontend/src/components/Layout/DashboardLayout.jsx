@@ -7,9 +7,15 @@ const { Header, Content } = Layout;
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate();
 
+  // const handleLogout = () => {
+  //   localStorage.removeItem('adminId');
+  //   navigate('/login');
+  // };
+
   const handleLogout = () => {
-    localStorage.removeItem('adminId');
-    navigate('/login');
+    localStorage.removeItem('adminToken'); // Clear the token from localStorage
+    sessionStorage.removeItem('adminToken'); // Clear the token from sessionStorage
+    navigate('/login'); // Redirect to login page
   };
 
   const userMenuItems = [
