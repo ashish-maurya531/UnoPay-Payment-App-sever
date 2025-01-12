@@ -13,7 +13,17 @@ export default function UserTransactions() {
   const [totalTransactions, setTotalTransactions] = useState(0);
   const [successfulTransactions, setSuccessfulTransactions] = useState(0);
   const [failedTransactions, setFailedTransactions] = useState(0);
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 12,
+  });
 
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
   useEffect(() => {
     fetchTransactions();
   }, []);
@@ -73,7 +83,8 @@ export default function UserTransactions() {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'Transaction ID',
@@ -169,10 +180,14 @@ export default function UserTransactions() {
           dataSource={filteredTransactions}
           rowKey="transaction_id"
           pagination={{
+            current: currentPagination.current,
+            pageSize: currentPagination.pageSize,
             total: filteredTransactions.length,
-            pageSize: 10,
+         
           }}
           scroll={{ x: true }}
+          size="small"
+          onChange={handleTableChange}
         />
       </Spin>
     </div>

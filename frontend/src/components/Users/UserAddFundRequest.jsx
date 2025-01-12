@@ -25,7 +25,17 @@ const UserAddFundRequest = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchText, setSearchText] = useState('');
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
   useEffect(() => {
     fetchFundRequests(currentPage);
   }, [currentPage]);
@@ -118,7 +128,8 @@ const UserAddFundRequest = () => {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'UTR Number',
@@ -226,11 +237,14 @@ const UserAddFundRequest = () => {
         rowKey={(record) => record.utr_number}
         loading={loading}
         pagination={{
-          current: currentPage,
+          current: currentPagination.current,
+          pageSize: currentPagination.pageSize,
           total: totalRecords,
-          pageSize: 10,
-          onChange: (page) => setCurrentPage(page),
+       
+          
         }}
+         size="small"
+        onChange={handleTableChange}
       />
 
       <Modal

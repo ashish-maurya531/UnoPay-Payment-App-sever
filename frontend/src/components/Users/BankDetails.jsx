@@ -34,7 +34,17 @@ const BankDetails = () => {
   
   // New state for filtering
   const [searchText, setSearchText] = useState('');
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
 
   const fetchBankDetails = async () => {
     setLoading(true);
@@ -165,7 +175,8 @@ const BankDetails = () => {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'Member ID',
@@ -253,11 +264,26 @@ const BankDetails = () => {
         </Col>
       </Row>
 
-      <Table 
+      {/* <Table 
         columns={columns} 
         dataSource={filteredData} 
         rowKey="member_id"
         loading={loading}
+      /> */}
+
+    <Table
+        columns={columns}
+        dataSource={filteredData}
+        loading={loading}
+        rowKey="member_id"
+        scroll={{ x: true }}
+        pagination={{
+          current: currentPagination.current,
+          pageSize: currentPagination.pageSize,
+          total: filteredData.length,
+        }}
+         size="small"
+        onChange={handleTableChange}
       />
 
       {/* Modal for Bank and KYC Details */}

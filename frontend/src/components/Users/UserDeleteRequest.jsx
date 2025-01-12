@@ -14,6 +14,17 @@ export default function UserDeleteRequestList() {
   const [currentMemberId, setCurrentMemberId] = useState('');
   const [totalRequests, setTotalRequests] = useState(0);
   const [searchText, setSearchText] = useState('');
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
 
   useEffect(() => {
     fetchDeleteRequests();
@@ -89,7 +100,8 @@ export default function UserDeleteRequestList() {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'Member ID',
@@ -232,9 +244,13 @@ export default function UserDeleteRequestList() {
         loading={loading}
         scroll={{ x: true }}
         pagination={{
+          current:currentPagination.current,
+          pageSize: currentPagination.pageSize,
           total: filteredRequests.length,
-          pageSize: 10,
         }}
+         size="small"
+        onChange={handleTableChange}
+
       />
 
       {/* Confirmation Modal */}

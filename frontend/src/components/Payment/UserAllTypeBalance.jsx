@@ -7,7 +7,17 @@ const WalletTable = () => {
   const [loading, setLoading] = useState(true);  // To handle loading state
   const [error, setError] = useState(null);      // To handle errors
   const [searchText, setSearchText] = useState(''); // State to manage search input
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 12,
+  });
 
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
   useEffect(() => {
     // Fetch user wallet balance data
     axios
@@ -37,6 +47,13 @@ const WalletTable = () => {
   // Columns for the table
   const columns = [
     {
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
+    },
+    {
       title: 'Member ID',
       dataIndex: 'member_id',
       key: 'member_id',
@@ -56,10 +73,7 @@ const WalletTable = () => {
     },
   ];
 
-  // Handle pagination change
-  const handlePaginationChange = (page, pageSize) => {
-    console.log('Page:', page, 'PageSize:', pageSize);
-  };
+
 
   return (
     <div style={{ padding: '20px' }}>
@@ -88,13 +102,15 @@ const WalletTable = () => {
         dataSource={filteredData}
         rowKey="member_id"
         pagination={{
-          pageSize: 10,
-          onChange: handlePaginationChange,
+          current: currentPagination.current,
+          pageSize: currentPagination.pageSize,
           total: filteredData.length,
         }}
         loading={loading}  // Show Ant Design loading spinner
         scroll={{ x: true }} // Ensure it handles large content
-        size="middle" // Compact table size
+        // size="middle" // Compact table size
+        size="small"
+        onChange={handleTableChange}
       />
     </div>
   );

@@ -26,7 +26,17 @@ const WithdrawRequests = () => {
   const [rejectModalVisible, setRejectModalVisible] = useState(false); // Added missing state
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [rejectionMessage, setRejectionMessage] = useState('Withdrawal request not valid');
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
   // New state for filtering
   const [searchText, setSearchText] = useState('');
 
@@ -137,7 +147,8 @@ const WithdrawRequests = () => {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'Transaction Id',
@@ -218,7 +229,7 @@ const WithdrawRequests = () => {
       </Row>
 
       {/* Search input */}
-      <Row style={{ marginBottom: 16 }}>
+      <Row style={{ marginBottom: 10 }}>
         <Col span={24}>
           <Input.Search
             placeholder="Search across all fields"
@@ -230,11 +241,20 @@ const WithdrawRequests = () => {
         </Col>
       </Row>
 
-      <Table 
-        columns={columns} 
-        dataSource={filteredData} 
-        rowKey="request_id"
+      
+      <Table
+        columns={columns}
+        dataSource={filteredData}
         loading={loading}
+        rowKey="request_id"
+        scroll={{ x: true }}
+        pagination={{
+          current: currentPagination.current,
+          pageSize: currentPagination.pageSize,
+          total: filteredData.length,
+        }}
+         size="small"
+        onChange={handleTableChange}
       />
 
       {/* Modal for Withdraw Request Details */}

@@ -12,6 +12,17 @@ export default function UserList() {
   const [currentStatus, setCurrentStatus] = useState('');
   const [currentUsername, setCurrentUsername] = useState('');
   const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 12,
+  });
+
+  const handleTableChange = (pagination) => {
+    setCurrentPagination({
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    });
+  };
   
   // New state for search
   const [searchText, setSearchText] = useState('');
@@ -70,11 +81,12 @@ export default function UserList() {
   const inactiveUsers = filteredUsers.filter(user => user.status === 'inactive').length;
 
   const columns = [
-     {
+    {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) =>
+        (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
       title: 'Member ID',
@@ -218,9 +230,12 @@ export default function UserList() {
         loading={loading}
         scroll={{ x: true }}
         pagination={{
+          current: currentPagination.current,
+          pageSize: currentPagination.pageSize,
           total: filteredUsers.length,
-          pageSize: 10,
         }}
+         size="small"
+        onChange={handleTableChange}
       />
 
       {/* Confirmation Modal */}

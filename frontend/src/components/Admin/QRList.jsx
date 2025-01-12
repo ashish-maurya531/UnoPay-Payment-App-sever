@@ -162,6 +162,8 @@ export default function QRList() {
         pagination={pagination}
         onChange={(pagination) => fetchQRs(pagination.current, pagination.pageSize)}
         rowKey="id"
+        size="small"
+
       />
 
       {/* Add QR Modal */}
