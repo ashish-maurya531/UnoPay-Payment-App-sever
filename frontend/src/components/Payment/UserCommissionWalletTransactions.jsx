@@ -51,16 +51,16 @@ export default function UserTransactions() {
     const filteredData = transactions.filter((transaction) => {
       return (
         transaction.sno?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.member_id?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.commissionBy?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.transaction_id_for_member_id?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.transaction_id_of_commissionBy?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.credit?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.debit?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.total_balance?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.message?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.date_time?.toLowerCase().includes(searchText.toLowerCase()) ||
-transaction.level?.toString().toLowerCase().includes(searchText.toLowerCase())
+        transaction.member_id?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.commissionBy?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.transaction_id_for_member_id?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.transaction_id_of_commissionBy?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.credit?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.debit?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.total_balance?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.message?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.date_time?.toLowerCase().includes(searchText.toLowerCase()) ||
+        transaction.level?.toString().toLowerCase().includes(searchText.toLowerCase())
 
      
       );
