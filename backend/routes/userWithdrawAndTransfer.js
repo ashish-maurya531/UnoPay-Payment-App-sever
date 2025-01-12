@@ -325,9 +325,15 @@ router.put('/update-status-user-withdraw-request', async (req, res) => {
 
 router.post('/get-user-withdraw-request', async (req, res) => {
     const { member_id } = req.body;
+    console.log("get user withdraw request api hit ")
 
     if (!member_id) {
-        return res.status(400).json({ status: "false", message: "Member ID is required." });
+        return res.status(200).json({ status: "false", message: "Member ID is required." });
+    }
+    //sql injection 
+    
+    if (containsSQLInjectionWords(member_id)) {
+        return res.status(200).json({ status: "false", message: "Invalid input. SQL injection is not allowed." });
     }
 
     try {
@@ -339,7 +345,7 @@ router.post('/get-user-withdraw-request', async (req, res) => {
         if (rows.length > 0) {
             return res.status(200).json({ status: "true", data: rows });
         } else {
-            return res.status(404).json({ status: "false", message: "No withdraw requests found for the given Member ID." });
+            return res.status(200).json({ status: "true", message: "No withdraw requests found for the given Member ID." });
         }
     } catch (error) {
         console.error(error);
