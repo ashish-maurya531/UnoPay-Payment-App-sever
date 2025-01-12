@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 // admin login jwt 
 router.post('/adminLogin2', async (req, res) => {
   const { name, password } = req.body;
+  console.log("--------------"+name, password);
   
   try {
     const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? LIMIT 1', [name]);
@@ -26,8 +27,8 @@ router.post('/adminLogin2', async (req, res) => {
     }
     
     // Generate JWT token
-    // const token = jwt.sign({ message:"hack mt kr"}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-    const token = jwt.sign({ message: "hack mt kr" }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2m' });
+    const token = jwt.sign({ message:"hack mt kr"}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    // const token = jwt.sign({ message: "hack mt kr" }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2m' });
 
     
     res.json({ message: 'Admin logged in successfully', token });

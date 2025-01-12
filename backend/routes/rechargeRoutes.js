@@ -56,10 +56,10 @@ router.post('/doMobileRecharge', async (req, res) => {
 
     // Validate input
     if (!username || !pwd || !circlecode || !operatorcode || !number || !amount || !member_id) {
-        return res.status(200).json({ status: 'false', error: 'All required fields must be provided.' });
+        return res.status(200).json({ status: 'false', message: 'All required fields must be provided.' });
     }
 
-    // // Check for SQL injection
+    // Check for SQL injection
     // const checkFields = [username, pwd, circlecode, operatorcode, number, amount, member_id].join(' ');
     // if (containsSQLInjectionWords(checkFields)) {
     //     return res.status(400).json({ status: "false", error: "Don't try to hack !" });
@@ -73,7 +73,7 @@ router.post('/doMobileRecharge', async (req, res) => {
         );
 
         if (userRows.length === 0) {
-            return res.status(200).json({ status: 'false', error: 'Invalid member ID.' });
+            return res.status(200).json({ status: 'false', message: 'Invalid member ID.' });
         }
 
       
@@ -125,12 +125,12 @@ router.post('/doMobileRecharge', async (req, res) => {
             // Parse response
             const apiData = apiResponse.data;
             console.log(apiData);
-            if (!apiData || !apiData.status) {
-                return res.status(200).json({
-                    status: 'false',
-                    error: 'Failed to get a valid response from the provider.'
-                });
-            }
+            // if (!apiData || !apiData.status) {
+            //     return res.status(200).json({
+            //         status: 'false',
+            //         error: 'Failed to get a valid response from the provider.'
+            //     });
+            // }
 
             // Save transaction details into the database
             const transactionStatus = (apiData.status === 'Success' || apiData.status === 'Pending') ? 'success' : 'failed';
@@ -190,7 +190,7 @@ router.post('/doMobileRecharge', async (req, res) => {
             await connection.rollback();
             return res.status(200).json({
                 status: 'false',
-                error: 'Error while processing recharge.'
+                message: 'Error while processing recharge.'
             });
         }
     finally {
@@ -298,7 +298,7 @@ router.post('/doDthRecharge', async (req, res) => {
                 const [rows] = await connection.query(
                     `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,recharge_to,amount, status,message)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [orderid, member_id, 'Rechange', 'DTH',number, amount, 'success', 'Recharge done Successfully']
+                    [orderid, member_id, 'Recharge', 'DTH',number, amount, 'success', 'Recharge done Successfully']
                 );
                 if (rows.affectedRows>0) {
                     console.log('Addition in universal transaction done successfully');
@@ -326,7 +326,7 @@ router.post('/doDthRecharge', async (req, res) => {
                 const [rows] = await connection.query(
                     `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,recharge_to,amount, status,message)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [orderid, member_id, 'Rechange', 'DTH', number, amount, 'failed', 'Recharge failed']
+                    [orderid, member_id, 'Recharge', 'DTH', number, amount, 'failed', 'Recharge failed']
                 );
                 if (rows.affectedRows > 0) {
                     console.log('Addition in universal transaction done successfully');

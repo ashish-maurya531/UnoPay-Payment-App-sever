@@ -22,7 +22,7 @@ dotenv.config();
 
 
 function authenticateToken(req, res, next) {
-  console.log("Token check is skipped. Allowing all requests.");
+  // console.log("Token check is skipped. Allowing all requests.");
   next(); 
 }
 // Export the middleware correctly
