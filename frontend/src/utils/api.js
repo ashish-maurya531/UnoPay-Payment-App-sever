@@ -50,3 +50,9 @@ export const setupAxiosInterceptors = () => {
     }
   );
 };
+
+
+axios.interceptors.request.use((config) => {
+  console.log('Request:', config);
+  return config;
+});

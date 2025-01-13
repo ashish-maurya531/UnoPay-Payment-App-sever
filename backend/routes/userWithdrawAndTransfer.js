@@ -30,6 +30,7 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
     }
+    //500 limit 
     if (commission_amount<30){
         return res.status(200).json({status:"false", message: "Commission Amount should be greater than 200" });
     }
@@ -118,7 +119,7 @@ router.post('/user-withdraw-request', async (req, res) => {
         return res.status(200).json({ status: "false", message: "Invalid Amount" });
 
     }
-    //amount should be greater than 500
+    //amount should be 250
     if (amount < 5) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 500." });
     }
@@ -150,9 +151,9 @@ router.post('/user-withdraw-request', async (req, res) => {
 
     
     // check if user has enough money in flexi wallet
-    const user_flexi_wallet_balance=getFlexiWalletBalance(member_id);
-    if (user_flexi_wallet_balance < amount) {
-        return res.status(200).json({ status: "false", message: "Insufficient balance in Flexi Wallet." });
+    const user_commission_wallet_balance=getCommisionWalletBalance(member_id);
+    if (user_commission_wallet_balance < amount) {
+        return res.status(200).json({ status: "false", message: "Insufficient balance in Commission Wallet." });
     }
     
     const txn_id = generateTransactionId();
@@ -171,7 +172,7 @@ router.post('/user-withdraw-request', async (req, res) => {
         if (result.affectedRows===0) {
             return res.status(200).json({ status: "false", message: "Failed to create withdraw request." });
         } 
-        console.log("added to widraw al request table");
+        console.log("added to withdraw request table");
         // entry in universal_transaction_table
         const [universal_result] = await connection.query(
             `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status,message) VALUES (?,?,?,?,?,?)`,
@@ -184,17 +185,15 @@ router.post('/user-withdraw-request', async (req, res) => {
         }  
         console.log("added to universal table")
         
-        // insert the entry in flexi wallet
-        const [flexi_result] = await connection.query(
-            `INSERT INTO flexi_wallet (member_id, transaction_id, credit,debit) VALUES (?,?,?,?)`,
-            [member_id, txn_id, 0.00,amount]
-            );
-            
-            if (flexi_result.affectedRows===0) {
-                return res.status(200).json({ status: "false", message: "Failed to create entry in flexi wallet." });
-            }
-
-            console.log("added to flexi wallet")
+        // insert the entry in commission wallet
+        const [row2]=await connection.query(
+            `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit,level)
+            VALUES (?,?,?,?,?,?,?)`,
+            [member_id,member_id,txn_id,txn_id,0.0000000000,amount,0]
+        );
+        if(row2.affectedRows>0){
+            console.log("Commission Wallet transaction added in commission wallet");
+        }
         // update user total money
         const [user_result] = await connection.query(
             `UPDATE users_total_balance SET user_total_balance = user_total_balance - ? WHERE member_id = ?`,
@@ -225,100 +224,182 @@ router.post('/user-withdraw-request', async (req, res) => {
 
 
 
-router.put('/update-status-user-withdraw-request', async (req, res) => {
-    const { transaction_id, status,message } = req.body;
+// router.post('/update-status-user-withdraw-request', async (req, res) => {
+//     const { transaction_id, status,message } = req.body;
 
-    if (!transaction_id || !status|| !message) {
-        return res.status(400).json({ status: "false", message: "Transaction ID and status are required." });
+//     if (!transaction_id || !status|| !message) {
+//         return res.status(400).json({ status: "false", message: "Transaction ID and status are required." });
+//     }
+
+//     if (!['rejected', 'done'].includes(status)) {
+//         return res.status(400).json({ status: "false", message: "Invalid status value." });
+//     }
+//     if (status==="done"){
+//         var message2="sent to bank"
+//     }
+//     else{
+//         var message2=message
+//     }
+//     try {
+//         const [result] = await pool.query(
+//             `UPDATE withdraw_requests SET status = ?, message=? WHERE transaction_id = ?`,
+//             [status, message2, transaction_id]
+//         );
+
+
+//         console.log(status);
+//         if (status=="rejected"){
+//             // make a connection
+
+//             const [result] = await pool.query(`SELECT member_id,amount FROM withdraw_requests WHERE transaction_id=?`, [transaction_id])
+//             const member_id=result[0].member_id
+//             const amount=result[0].amount
+//             const connection = await pool.getConnection();
+//             const txn_id=generateTransactionId();
+           
+//             try {
+
+//                 await connection.beginTransaction();
+                
+//                 const [universal_result] = await connection.query(
+//                     `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status,message) VALUES (?,?,?,?,?,?)`,
+//                     [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal Rejected,Money Back to You successfully."]
+//                 );
+
+
+//                 if (universal_result.affectedRows === 0) {
+//                     return res.status(200).json({ status: "false", message: "Failed to create entry in universal transaction table." });
+//                 }
+//                 console.log("rejected sp added to universal table2")
+
+//                 // insert the entry in flexi wallet
+//                 const [row2]=await connection.query(
+//                     `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit,level)
+//                     VALUES (?,?,?,?,?,?,?)`,
+//                     [member_id,member_id,txn_id,txn_id,amount,0.0000000000,0]
+//                 );
+//                 if(row2.affectedRows>0){
+//                     console.log("rejected so back to commission_wallet");
+//                 }
+//                 // update user total money
+//                 const [user_result] = await connection.query(
+//             `UPDATE users_total_balance SET user_total_balance = user_total_balance + ? WHERE member_id = ?`,
+//             [amount, member_id]
+//             );
+            
+//             if (user_result.affectedRows===0) {
+//                 return res.status(200).json({ status: "false", message: "Failed to update user total balance." });
+//             }
+//             console.log("rejected so updated user total balance2")
+
+
+
+//             await connection.commit();
+//             return res.status(200).json({ status: "true", message: "Withdraw request status created successfully." });
+
+
+
+
+//             }
+//             catch (error) {
+//                 await connection.rollback();
+//                 console.error(error);
+//                 return res.status(500).json({ status: "false", message: "Internal Server Error." });
+//             } finally {
+//                 connection.release();
+//             }
+            
+
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ status: "false", message: "Internal Server Error." });
+//     }
+// });
+
+router.post('/update-status-user-withdraw-request', async (req, res) => {
+    const { transaction_id, status, message } = req.body;
+
+    if (!transaction_id || !status || !message) {
+        return res.status(400).json({ status: "false", message: "Transaction ID, status, and message are required." });
     }
 
     if (!['rejected', 'done'].includes(status)) {
         return res.status(400).json({ status: "false", message: "Invalid status value." });
     }
-    if (status==="done"){
-        var message2="sent to bank"
-    }
-    else{
-        var message2=message
-    }
+
+    let message2 = status === "done" ? "sent to bank" : message;
+
     try {
-        const [result] = await pool.query(
-            `UPDATE withdraw_requests SET status = ?, message=? WHERE transaction_id = ?`,
+        // Update the status and message in the database
+        const [updateResult] = await pool.query(
+            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
             [status, message2, transaction_id]
         );
 
+        if (updateResult.affectedRows === 0) {
+            return res.status(400).json({ status: "false", message: "Transaction not found or not updated." });
+        }
 
-        console.log(status);
-        if (status=="rejected"){
-            // make a connection
-
-            const [result] = await pool.query(`SELECT member_id,amount FROM withdraw_requests WHERE transaction_id=?`, [transaction_id])
-            const member_id=result[0].member_id
-            const amount=result[0].amount
-            const connection = await pool.getConnection();
-            const txn_id=generateTransactionId();
-           
-            try {
-
-                await connection.beginTransaction();
-                
-                const [universal_result] = await connection.query(
-                    `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status,message) VALUES (?,?,?,?,?,?)`,
-                    [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal Rejected,Money Back to You successfully."]
-                );
-
-
-                if (universal_result.affectedRows === 0) {
-                    return res.status(200).json({ status: "false", message: "Failed to create entry in universal transaction table." });
-                }
-                console.log("added to universal table2")
-
-                // insert the entry in flexi wallet
-                const [flexi_result] = await connection.query(
-                    `INSERT INTO flexi_wallet (member_id, transaction_id, credit,debit) VALUES (?,?,?,?)`,
-                    [member_id, txn_id, amount,0.00]
-                );
-
-                if (flexi_result.affectedRows === 0) {
-                    return res.status(200).json({ status: "false", message: "Failed to create entry in flexi wallet." });
-                }
-
-                console.log("added to flexi wallet2")
-                // update user total money
-                const [user_result] = await connection.query(
-            `UPDATE users_total_balance SET user_total_balance = user_total_balance + ? WHERE member_id = ?`,
-            [amount, member_id]
+        // Handle additional logic for rejected status
+        if (status === "rejected") {
+            const [withdrawalDetails] = await pool.query(
+                `SELECT member_id, amount FROM withdraw_requests WHERE transaction_id = ?`,
+                [transaction_id]
             );
-            
-            if (user_result.affectedRows===0) {
-                return res.status(200).json({ status: "false", message: "Failed to update user total balance." });
+
+            if (withdrawalDetails.length === 0) {
+                return res.status(400).json({ status: "false", message: "Withdrawal details not found." });
             }
-            console.log("updated user total balance2")
 
+            const { member_id, amount } = withdrawalDetails[0];
+            const connection = await pool.getConnection();
+            const txn_id = generateTransactionId();
 
+            try {
+                await connection.beginTransaction();
+
+                // Log the transaction in the universal transaction table
+                await connection.query(
+                    `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status, message) 
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal rejected, money refunded."]
+                );
+
+                // Update the user's wallet balance
+                await connection.query(
+                    `UPDATE users_total_balance 
+                     SET user_total_balance = user_total_balance + ? 
+                     WHERE member_id = ?`,
+                    [amount, member_id]
+                );
+
+                // Log the refund in the commission wallet
+                await connection.query(
+                    `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [member_id, member_id, txn_id, txn_id, amount, 0.0, 0]
+                );
 
                 await connection.commit();
-                return res.status(200).json({ status: "true", message: "Withdraw request created successfully." });
-
-
-
-
-            }
-            catch (error) {
+                return res.status(200).json({ status: "true", message: "Withdrawal request rejected successfully, funds refunded." });
+            } catch (error) {
                 await connection.rollback();
                 console.error(error);
-                return res.status(500).json({ status: "false", message: "Internal Server Error." });
+                return res.status(500).json({ status: "false", message: "Failed to process rejection." });
             } finally {
                 connection.release();
             }
-            
-
         }
+
+        // Response for approved requests
+        return res.status(200).json({ status: "true", message: "Withdrawal request processed successfully." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: "false", message: "Internal Server Error." });
     }
 });
+
 
 
 

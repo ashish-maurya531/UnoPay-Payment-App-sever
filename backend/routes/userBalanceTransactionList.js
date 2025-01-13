@@ -133,7 +133,7 @@ router.post("/user-wallet-wise-balance", async (req, res) => {
     try {
       const flexi_wallet = await getFlexiWalletBalance(member_id);
       const commission_wallet = await getCommisionWalletBalance(member_id);
-      return res.status(200).json({ success: "true", flexi_wallet, commission_wallet,"signup_bonus":649 });
+      return res.status(200).json({status: "true", flexi_wallet, commission_wallet,"signup_bonus":649 });
     } catch (error) {
       return res.status(500).json({ success: "false", message: "Error getting user wallet" });
     }

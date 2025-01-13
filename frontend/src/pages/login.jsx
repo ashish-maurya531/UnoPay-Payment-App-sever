@@ -308,46 +308,51 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await axios.post('http://localhost:3000/adminLogin2', {
-        name: values.username, 
-        password: values.password
+        name: values.username,
+        password: values.password,
       });
-
+  
       if (response.data.message === 'Admin logged in successfully') {
-        // Store token based on "Remember Me" selection
         const token = response.data.token;
+  
+        // Store token based on "Remember Me" selection
         if (values.remember) {
           localStorage.setItem('adminToken', token);
         } else {
           sessionStorage.setItem('adminToken', token);
         }
-
-        // Show success toast
+  
+        // Show success toast and navigate
         message.success('Login Successful! Redirecting to Dashboard');
-
-        // Short delay to show toast before navigating
         setTimeout(() => {
-          // After login, redirect to the dashboard
           navigate('/dashboard');
         }, 1000);
       } else {
-        // Handle unexpected response message
-        message.error('Login failed. Please check your credentials.');
+        // Handle unexpected success response
+        message.error('Unexpected response. Please try again.');
       }
     } catch (error) {
       if (error.response) {
-        // Server responded with an error status code
+        // Backend returned an error
         if (error.response.status === 401) {
-          message.error('Invalid credentials. Please try again.');
+          const errorMessage = error.response.data.error;
+          if (errorMessage === 'Invalid credentials1') {
+            message.error('Admin not found. Please check the username.');
+          } else if (errorMessage === 'Invalid credentials2') {
+            message.error('Invalid password. Please try again.');
+          } else {
+            message.error('Login failed. Please check your credentials.');
+          }
         } else if (error.response.status === 500) {
           message.error('Server error. Please try again later.');
         } else {
           message.error('Something went wrong. Please try again later.');
         }
       } else if (error.request) {
-        // No response received (network error)
+        // Network error
         message.error('Network error. Please check your connection.');
       } else {
-        // Something else went wrong
+        // Unexpected error
         message.error('An unexpected error occurred. Please try again.');
       }
       console.error('Login failed:', error);
@@ -355,6 +360,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

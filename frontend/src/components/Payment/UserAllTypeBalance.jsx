@@ -20,6 +20,7 @@ const WalletTable = () => {
   };
   useEffect(() => {
     // Fetch user wallet balance data
+    console.log('1234567890');
     axios
       .post('http://localhost:3000/api/auth/all-user-wallet-wise-balance')
       .then((response) => {
