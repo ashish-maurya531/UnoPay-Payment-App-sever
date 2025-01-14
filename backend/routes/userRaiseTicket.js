@@ -171,6 +171,120 @@ router.get('/get-all-the-users', authenticateToken,async (req, res) => {
     }
 });
 
+
+
+////////////////////////////////////////////////////////
+
+
+
+// Route to create a login issue request
+// Function to generate a random login issue ID like "R239665"
+const generateLoginIssueId = () => {
+    const prefix = 'R';
+    const randomNumber = Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit number
+    return prefix + randomNumber;
+  };
+  
+  // Route to create a login issue request
+  router.post('/login-issue', async (req, res) => {
+    const { email, member_id, message_by_user } = req.body;
+  
+    // Check if all required fields are provided
+    if (!email || !member_id || !message_by_user) {
+      return res.status(200).json({ message: 'Missing required fields' });
+    }
+  
+    // Generate a random login issue ID
+    const login_issue_id = generateLoginIssueId();
+  
+    try {
+      // SQL query to check if there's already a pending request for the same email or member_id
+      const [result] = await pool.query(
+        `SELECT * FROM login_issue_help WHERE (email = ? OR member_id = ?) AND status = 'pending'`,
+        [email, member_id]
+      );
+  
+      if (result.length > 0) {
+        return res.status(200).json({
+          message: 'There is already a pending request for this email or member ID.',
+        });
+      }
+  
+      // If no pending request, insert the new request with generated login_issue_id
+      await pool.query(
+        `INSERT INTO login_issue_help (login_issue_id, email, member_id, message_by_user) VALUES (?, ?, ?, ?)`,
+        [login_issue_id, email, member_id, message_by_user]
+      );
+  
+      return res.status(201).json({
+        message: 'Request submitted successfully',
+        login_issue_id: login_issue_id,
+      });
+    } catch (err) {
+      console.error('Error checking or inserting request:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+  });
+  
+  // Route to update the status of a login issue request
+  router.post('/update-login-issue-status', async (req, res) => {
+    const { login_issue_id, status } = req.body;
+  
+    // Validate the status
+    if (!['pending', 'solved'].includes(status)) {
+      return res.status(200).json({ message: 'Invalid status' });
+    }
+  
+    try {
+      // Check the current status of the login issue request
+      const [currentStatusResult] = await pool.query(
+        `SELECT status FROM login_issue_help WHERE login_issue_id = ?`,
+        [login_issue_id]
+      );
+  
+      if (currentStatusResult.length === 0) {
+        return res.status(200).json({ message: 'Login issue not found' });
+      }
+  
+      const currentStatus = currentStatusResult[0].status;
+  
+      // Prevent changing the status back to "pending" once it's "solved"
+      if (currentStatus === 'solved' && status === 'pending') {
+        return res.status(200).json({
+          message: 'The status cannot be changed back to "pending" after being set to "solved".',
+        });
+      }
+  
+      // Update the status of the login issue request
+      await pool.query(
+        `UPDATE login_issue_help SET status = ? WHERE login_issue_id = ?`,
+        [status, login_issue_id]
+      );
+  
+      return res.status(200).json({ message: 'Status updated successfully' });
+    } catch (err) {
+      console.error('Error updating status:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+  });
+  
+  // Route to get all login issue requests (for admin)
+  router.post('/all-login-issues', async (req, res) => {
+    try {
+      // SQL query to select all login issue requests
+      const [result] = await pool.query('SELECT * FROM login_issue_help');
+  
+      return res.status(200).json({ requests: result });
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+  });
+
+
+///////////////////////////////////////////////////////
+
+
 // Export the router for use
 module.exports = router;
 
