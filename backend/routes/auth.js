@@ -476,7 +476,7 @@ if (isUsed.length > 0) {
           email,
           password,
           tpin,
-          dateOfJoining: new Date().toLocaleDateString(),
+          dateOfJoining: new Date().toLocaleString(),
         };
 
         // Send the welcome email

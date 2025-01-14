@@ -465,8 +465,223 @@ async function sendWelcomeEmail(userDetails) {
 
 
 
-module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail};
-// Example usage
-// console.log(await sendOtpEmail("UP100070"));
+
+
+
+
+  ///////////////////////////////////////////////////////
+
+//email fro register 
+
+
+const insertOtpForRegister = async (identifier, otp) => {
+    try {
+        const query = `
+            INSERT INTO otp_store_for_register (identifier, otp)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE otp = VALUES(otp), created_at = CURRENT_TIMESTAMP
+        `;
+        await pool.query(query, [identifier, otp]);
+    } catch (error) {
+        console.error("Error inserting OTP for register:", error);
+        throw new Error("Failed to store OTP for register");
+    }
+};
+
+const deleteOtpForRegister = async (identifier) => {
+    try {
+        const query = `
+            DELETE FROM otp_store_for_register 
+            WHERE identifier = ?
+        `;
+        await pool.query(query, [identifier]);
+    } catch (error) {
+        console.error("Error deleting OTP for register:", error);
+        throw new Error("Failed to delete OTP for register");
+    }
+};
+
+const verifyOtpForRegister = async (identifier, inputOtp) => {
+    console.log("Verifying OTP for register");
+    try {
+        const query = `
+            SELECT otp, created_at 
+            FROM otp_store_for_register 
+            WHERE identifier = ?
+        `;
+        const [results] = await pool.query(query, [identifier]);
+
+        if (results.length === 0) {
+            return { success: false, message: "No OTP request for this Email" };
+        }
+
+        const { otp, created_at } = results[0];
+
+        // Check OTP validity
+        const currentTime = new Date();
+        const createdTime = new Date(created_at);
+        const timeDifference = (currentTime - createdTime) / (1000 * 60); // Convert to minutes
+
+        if (otp !== inputOtp) {
+            return { success: false, message: "Invalid OTP" };
+        } else if (timeDifference > 5) {
+            await deleteOtpForRegister(identifier);
+            return { success: false, message: "OTP expired" };
+        }
+
+        // OTP is valid
+        // Optionally delete the OTP after successful verification
+        await deleteOtpForRegister(identifier);
+        console.log("OTP verified successfully");
+        return { success: true, message: "OTP verified successfully" };
+    } catch (error) {
+        console.error("Error verifying OTP for register:", error);
+        throw new Error("Failed to verify OTP for register");
+    }
+};
+
+const sendOtpRegister = async (identifier) => {
+    try {
+        // Validate the email format (optional)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(identifier)) {
+            return { success: false, message: "Invalid email format" };
+        }
+
+        // Generate a 6-digit OTP
+        const otp = generateOtp();
+        console.log("Register Generated OTP:", otp);
+
+        // Insert the OTP into the database
+        await insertOtpForRegister(identifier, otp);
+
+        // Email options
+        const mailOptions = {
+            from: `"UnoPay Payment App" <${process.env.EMAIL_USER}>`,
+            to: identifier,
+            subject: 'Your UnoPay Registration OTP Code',
+            html: `
+               <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .email-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                            }
+                            .email-header {
+                                background-color: #4CAF50;
+                                text-align: center;
+                                padding: 20px 0;
+                                position: relative;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                            }
+                            .email-header img {
+                                width: 150px;
+                                margin-bottom: 10px;
+                            }
+                            .email-header h1 {
+                                margin: 10px 0 0 0;
+                                font-size: 24px;
+                                color: #ffffff;
+                            }
+                            .email-body {
+                                padding: 20px;
+                                color: #333333;
+                            }
+                            .email-body p {
+                                line-height: 1.6;
+                            }
+                            .otp-code {
+                                font-size: 20px;
+                                font-weight: bold;
+                                color: #4CAF50;
+                                text-align: center;
+                            }
+                            .email-footer {
+                                background-color: #f4f4f4;
+                                text-align: center;
+                                padding: 10px;
+                                font-size: 12px;
+                                color: #666666;
+                            }
+                            .email-footer a {
+                                color: #4CAF50;
+                                text-decoration: none;
+                            }
+                            .email-contact {
+                                margin-top: 20px;
+                                font-size: 14px;
+                            }
+                            img {
+                                display: block;
+                                margin: 0 auto;
+                                scale:1.3
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header with Banner -->
+                            <div class="email-header">
+                                <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                                <h1>UnoPay Payment Service</h1>
+                                <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                            </div>
+                            <!-- Email Body -->
+                            <div class="email-body">
+                                <p>Dear Customer,</p>
+                                <p>Thank you for using UnoPay. To proceed with your request, please use the following One-Time Password (OTP):</p>
+                                <p class="otp-code">${otp}</p>
+                                <p>This OTP is valid for 5 minutes. Please do not share it with anyone.</p>
+                                <p>If you did not request this, please contact our support team immediately at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                                <p>Thank you for choosing UnoPay!</p>
+                            </div>
+                            <!-- Footer -->
+                            <div class="email-footer">
+                                <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                                <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                                <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                                <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+
+                    `,
+            attachments: [
+                {
+                    filename: 'unopay.jpeg',
+                    path: 'unopay.jpeg', // Replace with the correct path to your image
+                    cid: 'unopay_banner' // Same as referenced in the HTML img tag
+                }
+            ]
+        };
+        // Send the email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.response);
+
+        return { success: true, message: 'OTP sent successfully' };
+    } catch (error) {
+        console.error("Error sending OTP email for register:", error);
+        return { success: false, message: 'Failed to send OTP email', error };
+    }
+};
+
+
+
+  //////////////////////////////////////////////////
+
+module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister};
 
    

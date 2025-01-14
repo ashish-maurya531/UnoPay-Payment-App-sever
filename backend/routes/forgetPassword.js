@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
-const {sendOtpEmail,verifyOtp} = require('../utills/sendOtpMail');
+const {sendOtpEmail,verifyOtp,sendOtpRegister,verifyOtpForRegister} = require('../utills/sendOtpMail');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
@@ -71,6 +71,68 @@ router.post("/verify-otp", async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to verify OTP", error });
     }
 });
+
+
+////////////////////////////////////////////////////////
+
+
+
+// Route to send OTP for registration
+router.post("/send-register-otp", async (req, res) => {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+        return res.status(200).json({ success: false, message: "Identifier (email) is required" });
+    }
+
+    if (containsSQLInjectionWords(identifier)) {
+        return res.status(200).json({ success: false, message: "Invalid input detected. Do not try to hack." });
+    }
+
+    try {
+        const result = await sendOtpRegister(identifier);
+        if (result.success) {
+            res.status(200).json({ success: true, message: "OTP sent successfully", result });
+        } else {
+            res.status(500).json({ success: false, message: "Failed to send OTP", error: result.error });
+        }
+    } catch (error) {
+        console.error("Error sending registration OTP:", error);
+        res.status(500).json({ success: false, message: "An error occurred while sending OTP", error });
+    }
+});
+
+// Route to verify OTP for registration
+router.post("/verify-register-otp", async (req, res) => {
+    const { identifier, otp } = req.body;
+
+    if (!identifier || !otp) {
+        return res.status(200).json({ success: false, message: "Identifier and OTP are required" });
+    }
+
+    if (containsSQLInjectionWords(identifier + otp)) {
+        return res.status(200).json({ success: false, message: "Invalid input detected. Do not try to hack." });
+    }
+
+    try {
+        const isValid = await verifyOtpForRegister(identifier, otp);
+
+        if (isValid.success) {
+            res.status(200).json({ success: true, message: "OTP verified successfully" });
+        } else {
+            res.status(200).json({ success: false, message: isValid.message });
+        }
+    } catch (error) {
+        console.error("Error verifying registration OTP:", error);
+        res.status(500).json({ success: false, message: "An error occurred while verifying OTP", error });
+    }
+});
+
+module.exports = router;
+
+
+
+////////////////////////////////////////////////////////
 
 
 
