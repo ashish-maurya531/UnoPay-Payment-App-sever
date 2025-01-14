@@ -11,10 +11,10 @@ router.post("/send-otp", async (req, res) => {
     const { identifier } = req.body;
 
     if (!identifier) {
-        return res.status(400).json({ success: false, message: "Fields is required" });
+        return res.status(200).json({ success: false, message: "Fields is required" });
     }
     if (containsSQLInjectionWords(identifier)) {
-        return res.status(400).json({ success: false, message: "Don't try to hack." });
+        return res.status(200).json({ success: false, message: "Don't try to hack." });
     }
     // Check for member existence
     const [userRows] = await pool.query(
@@ -24,7 +24,7 @@ router.post("/send-otp", async (req, res) => {
       // console.log(userRows)
   
       if (userRows.length === 0) {
-        return res.status(404).json({ status:"false",error: `User with is ${identifier} not registered` });
+        return res.status(200).json({ status:"false",error: `User with is ${identifier} not registered` });
       }
       //extract member_id 
       const member_id = userRows[0].memberid;
@@ -39,38 +39,38 @@ router.post("/send-otp", async (req, res) => {
     }
 });
 
-// // Route to verify OTP
-// router.post("/verify-otp", async (req, res) => {
-//     const { member_id, otp } = req.body;
+// Route to verify OTP
+router.post("/verify-otp", async (req, res) => {
+    const { member_id, otp } = req.body;
 
-//     if (!member_id || !otp) {
-//         return res.status(400).json({ success: false, message: "Member ID and OTP are required" });
-//     }
-//     if (containsSQLInjectionWords(member_id + otp)) {
-//         return res.status(400).json({ success: false, message: "Don't try to hack." });
-//     }
+    if (!member_id || !otp) {
+        return res.status(200).json({ success: false, message: "Member ID and OTP are required" });
+    }
+    if (containsSQLInjectionWords(member_id + otp)) {
+        return res.status(200).json({ success: false, message: "Don't try to hack." });
+    }
 
-//     try {
-//         const isValid = await verifyOtp(member_id, otp);
-//         console.log("isValid:", isValid?.success);
-//         if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
-//             res.status(200).json({ success: true, message: "OTP verified successfully" });
+    try {
+        const isValid = await verifyOtp(member_id, otp);
+        console.log("isValid:", isValid?.success);
+        if (isValid?.success===true && isValid?.message==="OTP verified successfully") {
+            res.status(200).json({ success: true, message: "OTP verified successfully" });
 
-//         }
-//         else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
-//             res.status(404).json({ success: false, message: "No otp request by this Member ID" });
-//         }
-//         else if(isValid?.success===false && isValid?.message==="OTP expired") {
-//             res.status(400).json({ success: false, message: "Otp expired" });
+        }
+        else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
+            res.status(200).json({ success: false, message: "No otp request by this Member ID" });
+        }
+        else if(isValid?.success===false && isValid?.message==="OTP expired") {
+            res.status(200).json({ success: false, message: "Otp expired" });
 
-//         } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
-//             res.status(400).json({ success: false, message: "Invalid OTP" });
-//         }
-//     } catch (error) {
-//         console.error("Error verifying OTP:", error);
-//         res.status(500).json({ success: false, message: "Failed to verify OTP", error });
-//     }
-// });
+        } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
+            res.status(200).json({ success: false, message: "Invalid OTP" });
+        }
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        res.status(500).json({ success: false, message: "Failed to verify OTP", error });
+    }
+});
 
 
 

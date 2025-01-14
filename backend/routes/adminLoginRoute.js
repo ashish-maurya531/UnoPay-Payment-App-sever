@@ -25,9 +25,19 @@ router.post('/adminLogin2', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials2' });
     }
+    const payload = {
+      name,
+      password,
+      message: "hack mt kr",
+      jti: crypto.randomUUID(), // Generates a unique ID for each token
+      iat: Math.floor(Date.now() / 1000), // Issued At
+     
+    };
+    
     
     // Generate JWT token
-    const token = jwt.sign({ message:"hack mt kr"}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    
     // const token = jwt.sign({ message: "hack mt kr" }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2m' });
 
     

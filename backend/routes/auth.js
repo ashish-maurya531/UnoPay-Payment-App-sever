@@ -1,12 +1,10 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const axios = require('axios');
-const { rmSync } = require('fs');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
-const bcrypt = require('bcryptjs');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const jwt = require('jsonwebtoken');
+const {sendWelcomeEmail} = require('../utills/sendOtpMail');
 
 // // admin login jwt 
 // router.post('/adminLogin2', async (req, res) => {
@@ -325,34 +323,66 @@ router.post('/register', async (req, res) => {
   const checktheData = [sponser_id, phoneno, username, email, password, tpin].join(' ');
   console.log(checktheData);
   if (containsSQLInjectionWords(checktheData)) {
-    return res.status(400).json({ status: "false", error: "Don't try to hack." });
+    return res.status(200).json({ status: "false", error: "Don't try to hack." });
   }
   if (password === "" || tpin === "" || username === "" || email === "" || phoneno == "") {
     console.log("khali feild mat bhej ")
-    return res.status(400).json({ status: "false", error: "Fields cannot be empty." });
+    return res.status(200).json({ status: "false", error: "Fields cannot be empty." });
   }
   if (sponser_id.length != 8) {
     console.log("sponser id 8 char se choti mat bhej ")
-    return res.status(400).json({ status: "false", error: "Sponser ID must be 8 characters long." });
+    return res.status(200).json({ status: "false", error: "Sponser ID must be 8 characters long." });
   }
   if (!/^\d{10}$/.test(phoneno)) {
     console.log("phoneno 10 char se chota mat bhej ")
-    return res.status(400).json({ status: "false", error: "Phone number must be 10 digits long." });
+    return res.status(200).json({ status: "false", error: "Phone number must be 10 digits long." });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     console.log("email invalid mat bhej ")
-    return res.status(400).json({ status: "false", error: "Invalid email address." });
+    return res.status(200).json({ status: "false", error: "Invalid email address." });
   }
   if (!/^\d{4}$/.test(tpin)) {
     console.log("tpin 4 char se chota mat bhej ")
-    return res.status(400).json({ status: "false", error: "TPIN must be 4 digits long." });
+    return res.status(200).json({ status: "false", error: "TPIN must be 4 digits long." });
   }
   //check sponser id 
   const isSponserIdValid = await checkSponserId(sponser_id);
   if (!isSponserIdValid) {
     console.log("sponser id invalid mat bhej ")
-    return res.status(400).json({ status: "false", error: "Invalid sponser ID." });
+    return res.status(200).json({ status: "false", error: "Invalid sponser ID." });
   }
+
+ // Check if phoneno or email is already used in the usersdetails table
+const [isUsed] = await pool.query(
+  `SELECT phoneno, email FROM usersdetails WHERE phoneno = ? OR email = ?`,
+  [phoneno, email]
+);
+
+// Initialize flags for used fields
+let phoneUsed = false;
+let emailUsed = false;
+
+if (isUsed.length > 0) {
+ 
+  isUsed.forEach((row) => {
+    if (row.phoneno === phoneno) phoneUsed = true;
+    if (row.email === email) emailUsed = true;
+  });
+
+  
+  let errorMessage = '';
+  if (phoneUsed && emailUsed) {
+    errorMessage = "Phone number and email are already used.";
+  } else if (phoneUsed) {
+    errorMessage = "Phone number is already used.";
+  } else if (emailUsed) {
+    errorMessage = "Email is already used.";
+  }
+
+  console.log("Phone number or email already used.");
+  return res.status(200).json({ status: "false", error: errorMessage });
+}
+
 
 
 
@@ -435,6 +465,27 @@ router.post('/register', async (req, res) => {
       if (addMemberResponse.status === 200) {
 
         await connection.commit();
+
+
+            // Prepare user details for the welcome email
+        const userDetails = {
+          memberId: assignedId,
+          sponsorId: sponser_id,
+          username,
+          phoneno,
+          email,
+          password,
+          tpin,
+          dateOfJoining: new Date().toLocaleDateString(),
+        };
+
+        // Send the welcome email
+        const emailResponse = await sendWelcomeEmail(userDetails);
+        if (!emailResponse.success) {
+          console.error('Error sending welcome email:', emailResponse.error);
+        } else {
+          console.log(emailResponse.message);
+        }
 
         res.status(201).json({
           message: 'User registered successfully and member hierarchy updated',
