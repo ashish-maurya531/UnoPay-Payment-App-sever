@@ -4,7 +4,7 @@ const axios = require('axios');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const {sendWelcomeEmail} = require('../utills/sendOtpMail');
+const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp} = require('../utills/sendOtpMail');
 
 // // admin login jwt 
 // router.post('/adminLogin2', async (req, res) => {
@@ -585,7 +585,9 @@ router.post('/login', async (req, res) => {
 
 
     // Successful login
-    res.json({ status:"true",message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
+    res.json({ 
+      status:"true",
+      message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
     console.log(username+" ka hogya login "+new Date())
   } catch (error) {
     console.error('User login error:', error);
@@ -629,6 +631,150 @@ router.post('/getmembershipStatus', async (req, res) => {
 });
 
 
+
+//////////////////////////////////////////////////////
+router.post('/login2', async (req, res) => {
+  const { identifier, password, device_id, otp } = req.body;
+
+  // Validate inputs
+  if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
+    return res.status(400).json({ status: "false", error: "Don't try to hack." });
+  }
+
+  try {
+    // Fetch user details
+    const [userRows] = await pool.query(
+      'SELECT memberid, username, status, membership, phoneno, email, created_at FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+      [identifier, identifier, identifier]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ status: "false", error: 'User not registered' });
+    }
+
+    const memberid = userRows[0].memberid;
+    const username = userRows[0].username;
+    const status = userRows[0].status;
+    const membership = userRows[0].membership;
+    const email = userRows[0].email;
+
+    // Check if the account is active
+    if (status === 'inactive') {
+      return res.status(401).json({ status: "false", error: 'Your account is inactive' });
+    }
+
+    // Verify the password
+    const [passwordRows] = await pool.query(
+      'SELECT password FROM security_details_of_user WHERE member_id = ?',
+      [memberid]
+    );
+
+    if (passwordRows.length === 0 || passwordRows[0].password !== password) {
+      return res.status(200).json({ status: "false", error: 'Wrong password' });
+    }
+
+    // Check if device_id exists in the login_device_info table
+    const [deviceIdRows] = await pool.query(
+      'SELECT device_id FROM login_device_info WHERE member_id = ?',
+      [memberid]
+    );
+
+    if (deviceIdRows.length === 0) {
+      // First-time login, no device ID exists
+      if (!otp) {
+        // Send OTP for first-time login
+        const otpResponse = await universalOtpEmailSender(memberid, 'first_time_login');
+        if (otpResponse.success) {
+          return res.status(200).json({
+            status: "false",
+            message: 'This is your first time logging in. OTP sent to email for device verification.'
+          });
+        } else {
+          return res.status(500).json({ status: "false", error: 'Failed to send OTP email' });
+        }
+      } else {
+        // Verify OTP for first-time login
+        const otpVerification = await verifyOtp(memberid, otp);
+        if (otpVerification.success) {
+          // Insert the device ID after OTP verification is successful
+          await pool.query(
+            'INSERT INTO login_device_info (member_id, device_id) VALUES (?, ?)',
+            [memberid, device_id]
+          );
+          return res.status(200).json({
+            status: "true",
+            message: 'First-time login successful, device verified.',
+            memberid,
+            username,
+            membership,
+            phoneNo: userRows[0].phoneno,
+            email,
+            date_of_joining: userRows[0].created_at
+          });
+        } else {
+          return res.status(200).json({ status: "false", message: otpVerification.message });
+        }
+      }
+    } else {
+      // If device_id does not match, verify OTP
+      if (deviceIdRows[0].device_id !== device_id) {
+        if (!otp) {
+          const otpResponse = await universalOtpEmailSender(memberid, 'device_change');
+          if (otpResponse.success) {
+            return res.status(200).json({
+              status: "false",
+              message: 'Device does not match. OTP sent to email for verification.'
+            });
+          } else {
+            return res.status(500).json({ status: "false", error: 'Failed to send OTP email' });
+          }
+        } else {
+          // Verify OTP for device change
+          const otpVerification = await verifyOtp(memberid, otp);
+          if (otpVerification.success) {
+            // Update the device_id after OTP verification
+            await pool.query(
+              'UPDATE login_device_info SET device_id = ? WHERE member_id = ?',
+              [device_id, memberid]
+            );
+            return res.status(200).json({
+              status: "true",
+              message: 'Device change verified, logged in successfully.',
+              memberid,
+              username,
+              membership,
+              phoneNo: userRows[0].phoneno,
+              email,
+              date_of_joining: userRows[0].created_at
+            });
+          } else {
+            return res.status(200).json({ status: "false", message: otpVerification.message });
+          }
+        }
+      } else {
+        // Device ID matches, proceed with login
+        return res.status(200).json({
+          status: "true",
+          message: 'User logged in successfully',
+          memberid,
+          username,
+          membership,
+          phoneNo: userRows[0].phoneno,
+          email,
+          date_of_joining: userRows[0].created_at
+        });
+      }
+    }
+  } catch (error) {
+    console.error('User login error:', error);
+    res.status(500).json({ status: "false", error: 'Internal server error' });
+  }
+});
+
+
+
+
+////////////////////////////////////////////////////
 
 //to check tpin is correct or not 
 router.post('/checktpin', async(req,res)=>{

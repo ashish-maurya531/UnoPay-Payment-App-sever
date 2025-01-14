@@ -235,6 +235,10 @@ async function sendOtpEmail(member_id) {
     }
 }
 
+
+
+//////////////////////////////////////////////////////
+
 ////////////////////////////////////////////////////////////////
 // Function to send a welcome email to the newly registered user
 async function sendWelcomeEmail(userDetails) {
@@ -681,7 +685,521 @@ const sendOtpRegister = async (identifier) => {
 
 
   //////////////////////////////////////////////////
+/////////////////////////////////////////////
 
-module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister};
+
+
+
+
+
+
+
+// Function to send an email with the OTP for login or device change
+async function universalOtpEmailSender(member_id, type) {
+    try {
+        // Query to get the email address based on member_id
+        const [rows] = await pool.query(
+            `SELECT email FROM usersdetails WHERE memberid = ?`,
+            [member_id]
+        );
+
+        if (!rows.length) {
+            console.log('Member not found.');
+            return { success: false, message: 'Member not found' };
+        }
+
+        const { email } = rows[0];
+
+        // Generate a 6-digit OTP
+        const otp = generateOtp();
+        console.log(otp);
+        await insertOTP(member_id, otp);
+
+        let subject = '';
+        let emailHtml = '';
+
+        // Define the email content based on the type
+        if (type === 'first_time_login') {
+            subject = 'First-Time Login Verification - UnoPay';
+            emailHtml = `
+                                <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .email-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #e0e0e0;
+                            }
+                            .email-header {
+                                background-color: #4CAF50;
+                                text-align: center;
+                                padding: 20px 0;
+                                position: relative;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                            }
+                            .email-header img {
+                                width: 150px;
+                                margin-bottom: 10px;
+                            }
+                            .email-header h1 {
+                                margin: 10px 0 0 0;
+                                font-size: 24px;
+                                color: #ffffff;
+                            }
+                            .email-body {
+                                padding: 20px;
+                                color: #333333;
+                            }
+                            .email-body h2 {
+                                font-size: 22px;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .email-body p {
+                                line-height: 1.6;
+                                margin: 10px 0;
+                            }
+                            .otp-code {
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin: 20px 0;
+                            }
+                            .email-footer {
+                                background-color: #f4f4f4;
+                                text-align: center;
+                                padding: 10px;
+                                font-size: 12px;
+                                color: #666666;
+                            }
+                            .email-footer a {
+                                color: #4CAF50;
+                                text-decoration: none;
+                            }
+                            .email-contact {
+                                margin-top: 20px;
+                                font-size: 14px;
+                            }
+                            img {
+                                display: block;
+                                margin: 0 auto;
+                                scale: 1.3;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header with Banner -->
+                            <div class="email-header">
+                                <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                                <h1>UnoPay Payment Service</h1>
+                                <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                            </div>
+                            <!-- Email Body -->
+                            <div class="email-body">
+                                <h2>First-Time Login</h2>
+                                <p>Dear Customer,</p>
+                                <p>This is your first-time login attempt from a device. For security reasons, please use the One-Time Password (OTP) below to verify your login:</p>
+                                <p class="otp-code">${otp}</p>
+                                <p>The OTP is valid for <strong>5 minutes</strong>. Please do not share this code with anyone.</p>
+                                <p>If this login attempt was not made by you, please change your password and contact our support team immediately at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                                <p>Thank you for choosing UnoPay!</p>
+                            </div>
+                            <!-- Footer -->
+                            <div class="email-footer">
+                                <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                                <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                                <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                                <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+
+            `;
+        } else if (type === 'device_change') {
+            subject = 'Device Change Verification - UnoPay';
+            emailHtml = `
+                                <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .email-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #e0e0e0;
+                            }
+                            .email-header {
+                                background-color: #FF5733;
+                                text-align: center;
+                                padding: 20px 0;
+                                position: relative;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                            }
+                            .email-header img {
+                                width: 150px;
+                                margin-bottom: 10px;
+                            }
+                            .email-header h1 {
+                                margin: 10px 0 0 0;
+                                font-size: 24px;
+                                color: #ffffff;
+                            }
+                            .email-body {
+                                padding: 20px;
+                                color: #333333;
+                            }
+                            .email-body h2 {
+                                font-size: 22px;
+                                color: #FF5733;
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .email-body p {
+                                line-height: 1.6;
+                                margin: 10px 0;
+                            }
+                            .otp-code {
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #FF5733;
+                                text-align: center;
+                                margin: 20px 0;
+                            }
+                            .email-footer {
+                                background-color: #f4f4f4;
+                                text-align: center;
+                                padding: 10px;
+                                font-size: 12px;
+                                color: #666666;
+                            }
+                            .email-footer a {
+                                color: #FF5733;
+                                text-decoration: none;
+                            }
+                            .email-contact {
+                                margin-top: 20px;
+                                font-size: 14px;
+                            }
+                            img {
+                                display: block;
+                                margin: 0 auto;
+                                scale: 1.3;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header with Banner -->
+                            <div class="email-header">
+                                <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                                <h1>UnoPay Payment Service</h1>
+                                <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                            </div>
+                            <!-- Email Body -->
+                            <div class="email-body">
+                                <h2>Device Change Detected</h2>
+                                <p>Dear Customer,</p>
+                                <p>We noticed a login attempt from a new device. To proceed, please use the One-Time Password (OTP) below to verify this device:</p>
+                                <p class="otp-code">${otp}</p>
+                                <p>For security purposes, logging in from this new device will log your account out of the previous device.</p>
+                                <p>If this login attempt was not initiated by you, we strongly recommend changing your password immediately and contacting our support team at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                                <p>This OTP is valid for <strong>5 minutes</strong>. Please do not share this code with anyone.</p>
+                                <p>Thank you for choosing UnoPay!</p>
+                            </div>
+                            <!-- Footer -->
+                            <div class="email-footer">
+                                <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                                <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                                <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                                <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+
+            `;
+        } 
+        else if (type === 'forget_password'){
+             subject = 'Password Change Otp - UnoPay';
+            emailHtml = `
+                                <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .email-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #e0e0e0;
+                            }
+                            .email-header {
+                                background-color: #4CAF50;
+                                text-align: center;
+                                padding: 20px 0;
+                                position: relative;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                            }
+                            .email-header img {
+                                width: 150px;
+                                margin-bottom: 10px;
+                            }
+                            .email-header h1 {
+                                margin: 10px 0 0 0;
+                                font-size: 24px;
+                                color: #ffffff;
+                            }
+                            .email-body {
+                                padding: 20px;
+                                color: #333333;
+                            }
+                            .email-body h2 {
+                                font-size: 22px;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .email-body p {
+                                line-height: 1.6;
+                                margin: 10px 0;
+                            }
+                            .otp-code {
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin: 20px 0;
+                            }
+                            .email-footer {
+                                background-color: #f4f4f4;
+                                text-align: center;
+                                padding: 10px;
+                                font-size: 12px;
+                                color: #666666;
+                            }
+                            .email-footer a {
+                                color: #4CAF50;
+                                text-decoration: none;
+                            }
+                            .email-contact {
+                                margin-top: 20px;
+                                font-size: 14px;
+                            }
+                            img {
+                                display: block;
+                                margin: 0 auto;
+                                scale: 1.3;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header with Banner -->
+                            <div class="email-header">
+                                <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                                <h1>UnoPay Payment Service</h1>
+                                <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                            </div>
+                            <!-- Email Body -->
+                            <div class="email-body">
+                                <h2>Forgot Your Password?</h2>
+                                <p>Dear Customer,</p>
+                                <p>We received a request to reset your UnoPay password. Please use the One-Time Password (OTP) below to reset your password:</p>
+                                <p class="otp-code">${otp}</p>
+                                <p>The OTP is valid for <strong>5 minutes</strong>. Please do not share this code with anyone.</p>
+                                <p>If you did not request a password reset, please disregard this email. If you believe someone else is attempting to access your account, please contact us at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                                <p>Thank you for using UnoPay!</p>
+                            </div>
+                            <!-- Footer -->
+                            <div class="email-footer">
+                                <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                                <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                                <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                                <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                    `;
+                               
+
+        }
+        else if (type==="forget_tpin"){
+            subject = 'Tpin Change Otp - UnoPay';
+            emailHtml = `
+             <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .email-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #e0e0e0;
+                            }
+                            .email-header {
+                                background-color: #4CAF50;
+                                text-align: center;
+                                padding: 20px 0;
+                                position: relative;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                            }
+                            .email-header img {
+                                width: 150px;
+                                margin-bottom: 10px;
+                            }
+                            .email-header h1 {
+                                margin: 10px 0 0 0;
+                                font-size: 24px;
+                                color: #ffffff;
+                            }
+                            .email-body {
+                                padding: 20px;
+                                color: #333333;
+                            }
+                            .email-body h2 {
+                                font-size: 22px;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin-bottom: 20px;
+                            }
+                            .email-body p {
+                                line-height: 1.6;
+                                margin: 10px 0;
+                            }
+                            .otp-code {
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #4CAF50;
+                                text-align: center;
+                                margin: 20px 0;
+                            }
+                            .email-footer {
+                                background-color: #f4f4f4;
+                                text-align: center;
+                                padding: 10px;
+                                font-size: 12px;
+                                color: #666666;
+                            }
+                            .email-footer a {
+                                color: #4CAF50;
+                                text-decoration: none;
+                            }
+                            .email-contact {
+                                margin-top: 20px;
+                                font-size: 14px;
+                            }
+                            img {
+                                display: block;
+                                margin: 0 auto;
+                                scale: 1.3;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <!-- Header with Banner -->
+                            <div class="email-header">
+                                <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                                <h1>UnoPay Payment Service</h1>
+                                <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                            </div>
+                            <!-- Email Body -->
+                            <div class="email-body">
+                                <h2>Forgot Your TPIN?</h2>
+                                <p>Dear Customer,</p>
+                                <p>We received a request to reset your UnoPay TPIN. Please use the One-Time Password (OTP) below to reset your TPIN:</p>
+                                <p class="otp-code">${otp}</p>
+                                <p>The OTP is valid for <strong>5 minutes</strong>. Please do not share this code with anyone.</p>
+                                <p>If you did not request a TPIN reset, please disregard this email. If you believe someone else is attempting to access your account, please contact us at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                                <p>Thank you for using UnoPay!</p>
+                            </div>
+                            <!-- Footer -->
+                            <div class="email-footer">
+                                <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                                <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                                <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                                <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                    
+
+            `;
+        }
+        else {
+            return { success: false, message: 'Invalid OTP type' };
+        }
+
+        // Email options
+        const mailOptions = {
+            from: `"UnoPay Payment App" ${process.env.EMAIL_USER}`,
+            to: email,
+            subject: subject,
+            html: emailHtml,
+            attachments: [
+                {
+                    filename: 'unopay.jpeg',
+                    path: 'unopay.jpeg', // Replace with the correct path to your image
+                    cid: 'unopay_banner' // Same as referenced in the HTML img tag
+                }
+            ]
+        };
+
+        // Sending the email
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log('Email sent: ' + info.response);
+        return { success: true, message: 'OTP sent successfully' };
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return { success: false, message: 'Error sending OTP email', error };
+    }
+}
+
+/////////////////////////////////////////////
+module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender};
 
    

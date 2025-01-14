@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
-const {sendOtpEmail,verifyOtp,sendOtpRegister,verifyOtpForRegister} = require('../utills/sendOtpMail');
+const {sendOtpEmail,verifyOtp,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender} = require('../utills/sendOtpMail');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
 
@@ -38,6 +38,56 @@ router.post("/send-otp", async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to send OTP", error });
     }
 });
+
+
+/////////////////////////////////////////////////
+//new send otp with its type
+// Route to send OTP
+router.post("/send-otp2", async (req, res) => {
+    const { identifier, type } = req.body;
+
+    // Check if identifier or type is missing
+    if (!identifier || !type) {
+        return res.status(200).json({ success: false, message: "Fields are required" });
+    }
+
+    // Check for SQL injection attempt
+    if (containsSQLInjectionWords(identifier)) {
+        return res.status(200).json({ success: false, message: "Don't try to hack." });
+    }
+    // Validate the type (only allow 'forget_password' or 'forget_tpin')
+    const validTypes = ['forget_password', 'forget_tpin'];
+    if (!validTypes.includes(type)) {
+        return res.status(200).json({ success: false, message: "Invalid type." });
+    }
+
+
+    // Check for user existence
+    const [userRows] = await pool.query(
+        'SELECT memberid, phoneno, email FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+        [identifier, identifier, identifier]
+    );
+
+    if (userRows.length === 0) {
+        return res.status(200).json({ status: "false", error: `User  not registered` });
+    }
+
+    // Extract member_id
+    const member_id = userRows[0].memberid;
+
+    try {
+        console.log(type+" for "+member_id)
+        const result = await universalOtpEmailSender(member_id, type);
+        res.status(200).json({ success: true, message: "OTP sent successfully", result });
+    } catch (error) {
+        console.error("Error sending OTP:", error);
+        res.status(500).json({ success: false, message: "Failed to send OTP", error });
+    }
+});
+
+
+
+/////////////////////////////////////////////////
 
 // Route to verify OTP
 router.post("/verify-otp", async (req, res) => {
