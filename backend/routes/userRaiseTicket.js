@@ -190,7 +190,7 @@ const generateLoginIssueId = () => {
     const { email, member_id, message_by_user } = req.body;
   
     // Check if all required fields are provided
-    if (!email || !member_id || !message_by_user) {
+    if (!email ||  !message_by_user) {
       return res.status(200).json({ message: 'Missing required fields' });
     }
   
@@ -280,6 +280,33 @@ const generateLoginIssueId = () => {
       return res.status(500).json({ message: 'Database error' });
     }
   });
+
+
+  //route to delete the login issue
+  router.post('/delete-login-issue', async (req, res) => {
+    const {login_issue_id  } = req.body;
+    if (!login_issue_id) {
+      return res.status(200).json({ message: 'Missing required fields' });
+    }
+   
+  
+    try {
+     
+      // SQL query to delete the login issue request
+      const [login_issue_delete]=await pool.query('DELETE FROM login_issue_help WHERE login_issue_id =?', [login_issue_id]);
+      if (login_issue_delete.affectedRows> 0) {
+        return res.status(200).json({ message: 'Login issue deleted successfully' });
+      }
+      else{
+        return res.status(200).json({ message: 'Login issue not found' });
+      }
+     
+      
+    } catch (err) {
+      console.error('Error deleting login issue:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+    });
 
 
 ///////////////////////////////////////////////////////

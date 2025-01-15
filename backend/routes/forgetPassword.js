@@ -138,6 +138,14 @@ router.post("/send-register-otp", async (req, res) => {
     if (containsSQLInjectionWords(identifier)) {
         return res.status(200).json({ success: false, message: "Invalid input detected. Do not try to hack." });
     }
+    // check if email is already registered
+    const [userRows] = await pool.query(
+        'SELECT email FROM usersdetails WHERE email =?',
+        [identifier]
+    );
+    if (userRows.length > 0) {
+        return res.status(200).json({ success: false, message: "Email is already registered" });
+    }
 
     try {
         const result = await sendOtpRegister(identifier);

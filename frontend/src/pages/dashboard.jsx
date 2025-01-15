@@ -18,7 +18,9 @@ import UserWithdrawRequest from '../components/Users/UserWithdrawRequest.jsx';
 import UserAllTypeBalance from '../components/Payment/UserAllTypeBalance';
 
 import UserDeleteRequest from '../components/Users/UserDeleteRequest';
+import UserLoginHelpRequest from '../components/Users/UserLoginHelpRequest';
 import * as jwt_decode from 'jwt-decode';
+
 
 
 export default function Dashboard() {
@@ -58,6 +60,9 @@ export default function Dashboard() {
         <Route path="User-Commission-list" element={<UserCommissionWalletPaymentList />} />
         <Route path="user-withdraw-request" element={<UserWithdrawRequest />} />
         <Route path="User-all-type-balance" element={<UserAllTypeBalance/>} />
+        <Route path="user-login-help-request" element={<UserLoginHelpRequest />} />
+
+      
 
       </Routes>
     </DashboardLayout>

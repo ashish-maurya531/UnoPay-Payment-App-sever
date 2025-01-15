@@ -635,10 +635,11 @@ router.post('/getmembershipStatus', async (req, res) => {
 //////////////////////////////////////////////////////
 router.post('/login2', async (req, res) => {
   const { identifier, password, device_id, otp } = req.body;
+  console.log(identifier, password, device_id+" otp=",otp);
 
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
-    return res.status(400).json({ status: "false", error: "Don't try to hack." });
+    return res.status(200).json({ status: "false", error: "Don't try to hack." });
   }
 
   try {
@@ -649,7 +650,7 @@ router.post('/login2', async (req, res) => {
     );
 
     if (userRows.length === 0) {
-      return res.status(404).json({ status: "false", error: 'User not registered' });
+      return res.status(200).json({ status: "false", error: 'User not registered' });
     }
 
     const memberid = userRows[0].memberid;
@@ -660,7 +661,7 @@ router.post('/login2', async (req, res) => {
 
     // Check if the account is active
     if (status === 'inactive') {
-      return res.status(401).json({ status: "false", error: 'Your account is inactive' });
+      return res.status(200).json({ status: "false", error: 'Your account is inactive' });
     }
 
     // Verify the password
@@ -690,7 +691,7 @@ router.post('/login2', async (req, res) => {
             message: 'This is your first time logging in. OTP sent to email for device verification.'
           });
         } else {
-          return res.status(500).json({ status: "false", error: 'Failed to send OTP email' });
+          return res.status(200).json({ status: "false", error: 'Failed to send OTP email' });
         }
       } else {
         // Verify OTP for first-time login
@@ -726,7 +727,7 @@ router.post('/login2', async (req, res) => {
               message: 'Device does not match. OTP sent to email for verification.'
             });
           } else {
-            return res.status(500).json({ status: "false", error: 'Failed to send OTP email' });
+            return res.status(200).json({ status: "false", error: 'Failed to send OTP email' });
           }
         } else {
           // Verify OTP for device change
@@ -767,7 +768,7 @@ router.post('/login2', async (req, res) => {
     }
   } catch (error) {
     console.error('User login error:', error);
-    res.status(500).json({ status: "false", error: 'Internal server error' });
+    res.status(200).json({ status: "false", error: 'Internal server error' });
   }
 });
 

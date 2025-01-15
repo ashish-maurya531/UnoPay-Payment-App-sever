@@ -97,7 +97,14 @@ export default function DashboardLayout({ children }) {
       label: 'User Help Desk',
       onClick: () => navigate('/dashboard/user-help-desk'),
 
+    },
+    {
+      key: 'UserLoginHelpRequest',
+      label: 'User Login Help Request',
+      onClick: () => navigate('/dashboard/user-login-help-request'),
+
     }
+
   ]
 
 
