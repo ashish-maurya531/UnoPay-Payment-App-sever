@@ -498,12 +498,21 @@ const deleteOtpForRegister = async (identifier) => {
             DELETE FROM otp_store_for_register 
             WHERE identifier = ?
         `;
-        await pool.query(query, [identifier]);
+        const [toDelete]=await pool.query(query, [identifier]);
+        if (toDelete.affectedRows>0){
+            return { success: true, message: "OTP deleted successfully" };
+        }
+        return { success: false, message: "No OTP found for this Email" };
     } catch (error) {
         console.error("Error deleting OTP for register:", error);
         throw new Error("Failed to delete OTP for register");
     }
 };
+
+
+
+
+
 
 const verifyOtpForRegister = async (identifier, inputOtp) => {
     console.log("Verifying OTP for register");
@@ -535,7 +544,7 @@ const verifyOtpForRegister = async (identifier, inputOtp) => {
 
         // OTP is valid
         // Optionally delete the OTP after successful verification
-        await deleteOtpForRegister(identifier);
+        // await deleteOtpForRegister(identifier);
         console.log("OTP verified successfully");
         return { success: true, message: "OTP verified successfully" };
     } catch (error) {
@@ -543,6 +552,8 @@ const verifyOtpForRegister = async (identifier, inputOtp) => {
         throw new Error("Failed to verify OTP for register");
     }
 };
+
+
 
 const sendOtpRegister = async (identifier) => {
     try {
@@ -1200,6 +1211,6 @@ async function universalOtpEmailSender(member_id, type) {
 }
 
 /////////////////////////////////////////////
-module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender};
+module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender,deleteOtpForRegister};
 
    

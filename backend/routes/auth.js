@@ -4,7 +4,7 @@ const axios = require('axios');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp} = require('../utills/sendOtpMail');
+const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp, verifyOtpForRegister,deleteOtpForRegister} = require('../utills/sendOtpMail');
 
 // // admin login jwt 
 // router.post('/adminLogin2', async (req, res) => {
@@ -318,14 +318,15 @@ router.post('/checkSponserId', async(req, res) => {
  // Import axios for making HTTP requests
 
 router.post('/register', async (req, res) => {
-  const { sponser_id, phoneno, username, email, password, tpin } = req.body;
+  const { sponser_id, phoneno, username, email, password, tpin,emailOtp } = req.body;
+  
   // Validate inputs
-  const checktheData = [sponser_id, phoneno, username, email, password, tpin].join(' ');
+  const checktheData = [sponser_id, phoneno, username, email, password, tpin,emailOtp].join(' ');
   console.log(checktheData);
   if (containsSQLInjectionWords(checktheData)) {
     return res.status(200).json({ status: "false", error: "Don't try to hack." });
   }
-  if (password === "" || tpin === "" || username === "" || email === "" || phoneno == "") {
+  if (password === "" || tpin === "" || username === "" || email === "" || phoneno == ""||!emailOtp) {
     console.log("khali feild mat bhej ")
     return res.status(200).json({ status: "false", error: "Fields cannot be empty." });
   }
@@ -383,7 +384,40 @@ if (isUsed.length > 0) {
   return res.status(200).json({ status: "false", error: errorMessage });
 }
 
+//first verify the otp 
+const isEmailValid = await verifyOtpForRegister(email, emailOtp);
 
+  if (isEmailValid.message === "Invalid OTP") {
+    console.log("otp invalid Try again ")
+    return res.status(200).json({ status: "false", message: "Invalid OTP. Try again" });
+  }
+  else if (isEmailValid.message === "OTP expired") {
+    console.log("otp expired ,Send new otp ")
+    const isDeleted = await deleteOtpForRegister(email)
+    if (isDeleted.message === "OTP deleted successfully") {
+      console.log("otp deleted 1")
+    }
+    else{
+      console.log("otp deleted failed")
+    }
+    return res.status(200).json({ status: "false", message: "OTP expired." });
+  }
+  else if (isEmailValid.message === "OTP verified successfully") {
+    console.log("otp verified successfully")
+    const isDeleted = await deleteOtpForRegister(email)
+    if (isDeleted.message === "OTP deleted successfully") {
+      console.log("otp deleted 2")
+    }
+    else{
+      console.log("otp deleted failed")
+    }
+    
+
+  }
+  else {
+    console.log("some error occur during otp verify")
+    return res.status(200).json({ status: "false", message: "Some error occur during OTP verification." });
+  }
 
 
 
@@ -489,8 +523,8 @@ if (isUsed.length > 0) {
 
         res.status(201).json({
           message: 'User registered successfully and member hierarchy updated',
-          userId: assignedId,
-          name: username
+          memberId: assignedId,
+          dateOfJoining: userDetails.dateOfJoining
         });
       } else {
         throw new Error('Failed to update member hierarchy'); 

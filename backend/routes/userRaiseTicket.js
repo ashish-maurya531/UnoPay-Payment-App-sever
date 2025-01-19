@@ -190,7 +190,7 @@ const generateLoginIssueId = () => {
     const { email, member_id, message_by_user } = req.body;
   
     // Check if all required fields are provided
-    if (!email ||  !message_by_user) {
+    if (!email) {
       return res.status(200).json({ message: 'Missing required fields' });
     }
   
@@ -217,6 +217,7 @@ const generateLoginIssueId = () => {
       );
   
       return res.status(201).json({
+        status: 'true',
         message: 'Request submitted successfully',
         login_issue_id: login_issue_id,
       });
