@@ -45,6 +45,7 @@ router.post("/send-otp", async (req, res) => {
 // Route to send OTP
 router.post("/send-otp2", async (req, res) => {
     const { identifier, type } = req.body;
+    console.log(identifier, type);
 
     // Check if identifier or type is missing
     if (!identifier || !type) {
@@ -56,7 +57,7 @@ router.post("/send-otp2", async (req, res) => {
         return res.status(200).json({ success: false, message: "Don't try to hack." });
     }
     // Validate the type (only allow 'forget_password' or 'forget_tpin')
-    const validTypes = ['forget_password', 'forget_tpin'];
+    const validTypes = ['forget_password', 'forget_tpin',"kyc"];
     if (!validTypes.includes(type)) {
         return res.status(200).json({ success: false, message: "Invalid type." });
     }

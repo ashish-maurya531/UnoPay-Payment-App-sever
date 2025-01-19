@@ -1180,6 +1180,121 @@ async function universalOtpEmailSender(member_id, type) {
 
             `;
         }
+        else if (type === 'kyc') {
+            subject = 'KYC OTP Verification - UnoPay';
+            emailHtml = `
+                <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                }
+                .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                    border: 1px solid #e0e0e0;
+                }
+                .email-header {
+                    background-color: #4CAF50;
+                    text-align: center;
+                    padding: 20px 0;
+                    position: relative;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
+                .email-header img {
+                    width: 150px;
+                    margin-bottom: 10px;
+                }
+                .email-header h1 {
+                    margin: 10px 0 0 0;
+                    font-size: 24px;
+                    color: #ffffff;
+                }
+                .email-body {
+                    padding: 20px;
+                    color: #333333;
+                }
+                .email-body h2 {
+                    font-size: 22px;
+                    color: #4CAF50;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .email-body p {
+                    line-height: 1.6;
+                    margin: 10px 0;
+                }
+                .otp-code {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #4CAF50;
+                    text-align: center;
+                    margin: 20px 0;
+                }
+                .email-footer {
+                    background-color: #f4f4f4;
+                    text-align: center;
+                    padding: 10px;
+                    font-size: 12px;
+                    color: #666666;
+                }
+                .email-footer a {
+                    color: #4CAF50;
+                    text-decoration: none;
+                }
+                .email-contact {
+                    margin-top: 20px;
+                    font-size: 14px;
+                }
+                img {
+                    display: block;
+                    margin: 0 auto;
+                    scale: 1.3;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <!-- Header with Banner -->
+                <div class="email-header">
+                    <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                    <h1>UnoPay Payment Service</h1>
+                    <p>Provided by UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                </div>
+                <!-- Email Body -->
+                <div class="email-body">
+                    <h2>KYC OTP Verification</h2>
+                    <p>Dear Customer,</p>
+                    <p>You have successfully submitted your KYC details and documents for verification. To complete the KYC process, please verify your identity by entering the One-Time Password (OTP) provided below:</p>
+                    <p class="otp-code">${otp}</p>
+                    <p>The OTP is valid for <strong>5 minutes</strong> from the time of receipt. Please do not share this code with anyone.</p>
+                    <p>Once the OTP is verified, your KYC submission will be completed and processed.</p>
+                    <p>The verification process may take up to 2-3 business days. You will be notified once your KYC submission is processed and approved.</p>
+                    <p>If you have any questions or need assistance, please contact our support team at <a href="mailto:info@unope.com">info@unope.com</a>.</p>
+                
+                   
+                </div>
+                <!-- Footer -->
+                <div class="email-footer">
+                    <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD. All rights reserved.</p>
+                    <p>This email is intended solely for the recipient. Unauthorized use or distribution is strictly prohibited.</p>
+                    <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                    <p class="email-contact">Contact us: +91-1234567890, +91-0987654321</p>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        }
+        
         else {
             return { success: false, message: 'Invalid OTP type' };
         }

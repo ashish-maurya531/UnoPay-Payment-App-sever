@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const {verifyOtp} = require('../utills/sendOtpMail');
+
 
 // Create directories if they don't exist
 const baseDir = path.join(__dirname, 'user_kyc_images');
@@ -56,7 +58,7 @@ router.post('/submitUserBankKycDetails',
     { name: 'kycPassbook', maxCount: 1 }
   ]), 
   async (req, res) => {
-    const { member_id, FullName, IFSC_Code, Bank_Name, Account_number, Aadhar_Number, PanCard_Number, Nominee_name,Nominee_relation } = req.body;
+    const { member_id, FullName, IFSC_Code, Bank_Name, Account_number, Aadhar_Number, PanCard_Number, Nominee_name,Nominee_relation,kycOtp } = req.body;
     console.log(member_id, IFSC_Code, Bank_Name, Account_number, PanCard_Number, Nominee_name);
     // Check if required fields are provided
     if (!member_id || !FullName || !IFSC_Code || !Bank_Name || !Account_number || !Aadhar_Number || !PanCard_Number || !Nominee_name||!Nominee_relation) {
@@ -80,6 +82,33 @@ router.post('/submitUserBankKycDetails',
       if (userRows.length === 0) {
         return res.status(404).json({ status: 'false', message:"4", error: 'Invalid member ID.' });
       }
+      // Assuming verifyOtp is an async function that returns a response
+      const isOtpValid = await verifyOtp(member_id, kycOtp);
+
+      if (isOtpValid?.success === true && isOtpValid?.message === "OTP verified successfully") {
+          
+          console.log("Kyc OTP verified successfully.");
+        
+          
+      } else if (isOtpValid?.success === false && isOtpValid?.message === "No otp request by this Member ID") {
+          console.log("No OTP request found for this Member ID.");
+          return res.status(200).json({ status: 'false', message:"5"})
+         
+      } else if (isOtpValid?.success === false && isOtpValid?.message === "OTP expired") {
+          console.log("OTP expired. Please request a new OTP.");
+          return res.status(200).json({ status: 'false', message:"6", error: 'OTP expired. Please request a new OTP.' });
+       
+      } else if (isOtpValid?.success === false && isOtpValid?.message === "Invalid OTP") {
+          console.log("Invalid OTP entered.");
+          return res.status(200).json({ status: 'false', message:"5", error: 'Invalid OTP entered.' });
+        
+      } else {
+          console.log("Unexpected OTP verification result.");
+        
+      }
+
+    
+
 
       // Check if user has already submitted bank kyc details and kyc status is pending 
       const [bankKycRows] = await pool.query(

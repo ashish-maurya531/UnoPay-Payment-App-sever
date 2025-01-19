@@ -188,6 +188,7 @@ const generateLoginIssueId = () => {
   // Route to create a login issue request
   router.post('/login-issue', async (req, res) => {
     const { email, member_id, message_by_user } = req.body;
+    console.log(email, member_id, message_by_user);
   
     // Check if all required fields are provided
     if (!email) {
@@ -196,13 +197,19 @@ const generateLoginIssueId = () => {
   
     // Generate a random login issue ID
     const login_issue_id = generateLoginIssueId();
+    // Check if email already exists in the database, this is just a placeholder for an actual email check. You should replace this with your own logic.
+    const [emailcheck]= await pool.query(`SELECT * FROM usersdetails WHERE email=?`,[email])
+    if(emailcheck.length===0){
+      return res.status(200).json({status:"false", message: 'email not found' });
+    }
   
     try {
       // SQL query to check if there's already a pending request for the same email or member_id
       const [result] = await pool.query(
-        `SELECT * FROM login_issue_help WHERE (email = ? OR member_id = ?) AND status = 'pending'`,
+        `SELECT * FROM login_issue_help WHERE email = ? AND status = 'pending'`,
         [email, member_id]
       );
+      console.log(result);
   
       if (result.length > 0) {
         return res.status(200).json({
