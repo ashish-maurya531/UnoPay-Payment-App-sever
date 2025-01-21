@@ -187,7 +187,7 @@ router.post("/verify-register-otp", async (req, res) => {
     }
 });
 
-module.exports = router;
+
 
 
 
