@@ -455,9 +455,11 @@ async function sendWelcomeEmail(userDetails) {
       };
   
       // Sending the email
-      const info = await transporter.sendMail(mailOptions);
+    //   const info = await transporter.sendMail(mailOptions);
   
-      console.log("Welcome email sent: " + info.response);
+    //   console.log("Welcome email sent: " + info?.response);
+      console.log("Welcome email sent: ");
+
       return { success: true, message: "Welcome email sent successfully" };
     } catch (error) {
       console.error("Error sending welcome email:", error);
@@ -683,8 +685,10 @@ const sendOtpRegister = async (identifier) => {
             ]
         };
         // Send the email
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent:', info.response);
+        // const info = await transporter.sendMail(mailOptions);
+        // console.log('Email sent:', info.response);
+        console.log('Email sent:');
+
 
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {

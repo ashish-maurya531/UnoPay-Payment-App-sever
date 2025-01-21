@@ -214,23 +214,23 @@ router.post('/changeUserPassword', async (req, res) => {
 
     //check old and new password are not same 
     if(oldPassword === newPassword){
-        return res.status(400).json({ status: 'false', error: 'Old and new password cannot be same'});
+        return res.status(200).json({ status: 'false', error: 'Old and new password cannot be same'});
     }
     //check for member present or not in security_details_of_user
     const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`,[member_id]);
     if(checkMember.length === 0){
-        return res.status(404).json({ status: 'false', error: 'Invalid member ID'});
+        return res.status(200).json({ status: 'false', error: 'Invalid member ID'});
     }
     console.log(checkMember)
     if (checkMember[0].password !== oldPassword){
-        return res.status(401).json({ status: 'false', error: 'Old password is incorrect'});
+        return res.status(200).json({ status: 'false', error: 'Old password is incorrect'});
     }
     // now update the password without hashing
     try{
 
         const updatePassword = await pool.query(`UPDATE security_details_of_user SET password = ? WHERE member_id=?`,[newPassword,member_id]);
         if(updatePassword.affectedRows === 0){
-            return res.status(404).json({ status: 'false', error: 'Failed to update password'});
+            return res.status(200).json({ status: 'false', error: 'Failed to update password'});
         }
         res.status(200).json({ status: 'true', message: 'Password updated successfully'});
     }
@@ -249,34 +249,34 @@ router.post('/changeUserTpin', async (req, res) => {
     const { member_id,oldtpin, newtpin } = req.body;
     //check member id not empty
     if (!member_id || !oldtpin || !newtpin) {
-        return res.status(400).json({ status: 'false', error: 'Some fields are empty'})
+        return res.status(200).json({ status: 'false', error: 'Some fields are empty'})
 
     }
 
     //check old and new tpin are not same 
     if(oldtpin === newtpin){
-        return res.status(400).json({ status: 'false', error: 'Old and new tpin cannot be same'});
+        return res.status(200).json({ status: 'false', error: 'Old and new tpin cannot be same'});
     }
 
     //sql injection check
     const checkthedata=[member_id,newtpin,oldtpin].join(" ");
     if (containsSQLInjectionWords(checkthedata)) {
-        return res.status(400).json({ status: 'false', error: 'Don`t try to hack' });
+        return res.status(200).json({ status: 'false', error: 'Don`t try to hack' });
     }
     //check for member present or not in security_details_of_user
     const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`,[member_id]);
     if(checkMember.length === 0){
-        return res.status(404).json({ status: 'false', error: 'Invalid member ID'});
+        return res.status(200).json({ status: 'false', error: 'Invalid member ID'});
     }
     if (checkMember[0].tpin !== oldtpin){
-        return res.status(401).json({ status: 'false', error: 'Old tpin is incorrect'});
+        return res.status(200).json({ status: 'false', error: 'Old tpin is incorrect'});
     }
     // now update the tpin without hashing
     try{
 
         const updatetpin = await pool.query(`UPDATE security_details_of_user SET tpin = ? WHERE member_id=?`,[newtpin,member_id]);
         if(updatetpin.affectedRows === 0){
-            return res.status(404).json({ status: 'false', error: 'Failed to update tpin'});
+            return res.status(200).json({ status: 'false', error: 'Failed to update tpin'});
         }
         res.status(200).json({ status: 'true', message: 'tpin updated successfully'});
     }
@@ -297,13 +297,13 @@ router.post('/forgetPassword', async (req, res) => {
 
     // Validate input fields
     if (!identifier || !newPassword || !otp) {
-        return res.status(400).json({ status: 'false', error: 'Some fields are empty' });
+        return res.status(200).json({ status: 'false', error: 'Some fields are empty' });
     }
 
     // Check for SQL injection attempts
     const checkthedata = [identifier, newPassword, otp].join(" ");
     if (containsSQLInjectionWords(checkthedata)) {
-        return res.status(400).json({ status: 'false', error: 'Don’t try to hack' });
+        return res.status(200).json({ status: 'false', error: 'Don’t try to hack' });
     }
       // Check for member existence
       const [userRows] = await pool.query(
@@ -313,7 +313,7 @@ router.post('/forgetPassword', async (req, res) => {
       // console.log(userRows)
   
       if (userRows.length === 0) {
-        return res.status(404).json({ status:"false",error: 'User not registered' });
+        return res.status(200).json({ status:"false",error: 'User not registered' });
       }
       //extract member_id 
       const member_id = userRows[0].memberid;
@@ -334,13 +334,13 @@ router.post('/forgetPassword', async (req, res) => {
 
         }
         else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
-            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+            res.status(200).json({ success: false, message: "No otp request by this Member ID" });
         }
         else if(isValid?.success===false && isValid?.message==="OTP expired") {
-            res.status(400).json({ success: false, message: "Otp expired" });
+            res.status(200).json({ success: false, message: "Otp expired" });
 
         } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
-            res.status(400).json({ success: false, message: "Invalid OTP" });
+            res.status(200).json({ success: false, message: "Invalid OTP" });
         }
         
       
@@ -358,18 +358,18 @@ router.post('/forgetTpin', async (req, res) => {
 
     // Validate input fields
     if (!member_id || !newTpin || !otp) {
-        return res.status(400).json({ status: 'false', error: 'Some fields are empty' });
+        return res.status(200).json({ status: 'false', error: 'Some fields are empty' });
     }
 
     // Check for SQL injection attempts
     const checkthedata = [member_id, newTpin, otp].join(" ");
     if (containsSQLInjectionWords(checkthedata)) {
-        return res.status(400).json({ status: 'false', error: 'Don’t try to hack' });
+        return res.status(200).json({ status: 'false', error: 'Don’t try to hack' });
     }
     // Check for member existence
     const [checkMember] = await pool.query(`SELECT * FROM security_details_of_user WHERE member_id =?`, [member_id]);
     if (checkMember.length === 0) {
-        return res.status(404).json({ status: 'false', error: 'Invalid member ID' });
+        return res.status(200).json({ status: 'false', error: 'Invalid member ID' });
     }
 
     // Verify OTP
@@ -380,7 +380,7 @@ router.post('/forgetTpin', async (req, res) => {
             // Update password
             const updateTpin = await pool.query(`UPDATE security_details_of_user SET tpin = ? WHERE member_id=?`, [newTpin, member_id]);
             if (updateTpin.affectedRows === 0) {
-                res.status(404).json({ status: 'false', error: 'Failed to update tpin' });
+                res.status(200).json({ status: 'false', error: 'Failed to update tpin' });
             }
             res.status(200).json({ status: 'true', message: 'TPin updated successfully' });
 
@@ -388,13 +388,13 @@ router.post('/forgetTpin', async (req, res) => {
 
         }
         else if (isValid?.success===false && isValid?.message==="No otp request by this Member ID") {
-            res.status(404).json({ success: false, message: "No otp request by this Member ID" });
+            res.status(200).json({ success: false, message: "No otp request by this Member ID" });
         }
         else if(isValid?.success===false && isValid?.message==="OTP expired") {
-            res.status(400).json({ success: false, message: "Otp expired" });
+            res.status(200).json({ success: false, message: "Otp expired" });
 
         } else if ( isValid?.success===false && isValid?.message==="Invalid OTP") {
-            res.status(400).json({ success: false, message: "Invalid OTP" });
+            res.status(200).json({ success: false, message: "Invalid OTP" });
         }
 
         

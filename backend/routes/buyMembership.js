@@ -6,6 +6,10 @@ const generateTransactionId = require('../utills/generateTxnId');
 const {getFlexiWalletBalance} = require('../utills/checkUserBalance');
 const {commisionPayout} = require('../utills/commisionPayout');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilder')
+// Usage example:
+// recreateRankTable()
+// updateRankAndBacktrack('UP183373');
 
 
 //api for mobile recharge

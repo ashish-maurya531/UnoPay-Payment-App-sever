@@ -521,7 +521,8 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
           console.log(emailResponse.message);
         }
 
-        res.status(201).json({
+        res.status(200).json({
+          status: "true",
           message: 'User registered successfully and member hierarchy updated',
           memberId: assignedId,
           dateOfJoining: userDetails.dateOfJoining
@@ -531,7 +532,7 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
       }
     } catch (apiError) {
       console.error('Error triggering /addmember:', apiError);
-      res.status(500).json({ status:"true",error: 'User registered but failed to update hierarchy' });
+      res.status(200).json({ status:"true",error: 'User registered but failed to update hierarchy' });
     }
   } catch (error) {
     console.error('User registration error:', error);
@@ -539,7 +540,7 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
     if (connection) await connection.rollback();
     
     if (error.code === 'ER_DUP_ENTRY') {
-      res.status(400).json({ status:"false",error: 'Username or email already exists' });
+      res.status(200).json({ status:"false",error: 'Username or email already exists' });
     } else {
       res.status(500).json({ status:"false",error: 'Internal server error' });
     }
