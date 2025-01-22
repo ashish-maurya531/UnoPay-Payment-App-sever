@@ -1,10 +1,11 @@
 import { Button, message } from 'antd';
 import axios from 'axios';
+const Src = import.meta.env.VITE_Src;
 
 export default function GenerateIds() {
   const handleGenerateIds = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/generate-user-ids');
+      const response = await axios.post(`${Src}/api/auth/generate-user-ids`);
       if (response.data.success) {
         message.success('IDs generated successfully!');
       } else {

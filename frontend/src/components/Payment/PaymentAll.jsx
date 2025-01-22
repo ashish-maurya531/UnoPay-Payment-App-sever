@@ -2,6 +2,7 @@
 import { Table, Input, notification, Row, Col, Tag, Typography, Spin } from 'antd';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+const Src = import.meta.env.VITE_Src;
 
 const { Text } = Typography;
 
@@ -35,7 +36,7 @@ export default function UserTransactions() {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/auth/user-all-transactions');
+      const response = await axios.get(`${Src}/api/auth/user-all-transactions`);
       const data = response.data.transactions;
       data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setTransactions(data);

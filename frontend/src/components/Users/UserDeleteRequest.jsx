@@ -4,6 +4,7 @@ import axios from 'axios';
 import { formatDate } from '../../utils/dateFormat';
 
 const { Text } = Typography;
+const Src = import.meta.env.VITE_Src;
 
 export default function UserDeleteRequestList() {
   const [deleteRequests, setDeleteRequests] = useState([]);
@@ -33,7 +34,7 @@ export default function UserDeleteRequestList() {
   const fetchDeleteRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/auth/deleteRequests');
+      const response = await axios.get(`${Src}/api/auth/deleteRequests`);
 
       const formattedRequests = response.data.data.map((request, index) => ({
         key: request.id || index.toString(),
@@ -60,7 +61,7 @@ export default function UserDeleteRequestList() {
   };
   const handleDeleteRequest = async (memberId) => {
     try {
-      const response = await axios.delete('http://localhost:3000/api/auth/deleteRequest', {
+      const response = await axios.delete(`${Src}/api/auth/deleteRequest`, {
         data: { member_id: memberId },
       });
   
@@ -179,7 +180,7 @@ export default function UserDeleteRequestList() {
 
   const handleOk = async () => {
     try {
-      await axios.post('http://localhost:3000/api/auth/toggleStatus', {
+      await axios.post(`${Src}/api/auth/toggleStatus`, {
         memberid: currentMemberId,
       });
 

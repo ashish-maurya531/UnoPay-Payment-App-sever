@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Input, Space, notification,Row,Col } from 'antd';
+const Src = import.meta.env.VITE_Src;
 
 const WalletTable = () => {
   const [data, setData] = useState([]);
@@ -22,7 +23,7 @@ const WalletTable = () => {
     // Fetch user wallet balance data
     console.log('1234567890');
     axios
-      .post('http://localhost:3000/api/auth/all-user-wallet-wise-balance')
+      .post(`${Src}/api/auth/all-user-wallet-wise-balance`)
       .then((response) => {
         if (response.data.success === "true") {
           setData(response.data.data); // Set the data into the state

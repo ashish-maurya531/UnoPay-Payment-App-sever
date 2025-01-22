@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {formatDate } from '../../utils/dateFormat';
 const { Text } = Typography;
+const Src = import.meta.env.VITE_Src;
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -35,7 +36,7 @@ export default function UserList() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:3000/api/auth/users', {
+      const response = await axios.get(`${Src}/api/auth/users`, {
         headers: {
           Authorization: `Bearer ${token}`, // Include the token for authentication
         },
@@ -159,7 +160,7 @@ export default function UserList() {
 
   const handleOk = async () => {
     try {
-      await axios.post('http://localhost:3000/api/auth/toggleStatus', {
+      await axios.post(`${Src}/api/auth/toggleStatus`, {
         memberid: currentUserId,
       });
 

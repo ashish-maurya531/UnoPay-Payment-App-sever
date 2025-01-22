@@ -297,6 +297,8 @@ import {
   UserOutlined, 
   LockOutlined 
 } from '@ant-design/icons';
+//env 
+const Src = import.meta.env.VITE_Src;
 
 const { Title } = Typography;
 
@@ -307,7 +309,7 @@ export default function LoginPage() {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/adminLogin2', {
+      const response = await axios.post(`${Src}/adminLogin2`, {
         name: values.username,
         password: values.password,
       });

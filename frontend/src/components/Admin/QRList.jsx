@@ -2,6 +2,8 @@ import { Table, Button, Modal, Form, Input, Upload, Image, message, Space, notif
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+const Src = import.meta.env.VITE_Src;
+
 
 export default function QRList() {
   const [data, setData] = useState([]); // Table data
@@ -15,7 +17,7 @@ export default function QRList() {
   const fetchQRs = async (currentPage = 1, pageSize = 5) => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/api/auth/getAllAdminQRS');
+      const response = await axios.get(`${Src}/api/auth/getAllAdminQRS`);
       const fetchedData = response.data.data || [];
       setData(fetchedData);
       setPagination({
@@ -44,7 +46,7 @@ export default function QRList() {
   // Delete a QR by ID
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/api/auth/deleteAdminQR/${id}`);
+      await axios.delete(`${Src}/api/auth/deleteAdminQR/${id}`);
       message.success('QR deleted successfully!');
       fetchQRs();
     } catch (error) {
@@ -59,7 +61,7 @@ export default function QRList() {
     formData.append('qr', values.qr.file);
 
     try {
-      await axios.post('http://localhost:3000/api/auth/postAdminQRS', formData, {
+      await axios.post(`${Src}/api/auth/postAdminQRS`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -76,7 +78,7 @@ export default function QRList() {
   // Fetch QR image URL by ID
   const handleViewQR = async (qr) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/getQRimage', {
+      const response = await axios.post(`${Src}/api/auth/getQRimage`, {
         qr: qr,
       }, { responseType: 'blob' });
 

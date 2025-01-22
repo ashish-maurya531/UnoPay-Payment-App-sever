@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+const Src = import.meta.env.VITE_Src;
 
 export default function UserChatSystem() {
   const [users, setUsers] = useState([]);
@@ -22,7 +23,7 @@ export default function UserChatSystem() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await axios.get('http://localhost:3000/api/auth/get-all-the-users',{
+      const response = await axios.get(`${Src}/api/auth/get-all-the-users`,{
         headers: {
           'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
           }
@@ -48,7 +49,7 @@ export default function UserChatSystem() {
   const fetchChats = async (memberId, ticketId) => {
     try {
       setLoadingChats(true);
-      const response = await axios.post('http://localhost:3000/api/auth/get-user-admin-chat', {
+      const response = await axios.post(`${Src}/api/auth/get-user-admin-chat`, {
         member_id: memberId,
         ticket_id: ticketId,
       });
@@ -69,7 +70,7 @@ export default function UserChatSystem() {
 
     try {
       const { memberId, ticketId } = selectedUser;
-      await axios.post('http://localhost:3000/api/auth/send-message', {
+      await axios.post(`${Src}/api/auth/send-message`, {
         member_id: memberId,
         ticket_id: ticketId,
         message_by: 'admin',

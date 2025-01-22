@@ -1,6 +1,7 @@
 import { Layout, Menu, Dropdown, Button, Space } from 'antd';
 import { UserOutlined, CreditCardOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+const Src = import.meta.env.VITE_Src;
 
 const { Header, Content } = Layout;
 

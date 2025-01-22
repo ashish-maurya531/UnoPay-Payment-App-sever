@@ -5,6 +5,7 @@ import { formatDate } from '../../utils/dateFormat';
 import { CheckCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
+const Src = import.meta.env.VITE_Src;
 
 export default function LoginIssueRequestList() {
   const [loginIssues, setLoginIssues] = useState([]);
@@ -32,7 +33,7 @@ export default function LoginIssueRequestList() {
   const fetchLoginIssueRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:3000/api/auth/all-login-issues');
+      const response = await axios.post(`${Src}/api/auth/all-login-issues`);
       
       const formattedRequests = response.data.requests.map((request, index) => ({
         key: request.login_issue_id,
@@ -60,7 +61,7 @@ export default function LoginIssueRequestList() {
 
   const handleStatusChange = async (loginIssueId, newStatus) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/update-login-issue-status', {
+      const response = await axios.post(`${Src}/api/auth/update-login-issue-status`, {
         login_issue_id: loginIssueId,
         status: newStatus,
       });
@@ -90,7 +91,7 @@ export default function LoginIssueRequestList() {
     console.log(loginIssueId);
     try {
       // Make the API request to delete the login issue
-      const response = await axios.post('http://localhost:3000/api/auth/delete-login-issue', {
+      const response = await axios.post(`${Src}/api/auth/delete-login-issue`, {
         login_issue_id: loginIssueId 
       });
   

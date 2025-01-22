@@ -74,6 +74,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { notification } from 'antd';
 import {jwtDecode} from 'jwt-decode'; // Correct import for jwt-decode
+const Src = import.meta.env.VITE_Src;
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Start with null to indicate loading

@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import axios from 'axios';
 import {formatDate } from '../../utils/dateFormat';
+const Src = import.meta.env.VITE_Src;
 
 
 const { Text, Title } = Typography;
@@ -49,7 +50,7 @@ const BankDetails = () => {
   const fetchBankDetails = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/api/auth/bankkycDetails/All');
+      const response = await axios.get(`${Src}/api/auth/bankkycDetails/All`);
       if (response.data.status === 'true') {
         //sort by creation time
         response.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -73,7 +74,7 @@ const BankDetails = () => {
 
   const fetchImage = async (imageType) => {
     try {
-      const response = await axios.post(`http://localhost:3000/api/auth/get${imageType}Image`, {
+      const response = await axios.post(`${Src}/api/auth/get${imageType}Image`, {
         member_id: selectedRecord.member_id
       }, { responseType: 'blob' });
       console.log(response);
@@ -96,7 +97,7 @@ const BankDetails = () => {
 
   const handleStatusUpdate = async (status) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/updateUserKycStatus', {
+      const response = await axios.post(`${Src}/api/auth/updateUserKycStatus`, {
         member_id: selectedRecord.member_id,
         status,
         message: status === 'rejected' ? rejectionMessage : 'done'

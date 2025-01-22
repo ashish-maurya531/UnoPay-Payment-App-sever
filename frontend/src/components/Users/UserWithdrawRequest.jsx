@@ -369,6 +369,7 @@ import {
 } from 'antd';
 import axios from 'axios';
 import { formatDate } from '../../utils/dateFormat';
+const Src = import.meta.env.VITE_Src;
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -390,7 +391,7 @@ const WithdrawRequests = () => {
   const fetchWithdrawRequests = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/api/auth/all-withdraw-request');
+      const response = await axios.get(`${Src}/api/auth/all-withdraw-request`);
       if (response.data.status === 'true') {
         response.data.data.sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
         setData(response.data.data);
@@ -416,7 +417,7 @@ const WithdrawRequests = () => {
     setLoading(true);
     try {
         const response = await axios.post(
-            'http://localhost:3000/api/auth/update-status-user-withdraw-request',
+            `${Src}/api/auth/update-status-user-withdraw-request`,
             {
                 transaction_id: selectedRecord.transaction_id,
                 status,

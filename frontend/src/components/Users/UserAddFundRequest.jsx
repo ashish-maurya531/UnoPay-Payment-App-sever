@@ -15,6 +15,7 @@ import {formatDate } from '../../utils/dateFormat';
 
 import axios from 'axios';
 const { Title, Text } = Typography;
+const Src = import.meta.env.VITE_Src;
 
 const UserAddFundRequest = () => {
   const [data, setData] = useState([]);
@@ -43,7 +44,7 @@ const UserAddFundRequest = () => {
   const fetchFundRequests = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:3000/api/auth/getAllUserAddFundRequest?page=${page}`);
+      const response = await axios.get(`${Src}/api/auth/getAllUserAddFundRequest?page=${page}`);
       if (response.data.status === 'success') {
         //sort the records decending  acc to time 
         response.data.data.sort((a, b) => new Date(b.time_date) - new Date(a.time_date));
@@ -68,7 +69,7 @@ const UserAddFundRequest = () => {
 
   const handleViewScreenshot = async (record) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/getUserAddFundRequestSS', {
+      const response = await axios.post(`${Src}/api/auth/getUserAddFundRequestSS`, {
         utr_number: record.utr_number,
       }, { responseType: 'blob' });
 
@@ -88,7 +89,7 @@ const UserAddFundRequest = () => {
 
   const handleStatusUpdate = async (status) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/updateFundRequestStatus', {
+      const response = await axios.post(`${Src}/api/auth/updateFundRequestStatus`, {
         utr_number: selectedRecord.utr_number,
         status,
       });

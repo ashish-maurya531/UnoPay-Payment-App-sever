@@ -2,6 +2,9 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const bodyParser = require('body-parser');
+
+
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/userAddFund');
 const adminQR= require('./routes/adminQR');
@@ -27,6 +30,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(bodyParser.json({ strict: true }));
 app.use(cors());
 app.use(express.json());
 // index.js
@@ -54,11 +58,14 @@ app.use('/api/auth', authenticateToken, userRaiseTicket); // Protected
 app.use('/api/auth', authenticateToken, userWithdrawAndTransfer); // Protected
 // Error handling middleware
 app.use((err, req, res, next) => {
+  console.log(req.body); // Log the request body
+
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
 
-app.listen(port, () => {
+
+app.listen(port,"0.0.0.0" ,() => {
   console.log(`Server running on port ${port}`);
 });
 
