@@ -685,9 +685,9 @@ const sendOtpRegister = async (identifier) => {
             ]
         };
         // Send the email
-        // const info = await transporter.sendMail(mailOptions);
-        // console.log('Email sent:', info.response);
-        console.log('Email sent:');
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.response);
+        // console.log('Email sent:');
 
 
         return { success: true, message: 'OTP sent successfully' };
