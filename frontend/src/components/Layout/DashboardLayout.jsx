@@ -46,6 +46,11 @@ export default function DashboardLayout({ children }) {
       label: 'User Money Withdraw Request',
       onClick: () => navigate('/dashboard/user-withdraw-request'),
     },
+    {
+      key: 'UserRanking',
+      label: 'User Ranking',
+      onClick: () => navigate('/dashboard/user-rank'),
+    },
     
   ];
   

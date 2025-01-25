@@ -21,6 +21,7 @@ const userWithdrawAndTransfer = require('./routes/userWithdrawAndTransfer')
 
 const authenticateToken  = require('./middleware/auth');
 const adminLoginRoute = require('./routes/adminLoginRoute');
+const ranking_system = require('./routes/ranking_system');
 
 
 
@@ -56,6 +57,7 @@ app.use('/api/auth', authenticateToken, userTeamAndDirect); // Protected
 app.use('/api/auth', authenticateToken, user_delete_requests); // Protected
 app.use('/api/auth', authenticateToken, userRaiseTicket); // Protected
 app.use('/api/auth', authenticateToken, userWithdrawAndTransfer); // Protected
+app.use('/api/auth', authenticateToken,ranking_system)
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.log(req.body); // Log the request body
