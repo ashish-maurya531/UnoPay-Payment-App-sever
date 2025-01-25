@@ -7,7 +7,7 @@ router.get('/getAllUsersRank', async (req, res) => {
   try {
     const [result] = await pool.query('SELECT * FROM ranktable');
     // console.log(result);
-    res.status(200).json(result.rows);
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching all users:', error);
     res.status(500).json({ error: 'Failed to fetch data' });
