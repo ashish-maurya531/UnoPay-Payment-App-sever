@@ -540,9 +540,9 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
     if (connection) await connection.rollback();
     
     if (error.code === 'ER_DUP_ENTRY') {
-      res.status(200).json({ status:"false",error: 'Username or email already exists' });
+      res.status(200).json({ status:"false",message: 'Username or email already exists' });
     } else {
-      res.status(500).json({ status:"false",error: 'Internal server error' });
+      res.status(500).json({ status:"false",message: 'Internal server error' });
     }
   } finally {
     // Release the connection back to the pool
@@ -553,89 +553,89 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
 ////////////////////////////
   
 // User Login
-router.post('/login', async (req, res) => {
-  const { identifier, password } = req.body; 
+// router.post('/login', async (req, res) => {
+//   const { identifier, password } = req.body; 
 
-  // Validate inputs
-  if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password)) {
-    return res.status(400).json({ status:"false",error: "Don't try to hack." });
-  }
+//   // Validate inputs
+//   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password)) {
+//     return res.status(400).json({ status:"false",message: "Don't try to hack." });
+//   }
 
-  try {
+//   try {
     
-    // console.log(identifier);
-    const [userRows] = await pool.query(
-      'SELECT memberid ,username ,status,membership,phoneno,email,created_at FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
-      [identifier, identifier, identifier]
-    );
-    // console.log(userRows)
+//     // console.log(identifier);
+//     const [userRows] = await pool.query(
+//       'SELECT memberid ,username ,status,membership,phoneno,email,created_at FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+//       [identifier, identifier, identifier]
+//     );
+//     // console.log(userRows)
 
-    if (userRows.length === 0) {
-      return res.status(404).json({ status:"false",error: 'User not registered' });
-    }
+//     if (userRows.length === 0) {
+//       return res.status(404).json({ status:"false",message: 'User not registered' });
+//     }
 
-    const memberid = userRows[0].memberid;
-    const username=userRows[0].username;
-    const status = userRows[0].status;
-    const membership = userRows[0].membership;
-    //checking the status of the user
-    if (status === 'inactive') {
-      return res.status(401).json({ status:"false",error: 'Your account is inactive'});
-      }
+//     const memberid = userRows[0].memberid;
+//     const username=userRows[0].username;
+//     const status = userRows[0].status;
+//     const membership = userRows[0].membership;
+//     //checking the status of the user
+//     if (status === 'inactive') {
+//       return res.status(401).json({ status:"false",message: 'Your account is inactive'});
+//       }
       
 
 
 
-    // Verify the password from security_details_of_user
-    const [passwordRows] = await pool.query(
-      'SELECT password FROM security_details_of_user WHERE member_id = ?',
-      [memberid]
-    );
+//     // Verify the password from security_details_of_user
+//     const [passwordRows] = await pool.query(
+//       'SELECT password FROM security_details_of_user WHERE member_id = ?',
+//       [memberid]
+//     );
 
-    if (passwordRows.length === 0 || passwordRows[0].password !== password) {
-      return res.status(401).json({ status:"false",error: 'Wrong password' });
-    }
+//     if (passwordRows.length === 0 || passwordRows[0].password !== password) {
+//       return res.status(401).json({ status:"false",message: 'Wrong password' });
+//     }
 
-    //update the user_signup_bonous table value 0 to 1
-    //first get the current value then update if value is 0 otherwise not update
-    const [signupBonusRows] = await pool.query(
-      'SELECT value FROM user_signup_bonus WHERE member_id = ?',
-      [memberid]
-    );
-    const currentValue = signupBonusRows[0]?.value;
-    if (currentValue === 0) {
-      const [updateRows] = await pool.query(
-        'UPDATE user_signup_bonus SET value = 1 WHERE member_id = ?',
-        [memberid]
-        );
+//     //update the user_signup_bonous table value 0 to 1
+//     //first get the current value then update if value is 0 otherwise not update
+//     const [signupBonusRows] = await pool.query(
+//       'SELECT value FROM user_signup_bonus WHERE member_id = ?',
+//       [memberid]
+//     );
+//     const currentValue = signupBonusRows[0]?.value;
+//     if (currentValue === 0) {
+//       const [updateRows] = await pool.query(
+//         'UPDATE user_signup_bonus SET value = 1 WHERE member_id = ?',
+//         [memberid]
+//         );
 
-        if (updateRows.affectedRows === 0) {
-          console.log("Error: Could not update user_signup_bonus table value");
-        }
-    }
-    //yadd rakhna ki user signup bonus table ka trigger chnage krna hai 
-    //SHOW CREATE TRIGGER prevent_revert_from_2;
-    // console.log(userRows);
+//         if (updateRows.affectedRows === 0) {
+//           console.log("Error: Could not update user_signup_bonus table value");
+//         }
+//     }
+//     //yadd rakhna ki user signup bonus table ka trigger chnage krna hai 
+//     //SHOW CREATE TRIGGER prevent_revert_from_2;
+//     // console.log(userRows);
 
 
 
-    // Successful login
-    res.json({ 
-      status:"true",
-      message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
-    console.log(username+" ka hogya login "+new Date())
-  } catch (error) {
-    console.error('User login error:', error);
-    res.status(500).json({ status:"false",error: 'Internal server error' });
-  }
-});
+//     // Successful login
+//     res.json({ 
+//       status:"true",
+//       message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
+//     console.log(username+" ka hogya login "+new Date())
+//   } catch (error) {
+//     console.error('User login error:', error);
+//     res.status(500).json({ status:"false",message: 'Internal server error' });
+//   }
+// });
 
 //get the membership status of the user
 router.post('/getmembershipStatus', async (req, res) => {
   const { member_id } = req.body;
 
   if (!member_id) {
-    return res.status(400).json({ status:"false",error: 'MemberID is required' });
+    return res.status(400).json({ status:"false",message: 'MemberID is required' });
   }
  
 
@@ -645,7 +645,7 @@ router.post('/getmembershipStatus', async (req, res) => {
   const checktheData = member_id;
   console.log(checktheData);
   if (containsSQLInjectionWords(checktheData)) {
-    return res.status(400).json({ status: "false", error: "Don't try to hack." });
+    return res.status(400).json({ status: "false", message: "Don't try to hack." });
   }
 
   try {
@@ -655,13 +655,13 @@ router.post('/getmembershipStatus', async (req, res) => {
     );
     // console.log(userRows)
     if (userRows.length === 0) {
-      return res.status(404).json({ status:"false",error: 'User not registered' });
+      return res.status(404).json({ status:"false",message: 'User not registered' });
     }
     const membership = userRows[0].membership;
     res.json({ status:"true", membership });
   } catch (error) {
     console.error('Error fetching membership:', error);
-    res.status(500).json({ status:"false",error: 'Internal server error' });
+    res.status(500).json({ status:"false",message: 'Internal server error' });
   }
 });
 
@@ -674,7 +674,7 @@ router.post('/login2', async (req, res) => {
 
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
-    return res.status(200).json({ status: "false", error: "Don't try to hack." });
+    return res.status(200).json({ status: "false", message: "Don't try to hack." });
   }
 
   try {
@@ -685,7 +685,7 @@ router.post('/login2', async (req, res) => {
     );
 
     if (userRows.length === 0) {
-      return res.status(200).json({ status: "false", error: 'User not registered' });
+      return res.status(200).json({ status: "false", message: 'User not registered' });
     }
 
     const memberid = userRows[0].memberid;
@@ -696,7 +696,7 @@ router.post('/login2', async (req, res) => {
 
     // Check if the account is active
     if (status === 'inactive') {
-      return res.status(200).json({ status: "false", error: 'Your account is inactive' });
+      return res.status(200).json({ status: "false", message: 'Your account is inactive' });
     }
 
     // Verify the password
@@ -706,7 +706,7 @@ router.post('/login2', async (req, res) => {
     );
 
     if (passwordRows.length === 0 || passwordRows[0].password !== password) {
-      return res.status(200).json({ status: "false", error: 'Wrong password' });
+      return res.status(200).json({ status: "false", message: 'Wrong password' });
     }
 
     // Check if device_id exists in the login_device_info table
@@ -726,7 +726,7 @@ router.post('/login2', async (req, res) => {
             message: 'This is your first time logging in. OTP sent to email for device verification.'
           });
         } else {
-          return res.status(200).json({ status: "false", error: 'Failed to send OTP email' });
+          return res.status(200).json({ status: "false", message: 'Failed to send OTP email' });
         }
       } else {
         // Verify OTP for first-time login
@@ -762,7 +762,7 @@ router.post('/login2', async (req, res) => {
               message: 'Device does not match. OTP sent to email for verification.'
             });
           } else {
-            return res.status(200).json({ status: "false", error: 'Failed to send OTP email' });
+            return res.status(200).json({ status: "false", message: 'Failed to send OTP email' });
           }
         } else {
           // Verify OTP for device change
@@ -803,7 +803,7 @@ router.post('/login2', async (req, res) => {
     }
   } catch (error) {
     console.error('User login error:', error);
-    res.status(200).json({ status: "false", error: 'Internal server error' });
+    res.status(200).json({ status: "false", message: 'Internal server error' });
   }
 });
 

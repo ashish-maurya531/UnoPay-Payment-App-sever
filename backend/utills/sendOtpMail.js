@@ -225,9 +225,11 @@ async function sendOtpEmail(member_id) {
 
 
         // Sending the email
-        const info = await transporter.sendMail(mailOptions);
+        // const info = await transporter.sendMail(mailOptions);
 
-        console.log('Email sent: ' + info.response);
+        // console.log('Email sent: ' + info.response);
+        console.log('Email sent: ');
+        
         return { success: true, message: 'OTP sent successfully'}; // Return the OTP for testing/debugging
     } catch (error) {
         console.error('Error sending email:', error);
@@ -1319,9 +1321,11 @@ async function universalOtpEmailSender(member_id, type) {
         };
 
         // Sending the email
-        const info = await transporter.sendMail(mailOptions);
+        // const info = await transporter.sendMail(mailOptions);
 
-        console.log('Email sent: ' + info.response);
+        // console.log('Email sent: ' + info.response);
+        console.log('Email sent: ',type);
+
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {
         console.error('Error sending email:', error);
