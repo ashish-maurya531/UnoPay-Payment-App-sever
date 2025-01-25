@@ -133,6 +133,7 @@ router.post('/buymembership', async (req, res) => {
             
             res.status(200).json({ status:'success', message: 'Membership purchased successfully.' });
             updateRankAndBacktrack(member_id);
+
         }
         catch (error) {
             console.error(error);
