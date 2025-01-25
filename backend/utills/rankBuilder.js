@@ -1,17 +1,10 @@
 const { pool } = require('../config/database');
-
-const STARTING_ID = 'UP100010'; // ID to skip in the chain
-
+const STARTING_ID = 'UP100010'; 
 const recreateRankTable = async () => {
     console.log("Recreating rank table...");
-
-    // Truncate the rank table to start fresh
     await pool.query(`TRUNCATE TABLE ranktable`);
-
-    // Fetch all users from the userdetails table
     // const [users] = await pool.query(`SELECT memberid FROM usersdetails WHERE status = 'active' or status='inactive'`);
     const [users] = await pool.query(`SELECT memberid FROM usersdetails`);
-
 
     const updateRank = async (memberId) => {
         const getRankInfo = async (id) => {
@@ -25,14 +18,11 @@ const recreateRankTable = async () => {
                 LEFT JOIN ranktable r ON m.member_id = r.member_id
                 WHERE m.sponser_id = ?
             `, [id]);
-            return result[0]; // Return the first (and only) result row
+            return result[0]; 
         };
 
         const updateUserRank = async (sponsorId, memberId, directs, activeDirects, rank, activeDirectsList) => {
-            // Only filter out directs with 'basic' or 'premium' membership for active directs
             const activeDirectsListFiltered = (Array.isArray(activeDirectsList) ? activeDirectsList : []).filter(({ membership }) => membership === 'BASIC' || membership === 'PREMIUM');
-            
-            // Calculate counts for different ranks
             const opalCount = activeDirectsListFiltered.filter(({ rank }) => rank === 1).length;
             const topazCount = activeDirectsListFiltered.filter(({ rank }) => rank === 2).length;
             const jasperCount = activeDirectsListFiltered.filter(({ rank }) => rank === 3).length;
@@ -40,8 +30,7 @@ const recreateRankTable = async () => {
             const diamondCount = activeDirectsListFiltered.filter(({ rank }) => rank === 5).length;
             const blueDiamondCount = activeDirectsListFiltered.filter(({ rank }) => rank === 6).length;
             const crownDiamondCount = activeDirectsListFiltered.filter(({ rank }) => rank === 7).length;
-        
-            // Insert or update the ranktable
+       
             await pool.query(`
                 INSERT INTO ranktable (sponser_id, member_id, directs, active_directs, rank_no, active_directs_list, OPAL, TOPAZ, JASPER, ALEXANDER, DIAMOND, BLUE_DIAMOND, CROWN_DIAMOND, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
@@ -64,7 +53,7 @@ const recreateRankTable = async () => {
                 directs,
                 activeDirects,
                 rank,
-                JSON.stringify(activeDirectsListFiltered), // Only include active directs in the list
+                JSON.stringify(activeDirectsListFiltered), 
                 opalCount,
                 topazCount,
                 jasperCount,
@@ -91,59 +80,57 @@ const recreateRankTable = async () => {
 
             let rank = 0;
 
-            // const eligibleRanks = (activeDirectsList || []).filter(({ rank }) => rank >= 1).length;
-            // // Calculate rank based on active directs and eligible ranks
-            // if (eligibleRanks >= 2 && rank >= 6) {
-            //     rank = 7; // Crown Diamond
-            // } else if (eligibleRanks >= 2 && rank >= 5) {
-            //     rank = 6; // Blue Diamond
-            // } else if (eligibleRanks >= 2 && rank >= 4) {
-            //     rank = 5; // Diamond
-            // } else if (eligibleRanks >= 2 && rank >= 3) {
-            //     rank = 4; // Alexander
-            // } else if (eligibleRanks >= 2 && rank >= 2) {
-            //     rank = 3; // Jasper
-            // } else if (eligibleRanks >= 2) {
-            //     rank = 2; // Topaz
-            // } else if (activeDirects >= 2) {
-            //     rank = 1; // Opal
-            // }
-
 
             const eligibleRanks = (activeDirectsList || []).filter(({ rank }) => rank >= 1).length;
             const [currentMembership]=await pool.query(`SELECT membership FROM usersdetails WHERE memberid = ?`, [id]);
             const currentMemberMembership=currentMembership[0].membership;
-
-            // Check if the member's membership is 'BASIC' or 'PREMIUM'
             if (currentMemberMembership === 'BASIC' || currentMemberMembership === 'PREMIUM') {
-                // Calculate rank based on active directs and eligible ranks
                 if (eligibleRanks >= 2 && rank >= 6) {
-                    rank = 7; // Crown Diamond
+                    rank = 7; 
                 } else if (eligibleRanks >= 2 && rank >= 5) {
-                    rank = 6; // Blue Diamond
+                    rank = 6; 
                 } else if (eligibleRanks >= 2 && rank >= 4) {
-                    rank = 5; // Diamond
+                    rank = 5; 
                 } else if (eligibleRanks >= 2 && rank >= 3) {
-                    rank = 4; // Alexander
+                    rank = 4;
                 } else if (eligibleRanks >= 2 && rank >= 2) {
-                    rank = 3; // Jasper
+                    rank = 3; 
                 } else if (eligibleRanks >= 3) {
-                    rank = 2; // Topaz
+                    rank = 2; 
                 } else if (activeDirects >= 2) {
-                    rank = 1; // Opal
+                    rank = 1; 
                 }
             } else {
                 console.log(`Skipping rank calculation for member ${id} as their membership is not BASIC or PREMIUM.`);
-                rank = 0; // Reset rank if membership is not eligible
+                rank = 0; 
             }
-    
 
-            // Get sponsor ID for backtracking
+            // if (currentMemberMembership === 'BASIC' || currentMemberMembership === 'PREMIUM') {
+            //     if (eligibleRanks >= 4 && rank >= 6) {
+            //         rank = 7; 
+            //     } else if (eligibleRanks >= 4 && rank >= 5) {
+            //         rank = 6; 
+            //     } else if (eligibleRanks >= 4 && rank >= 4) {
+            //         rank = 5; 
+            //     } else if (eligibleRanks >= 4 && rank >= 3) {
+            //         rank = 4; 
+            //     } else if (eligibleRanks >= 4 && rank >= 2) {
+            //         rank = 3;
+            //     } else if (eligibleRanks >= 4) {
+            //         rank = 2; 
+            //     } else if (activeDirects >= 12) {
+            //         rank = 1; 
+            //     }
+            // } else {
+            //     console.log(`Skipping rank calculation for member ${id} as their membership is not BASIC or PREMIUM.`);
+            //     rank = 0; 
+            // }
+    
             const [sponsor] = await pool.query(`SELECT sponser_id FROM member WHERE member_id = ?`, [id]);
 
             if (sponsor.length > 0) {
                 await updateUserRank(sponsor[0].sponser_id, id, directs, activeDirects, rank, activeDirectsList);
-                await processRank(sponsor[0].sponser_id); // Backtrack
+                await processRank(sponsor[0].sponser_id); 
             } else {
                 await updateUserRank(null, id, directs, activeDirects, rank, activeDirectsList);
             }
@@ -152,7 +139,7 @@ const recreateRankTable = async () => {
         await processRank(memberId);
     };
 
-    // Iterate through each user and calculate their rank
+    
     for (const user of users) {
         await updateRank(user.memberid);
     }
@@ -178,14 +165,11 @@ const updateRankAndBacktrack = async (memberId) => {
             LEFT JOIN ranktable r ON m.member_id = r.member_id
             WHERE m.sponser_id = ?
         `, [id]);
-        return result[0]; // Return the first (and only) result row
+        return result[0]; 
     };
 
     const updateUserRank = async (sponsorId, memberId, directs, activeDirects, rank, activeDirectsList) => {
-        // Only filter out directs with 'basic' or 'premium' membership for active directs
         const activeDirectsListFiltered = (Array.isArray(activeDirectsList) ? activeDirectsList : []).filter(({ membership }) => membership === 'BASIC' || membership === 'PREMIUM');
-        
-        // Calculate counts for different ranks
         const opalCount = activeDirectsListFiltered.filter(({ rank }) => rank === 1).length;
         const topazCount = activeDirectsListFiltered.filter(({ rank }) => rank === 2).length;
         const jasperCount = activeDirectsListFiltered.filter(({ rank }) => rank === 3).length;
@@ -194,7 +178,7 @@ const updateRankAndBacktrack = async (memberId) => {
         const blueDiamondCount = activeDirectsListFiltered.filter(({ rank }) => rank === 6).length;
         const crownDiamondCount = activeDirectsListFiltered.filter(({ rank }) => rank === 7).length;
     
-        // Insert or update the ranktable
+
         await pool.query(`
             INSERT INTO ranktable (sponser_id, member_id, directs, active_directs, rank_no, active_directs_list, OPAL, TOPAZ, JASPER, ALEXANDER, DIAMOND, BLUE_DIAMOND, CROWN_DIAMOND, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
@@ -217,7 +201,7 @@ const updateRankAndBacktrack = async (memberId) => {
             directs,
             activeDirects,
             rank,
-            JSON.stringify(activeDirectsListFiltered), // Only include active directs in the list
+            JSON.stringify(activeDirectsListFiltered), 
             opalCount,
             topazCount,
             jasperCount,
@@ -244,15 +228,11 @@ const updateRankAndBacktrack = async (memberId) => {
 
         let rank = 0;
 
-        // Calculate rank based on active directs
        
         const eligibleRanks = (activeDirectsList || []).filter(({ rank }) => rank >= 1).length;
             const [currentMembership]=await pool.query(`SELECT membership FROM usersdetails WHERE memberid = ?`, [id]);
             const currentMemberMembership=currentMembership[0].membership;
-
-            // Check if the member's membership is 'BASIC' or 'PREMIUM'
             if (currentMemberMembership === 'BASIC' || currentMemberMembership === 'PREMIUM') {
-                // Calculate rank based on active directs and eligible ranks
                 if (eligibleRanks >= 2 && rank >= 6) {
                     rank = 7; // Crown Diamond
                 } else if (eligibleRanks >= 2 && rank >= 5) {
@@ -270,15 +250,36 @@ const updateRankAndBacktrack = async (memberId) => {
                 }
             } else {
                 console.log(`Skipping rank calculation for member ${id} as their membership is not BASIC or PREMIUM.`);
-                rank = 0; // Reset rank if membership is not eligible
+                rank = 0; 
             }
 
-        // Get sponsor ID for backtracking
+
+            // if (currentMemberMembership === 'BASIC' || currentMemberMembership === 'PREMIUM') {
+            //     if (eligibleRanks >= 4 && rank >= 6) {
+            //         rank = 7; 
+            //     } else if (eligibleRanks >= 4 && rank >= 5) {
+            //         rank = 6; 
+            //     } else if (eligibleRanks >= 4 && rank >= 4) {
+            //         rank = 5; 
+            //     } else if (eligibleRanks >= 4 && rank >= 3) {
+            //         rank = 4; 
+            //     } else if (eligibleRanks >= 4 && rank >= 2) {
+            //         rank = 3;
+            //     } else if (eligibleRanks >= 4) {
+            //         rank = 2; 
+            //     } else if (activeDirects >= 12) {
+            //         rank = 1; 
+            //     }
+            // } else {
+            //     console.log(`Skipping rank calculation for member ${id} as their membership is not BASIC or PREMIUM.`);
+            //     rank = 0; 
+            // }
+
         const [sponsor] = await pool.query(`SELECT sponser_id FROM member WHERE member_id = ?`, [id]);
 
         if (sponsor.length > 0) {
             await updateUserRank(sponsor[0].sponser_id, id, directs, activeDirects, rank, activeDirectsList);
-            await processRank(sponsor[0].sponser_id); // Backtrack
+            await processRank(sponsor[0].sponser_id); 
         } else {
             await updateUserRank(null, id, directs, activeDirects, rank, activeDirectsList);
         }
@@ -286,10 +287,6 @@ const updateRankAndBacktrack = async (memberId) => {
 
     await processRank(memberId);
 };
-// Example usage: Call this function when a user buys a membership
-// updateRankAndBacktrack('UP191406');
-
-
 
 
 module.exports = { recreateRankTable ,updateRankAndBacktrack};
