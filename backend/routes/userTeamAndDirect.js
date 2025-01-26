@@ -86,7 +86,7 @@ router.post("/getTeamList", async (req, res) => {
 
         // Query to fetch member details from usersdetails
         const [rows2] = await pool.query(
-            `SELECT memberid, username, membership, created_at FROM usersdetails WHERE memberid IN (?)`,
+            `SELECT memberid, username, membership, phoneno,email,created_at FROM usersdetails WHERE memberid IN (?)`,
             [memberList]
         );
 
@@ -102,6 +102,8 @@ router.post("/getTeamList", async (req, res) => {
                 username: memberDetails?.username || null,
                 membership: memberDetails?.membership || null,
                 date_of_joining: memberDetails?.created_at || null,
+                phone: memberDetails?.phoneno || null,
+                email: memberDetails?.email || null,
             };
         });
 

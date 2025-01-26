@@ -26,7 +26,7 @@ const getMembershipTransactionsForToday = async (req, res) => {
         // Send the response with the result
         console.log({
             message: "Today's transactions fetched successfully",
-            todayIncome: rows[0].todayIncome,
+            todayIncome: rows[0].todayIncome|| 0,
         });
 
         return {
@@ -64,7 +64,7 @@ const getMembershipTransactionsForWeek = async (req, res) => {
 
         console.log({
             message: "Weekly transactions fetched successfully",
-            weeklyIncome: rows[0].weeklyIncome,
+            weeklyIncome: rows[0].weeklyIncome|| 0,
         });
 
         return {
@@ -103,7 +103,7 @@ const getMembershipTransactionsForMonth = async (req, res) => {
 
         console.log({
             message: "Monthly transactions fetched successfully",
-            monthlyIncome: rows[0].monthlyIncome,
+            monthlyIncome: rows[0].monthlyIncome|| 0,
         });
 
         return {

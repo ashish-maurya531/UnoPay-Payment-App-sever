@@ -110,6 +110,21 @@ export default function RankList() {
                       dataIndex: 'membership',
                       key: 'membership',
                     },
+                    {
+                      title: 'Status',
+                      dataIndex: 'status',
+                      key: 'status',
+                    },
+                    {
+                      title: 'Phone Number',
+                      dataIndex: 'phoneno',
+                      key: 'phoneno',
+                    },
+                    {
+                      title: 'Email Address',
+                      dataIndex: 'email',
+                      key: 'email',
+                    },
                   ]}
                   dataSource={activeDirectsList}
                   pagination={false}

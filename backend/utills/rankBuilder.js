@@ -11,8 +11,8 @@ const recreateRankTable = async () => {
             const [result] = await pool.query(`
                 SELECT
                     COUNT(*) AS directs,
-                    COUNT(CASE WHEN u.status = 'active' AND u.membership IN ('basic', 'premium') THEN 1 END) AS active_directs,
-                    JSON_ARRAYAGG(JSON_OBJECT('member_id', m.member_id, 'rank', IFNULL(r.rank_no, 0), 'membership', u.membership)) AS active_directs_list
+                    COUNT(CASE WHEN  u.membership IN ('BASIC', 'PREMIUM') THEN 1 END) AS active_directs,
+                    JSON_ARRAYAGG(JSON_OBJECT('member_id', m.member_id, 'rank', IFNULL(r.rank_no, 0), 'membership', u.membership,'status',u.status,'phoneno',u.phoneno,'email',u.email)) AS active_directs_list
                 FROM member m
                 LEFT JOIN usersdetails u ON m.member_id = u.memberid
                 LEFT JOIN ranktable r ON m.member_id = r.member_id
@@ -157,13 +157,13 @@ const updateRankAndBacktrack = async (memberId) => {
     const getRankInfo = async (id) => {
         const [result] = await pool.query(`
             SELECT
-                COUNT(*) AS directs,
-                COUNT(CASE WHEN u.status = 'active' AND u.membership IN ('basic', 'premium') THEN 1 END) AS active_directs,
-                JSON_ARRAYAGG(JSON_OBJECT('member_id', m.member_id, 'rank', IFNULL(r.rank_no, 0), 'membership', u.membership)) AS active_directs_list
-            FROM member m
-            LEFT JOIN usersdetails u ON m.member_id = u.memberid
-            LEFT JOIN ranktable r ON m.member_id = r.member_id
-            WHERE m.sponser_id = ?
+                    COUNT(*) AS directs,
+                    COUNT(CASE WHEN  u.membership IN ('BASIC', 'PREMIUM') THEN 1 END) AS active_directs,
+                    JSON_ARRAYAGG(JSON_OBJECT('member_id', m.member_id, 'rank', IFNULL(r.rank_no, 0), 'membership', u.membership,'status',u.status)) AS active_directs_list
+                FROM member m
+                LEFT JOIN usersdetails u ON m.member_id = u.memberid
+                LEFT JOIN ranktable r ON m.member_id = r.member_id
+                WHERE m.sponser_id = ?
         `, [id]);
         return result[0]; 
     };
