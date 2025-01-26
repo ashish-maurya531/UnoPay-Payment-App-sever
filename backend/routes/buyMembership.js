@@ -7,8 +7,10 @@ const {getFlexiWalletBalance} = require('../utills/checkUserBalance');
 const {commisionPayout} = require('../utills/commisionPayout');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilder')
-const {getMembershipTransactionsForToday}= require('../utills/companyTurnover');
+const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
 getMembershipTransactionsForToday();
+getMembershipTransactionsForWeek()
+getMembershipTransactionsForMonth()
 // Usage example:
 // recreateRankTable()
 // updateRankAndBacktrack('UP183373');
