@@ -815,18 +815,20 @@ router.post('/login2', async (req, res) => {
 //to check tpin is correct or not 
 router.post('/checktpin', async(req,res)=>{
   const {member_id,tpin} = req.body;
+  console.log(member_id,tpin)
   if (!member_id || !tpin) {
-    return res.status(400).json({ error: 'Member ID and TPIN are required' });
+    return res.status(400).json({ message: 'Member ID and TPIN are required' });
   }
   // Validate inputs
   if (containsSQLInjectionWords(member_id) || containsSQLInjectionWords(tpin)) {
-    return res.status(400).json({ error: "Don't try to hack." });
+    return res.status(400).json({ message: "Don't try to hack." });
   }
   const [tpinRows] = await pool.query('SELECT tpin FROM security_details_of_user WHERE member_id = ?', [member_id]);
   if(tpinRows.length === 0){
-    return res.status(404).json({error:'User not registered'});
+    return res.status(404).json({message:'User not registered'});
     }
     if(tpinRows[0].tpin === tpin){
+      console.log(tpinRows[0].tpin);
       return res.json({isValid: true});
     }
   return res.json({isValid: false });
