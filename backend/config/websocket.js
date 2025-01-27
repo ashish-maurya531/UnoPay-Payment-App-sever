@@ -1,29 +1,43 @@
 const WebSocket = require("ws");
 
 function setupWebSocket(server) {
+  // Attach WebSocket server to the HTTP server
   const wss = new WebSocket.Server({ server });
 
   wss.on("connection", (ws) => {
     console.log("New client connected");
 
-    // Handle messages from clients (optional)
+    // Log total connected clients
+    console.log(`Total connected clients: ${wss.clients.size}`);
+
+    // Send a welcome message to the client
+    ws.send(JSON.stringify({ message: "Welcome to the WebSocket server!" }));
+
+    // Handle messages from the client (optional)
     ws.on("message", (message) => {
-      console.log(`Received message: ${message}`);
+      console.log(`Received message from client: ${message}`);
     });
 
     // Handle client disconnection
     ws.on("close", () => {
       console.log("Client disconnected");
+      console.log(`Total connected clients: ${wss.clients.size}`);
+    });
+
+    // Handle connection errors
+    ws.on("error", (err) => {
+      console.error("WebSocket error:", err.message);
     });
   });
 
-  // Global broadcast function to send messages to all clients
+  // Broadcast function to send a message to all connected clients
   global.broadcastMessage = (message) => {
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+        client.send(message); // Send the message to all open clients
       }
     });
+    console.log("Broadcast message sent to all clients.");
   };
 }
 

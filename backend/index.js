@@ -83,9 +83,14 @@ app.post("/send-notification", (req, res) => {
   res.send({ success: true, message: "Notification sent" });
 });
 
+// Create HTTP server
 const server = http.createServer(app);
+
+// Setup WebSocket server
 setupWebSocket(server);
-const PORT = 3000;
+
+setupWebSocket(server);
+const PORT = 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
