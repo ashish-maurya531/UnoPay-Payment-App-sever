@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
-const { getFlexiWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
+const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 
 
@@ -130,38 +130,30 @@ router.post("/person-to-person-transfer", async (req, res) => {
 // code for fund transfer from commissin wallet to flexi wallet 
 router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
     const { member_id, commission_amount } = req.body;
-    // check if member_id and commission_amount are not empty
     if (!member_id || !commission_amount) {
         return res.status(200).json({status:"false", message: "Member ID and Commission Amount are required"});
     }
     
-    //sql injection
     if (containsSQLInjectionWords(member_id) || containsSQLInjectionWords(commission_amount)) {
         return res.status(400).json({ status:"false",message: "Don't try to hack" });
     }
-    //check if member id is valid 
     const [user] = await pool.query('SELECT memberid,status FROM usersdetails WHERE memberid =?', [member_id]);
     if (!user.length) {
         return res.status(404).json({ status:"false",message: "Invalid member ID" });
     }
-    //check the status of the member
     if (user[0].status!=="active") {
         return res.status(400).json({ status:"false",message: "User is not active" });
     }
-     //check kyc is done or not 
      const [kyc] = await pool.query('SELECT * FROM user_bank_kyc_details WHERE member_id=? AND Kyc_status =?', [member_id, 'approved']);
      if (!kyc.length) {
          return res.status(200).json({ status: "false", message: "KYC Not done"});
          }
-    //check if commission amount is valid
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
     }
-    //500 limit 
     if (commission_amount<30){
         return res.status(200).json({status:"false", message: "Commission Amount should be greater than 200" });
     }
-    //check if user has enough commission amount in commissin wallet
     const commission_wallet_balance = await getCommisionWalletBalance(member_id)
     console.log("commission amount: ",commission_amount);
     console.log("Commission Wallet Balance: ", commission_wallet_balance);
@@ -171,10 +163,8 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
 
 
     const txn_id = generateTransactionId();
-    //make a connection
     const connection = await pool.getConnection();
     try {
-        //start transaction
         await connection.beginTransaction();
         const [row1]=await connection.query(`INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,amount, status, message) 
             VALUES (?,?,?,?,?,?,?)`,
@@ -221,8 +211,6 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
         //release connection
         connection.release();
     }
-
-
 
 
 })
@@ -349,100 +337,6 @@ router.post('/user-withdraw-request', async (req, res) => {
 }); 
 
 
-
-
-// router.post('/update-status-user-withdraw-request', async (req, res) => {
-//     const { transaction_id, status,message } = req.body;
-
-//     if (!transaction_id || !status|| !message) {
-//         return res.status(400).json({ status: "false", message: "Transaction ID and status are required." });
-//     }
-
-//     if (!['rejected', 'done'].includes(status)) {
-//         return res.status(400).json({ status: "false", message: "Invalid status value." });
-//     }
-//     if (status==="done"){
-//         var message2="sent to bank"
-//     }
-//     else{
-//         var message2=message
-//     }
-//     try {
-//         const [result] = await pool.query(
-//             `UPDATE withdraw_requests SET status = ?, message=? WHERE transaction_id = ?`,
-//             [status, message2, transaction_id]
-//         );
-
-
-//         console.log(status);
-//         if (status=="rejected"){
-//             // make a connection
-
-//             const [result] = await pool.query(`SELECT member_id,amount FROM withdraw_requests WHERE transaction_id=?`, [transaction_id])
-//             const member_id=result[0].member_id
-//             const amount=result[0].amount
-//             const connection = await pool.getConnection();
-//             const txn_id=generateTransactionId();
-           
-//             try {
-
-//                 await connection.beginTransaction();
-                
-//                 const [universal_result] = await connection.query(
-//                     `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status,message) VALUES (?,?,?,?,?,?)`,
-//                     [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal Rejected,Money Back to You successfully."]
-//                 );
-
-
-//                 if (universal_result.affectedRows === 0) {
-//                     return res.status(200).json({ status: "false", message: "Failed to create entry in universal transaction table." });
-//                 }
-//                 console.log("rejected sp added to universal table2")
-
-//                 // insert the entry in flexi wallet
-//                 const [row2]=await connection.query(
-//                     `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit,level)
-//                     VALUES (?,?,?,?,?,?,?)`,
-//                     [member_id,member_id,txn_id,txn_id,amount,0.0000000000,0]
-//                 );
-//                 if(row2.affectedRows>0){
-//                     console.log("rejected so back to commission_wallet");
-//                 }
-//                 // update user total money
-//                 const [user_result] = await connection.query(
-//             `UPDATE users_total_balance SET user_total_balance = user_total_balance + ? WHERE member_id = ?`,
-//             [amount, member_id]
-//             );
-            
-//             if (user_result.affectedRows===0) {
-//                 return res.status(200).json({ status: "false", message: "Failed to update user total balance." });
-//             }
-//             console.log("rejected so updated user total balance2")
-
-
-
-//             await connection.commit();
-//             return res.status(200).json({ status: "true", message: "Withdraw request status created successfully." });
-
-
-
-
-//             }
-//             catch (error) {
-//                 await connection.rollback();
-//                 console.error(error);
-//                 return res.status(500).json({ status: "false", message: "Internal Server Error." });
-//             } finally {
-//                 connection.release();
-//             }
-            
-
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ status: "false", message: "Internal Server Error." });
-//     }
-// });
 
 router.post('/update-status-user-withdraw-request', async (req, res) => {
     const { transaction_id, status, message } = req.body;
