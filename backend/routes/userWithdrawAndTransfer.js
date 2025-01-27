@@ -49,6 +49,11 @@ router.post("/person-to-person-transfer", async (req, res) => {
     if (commission_amount < 10) {
         return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 10" });
     }
+     //check kyc is done or not 
+     const [kyc] = await pool.query('SELECT * FROM user_bank_kyc_details WHERE member_id=? AND Kyc_status =?', [sender_member_id, 'approved']);
+     if (!kyc.length) {
+         return res.status(200).json({ status: "false", message: "KYC Not done"});
+         }
 
     const commission_wallet_balance = await getCommisionWalletBalance(sender_member_id);
     if (commission_wallet_balance < commission_amount) {
@@ -143,6 +148,11 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
     if (user[0].status!=="active") {
         return res.status(400).json({ status:"false",message: "User is not active" });
     }
+     //check kyc is done or not 
+     const [kyc] = await pool.query('SELECT * FROM user_bank_kyc_details WHERE member_id=? AND Kyc_status =?', [member_id, 'approved']);
+     if (!kyc.length) {
+         return res.status(200).json({ status: "false", message: "KYC Not done"});
+         }
     //check if commission amount is valid
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
