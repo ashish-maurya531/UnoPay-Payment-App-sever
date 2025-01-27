@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
+const http = require("http");
+const { setupWebSocket } = require("./config/websocket");
 
 
 const authRoutes = require('./routes/auth');
@@ -66,6 +68,24 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
+// Admin API for sending notifications
+app.post("/send-notification", (req, res) => {
+  const { message } = req.body;
+  if (!message) {
+    return res.status(400).send({ error: "Message is required" });
+  }
+
+  // Use the WebSocket function to broadcast the message
+  global.broadcastMessage(message); // `broadcastMessage` is globally available
+  res.send({ success: true, message: "Notification sent" });
+});
+
+const server = http.createServer(app);
+setupWebSocket(server);
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
 
 app.listen(port,"0.0.0.0" ,() => {
   console.log(`Server running on port ${port}`);

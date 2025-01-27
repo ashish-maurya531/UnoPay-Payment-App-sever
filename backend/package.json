@@ -24,7 +24,8 @@
     "nodemailer": "^6.9.16",
     "pm2": "^5.4.3",
     "raw-body": "^3.0.0",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
