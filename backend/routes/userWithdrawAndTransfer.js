@@ -432,27 +432,63 @@ router.post('/get-user-withdraw-request', async (req, res) => {
     if (!member_id) {
         return res.status(200).json({ status: "false", message: "Member ID is required." });
     }
-    //sql injection 
     
     if (containsSQLInjectionWords(member_id)) {
         return res.status(200).json({ status: "false", message: "Invalid input. SQL injection is not allowed." });
     }
 
     try {
-        const [rows] = await pool.query(
+        const [withdrawRows] = await pool.query(
             `SELECT * FROM withdraw_requests WHERE member_id = ?`,
             [member_id]
         );
-
-        if (rows.length > 0) {
-            return res.status(200).json({ status: "true", data: rows });
+    
+        const [transactionRows] = await pool.query(
+            `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer')`
+        );
+    
+        const formatTransactionData = (transaction) => {
+            let formattedTransaction = {
+                type: transaction.type,
+                amount: transaction.amount,
+                date_time: transaction.created_at, 
+            };
+    
+            if (transaction.type === "Money Transfer") {
+                const receiverMatch = transaction.message.match(/Money Transferred to (\S+)/);
+                if (receiverMatch) {
+                    formattedTransaction.receiver = receiverMatch[1];
+                }
+            }
+    
+            return formattedTransaction;
+        };
+    
+        const withdrawData = withdrawRows.map((row) => ({
+            type: "Bank Transfer",
+            amount: row.amount,
+            status: row.status,
+            date_time: row.date_time, 
+        }));
+    
+        const transactionData = transactionRows.map(formatTransactionData);
+    
+        const combinedData = [...withdrawData, ...transactionData];
+    
+        if (combinedData.length > 0) {
+            return res.status(200).json({ success: "true", data: combinedData });
         } else {
-            return res.status(200).json({ status: "true", message: "No withdraw requests found for the given Member ID." });
+            return res.status(200).json({
+                success: "true",
+                message: "No Transaction Data Found",
+            });
         }
+    
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ status: "false", message: "Internal Server Error." });
+        console.error("Error fetching data:", error);
+        return res.status(500).json({ success: "false", message: "Internal Server Error" });
     }
+    
 });
 
 
