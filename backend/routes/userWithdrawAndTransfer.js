@@ -10,6 +10,7 @@ const generateTransactionId = require('../utills/generateTxnId');
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", async (req, res) => {
     const { sender_member_id, receiver_member_id, commission_amount } = req.body;
+    console.log(sender_member_id, receiver_member_id, commission_amount)
 
     if (!sender_member_id || !receiver_member_id || !commission_amount) {
         return res.status(200).json({ status: "false", message: "Sender Member ID, Receiver Member ID, and Commission Amount are required" });
@@ -166,7 +167,7 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
         await connection.beginTransaction();
         const [row1]=await connection.query(`INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType,amount, status, message) 
             VALUES (?,?,?,?,?,?,?)`,
-            [txn_id,member_id,"Money Transfer","Commission wallet to Flexi Wallet",commission_amount,"success","Money Transfered Successfully"]);
+            [txn_id,member_id,"Self Transfer","Commission wallet to Flexi Wallet",commission_amount,"success","Money Transfered Successfully"]);
         if(row1.affectedRows>0){
             console.log("Money Transafer Transaction added in universal transaction table");
             
