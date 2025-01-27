@@ -70,12 +70,15 @@ app.use((err, req, res, next) => {
 
 // Admin API for sending notifications
 app.post("/send-notification", (req, res) => {
-  const { message } = req.body;
-  if (!message) {
-    return res.status(400).send({ error: "Message is required" });
+  const { title, body } = req.body;
+  console.log(title,body)
+
+  if (!title || !body) {
+    return res.status(400).send({ error: "Title and body are required" });
   }
 
   // Use the WebSocket function to broadcast the message
+  const message = JSON.stringify({ title, body }); // Prepare as JSON string
   global.broadcastMessage(message); // `broadcastMessage` is globally available
   res.send({ success: true, message: "Notification sent" });
 });
