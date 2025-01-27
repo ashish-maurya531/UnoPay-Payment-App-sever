@@ -416,7 +416,7 @@ router.post('/updateUserKycStatus', async (req, res) => {
     }
 
     // If approved or rejected, delete images from user_kyc_images
-  if (status === 'rejected' || status === 'approved') {
+  if (status === 'rejected') {
       // Delete the entry from the `user_kyc_images` table
       //     // Delete the row from user_kyc_images
           const [imageRows] = await pool.query(
