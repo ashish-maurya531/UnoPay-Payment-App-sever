@@ -11,7 +11,7 @@ function setupWebSocket(server) {
     console.log(`Total connected clients: ${wss.clients.size}`);
 
     // Send a welcome message to the client
-    ws.send(JSON.stringify({ message: "Welcome to the WebSocket server!" }));
+    ws.send(JSON.stringify({ title: "Welcome", body: "Connected to WebSocket server!" }));
 
     // Handle messages from the client (optional)
     ws.on("message", (message) => {
@@ -42,3 +42,5 @@ function setupWebSocket(server) {
 }
 
 module.exports = { setupWebSocket };
+
+
