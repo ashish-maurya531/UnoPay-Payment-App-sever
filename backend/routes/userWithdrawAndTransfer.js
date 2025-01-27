@@ -5,6 +5,121 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const { getFlexiWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 
+
+
+// Code for transferring from sender's commission wallet to receiver's flexi wallet
+router.post("/person-to-person-transfer", async (req, res) => {
+    const { sender_member_id, receiver_member_id, commission_amount } = req.body;
+
+    if (!sender_member_id || !receiver_member_id || !commission_amount) {
+        return res.status(200).json({ status: "false", message: "Sender Member ID, Receiver Member ID, and Commission Amount are required" });
+    }
+
+    if (containsSQLInjectionWords(sender_member_id) || containsSQLInjectionWords(receiver_member_id) || containsSQLInjectionWords(commission_amount)) {
+        return res.status(200).json({ status: "false", message: "Don't try to hack" });
+    }
+
+    const [senderUser] = await pool.query('SELECT memberid, membership,status FROM usersdetails WHERE memberid =?', [sender_member_id]);
+    const [receiverUser] = await pool.query('SELECT memberid,membership, status FROM usersdetails WHERE memberid =?', [receiver_member_id]);
+    console.log("sender user: ", senderUser);
+    console.log("receiver user: ", receiverUser);
+
+    if (!senderUser.length) {
+        return res.status(404).json({ status: "false", message: "Invalid sender Member ID" });
+    }
+
+    if (!receiverUser.length) {
+        return res.status(200).json({ status: "false", message: "Invalid receiver Member ID" });
+    }
+
+    if (senderUser[0].status !== "active") {
+        return res.status(200).json({ status: "false", message: "Sender user is not active" });
+    }
+
+    if (senderUser[0].membership==="FREE") {
+        return res.status(200).json({ status: "false", message: "Sender user is not allowed to transfer money, he is a free member" });
+    }
+
+    if (receiverUser[0].status !== "active") {
+        return res.status(200).json({ status: "false", message: "Receiver user is not active" });
+    }
+
+    if (commission_amount < 10) {
+        return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 10" });
+    }
+
+    const commission_wallet_balance = await getCommisionWalletBalance(sender_member_id);
+    if (commission_wallet_balance < commission_amount) {
+        return res.status(200).json({ status: "false", message: "Insufficient balance in sender's wallet" });
+    }
+
+    const txn_id = generateTransactionId();
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const [row1] = await connection.query(
+            `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [txn_id, sender_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Transferred to ${receiver_member_id} successfully`]
+        );
+        if (row1.affectedRows > 0) {
+            console.log("Sender Money Transfer Transaction added in universal transaction table");
+        }
+
+        const [row2] = await connection.query(
+            `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [sender_member_id, sender_member_id, txn_id, txn_id, 0.0000000000, commission_amount, 0]
+        );
+        if (row2.affectedRows > 0) {
+            console.log("Sender Commission Wallet transaction added");
+        }
+
+        const [row3] = await connection.query(
+            `INSERT INTO flexi_wallet (member_id, transaction_id, credit, debit)
+            VALUES (?, ?, ?, ?)`,
+            [receiver_member_id, txn_id, commission_amount, 0.00]
+        );
+        if (row3.affectedRows > 0) {
+            console.log("Receiver Flexi Wallet transaction added");
+        }
+
+        // Update sender's total money
+        const [row4] = await connection.query(
+            `UPDATE users_total_balance SET user_total_balance = user_total_balance - ?
+            WHERE member_id =?`,
+            [commission_amount, sender_member_id]
+        );
+        if (row4.affectedRows > 0) {
+            console.log("Sender's total balance updated successfully");
+        }
+
+        // Update receiver's total money
+        const [row5] = await connection.query(
+            `UPDATE users_total_balance SET user_total_balance = user_total_balance + ?
+            WHERE member_id =?`,
+            [commission_amount, receiver_member_id]
+        );
+        if (row5.affectedRows > 0) {
+            console.log("Receiver's total balance updated successfully");
+        }
+
+        await connection.commit();
+        res.status(200).json({ status: "true", message: "Commission wallet transfer to receiver's flexi wallet successful" });
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
+        res.status(500).json({ status: "false", message: "Internal Server Error" });
+    } finally {
+        connection.release();
+    }
+});
+
+
+
+
 // code for fund transfer from commissin wallet to flexi wallet 
 router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
     const { member_id, commission_amount } = req.body;
