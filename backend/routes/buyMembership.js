@@ -8,6 +8,16 @@ const {commisionPayout} = require('../utills/commisionPayout');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilder')
 const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
+const {distributeDailyrankIncome,distributeWeeklyrankIncome,distributeMonthlyrankIncome} = require('../utills/companyTurnoverDistrubution.js'); 
+// distributeDailyrankIncome()
+// distributeWeeklyrankIncome()
+// distributeMonthlyrankIncome()
+
+
+
+
+
+
 // getMembershipTransactionsForToday();
 // getMembershipTransactionsForWeek()
 // getMembershipTransactionsForMonth()
