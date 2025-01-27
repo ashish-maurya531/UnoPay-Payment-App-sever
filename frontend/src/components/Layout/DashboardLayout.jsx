@@ -93,6 +93,11 @@ export default function DashboardLayout({ children }) {
       key: 'generateIds',
       label: 'Generate User IDs',
       onClick: () => navigate('/dashboard/generate-ids'),
+    },
+    {
+      key: 'CompanyClosing',
+      label: 'Company Closing',
+      onClick: () => navigate('/dashboard/company-closing'),
     }
   ]
 

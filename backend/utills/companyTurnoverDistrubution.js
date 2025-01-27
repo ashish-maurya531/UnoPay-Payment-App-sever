@@ -1,245 +1,178 @@
 const { pool } = require('../config/database');
 const moment = require('moment');
 const generateTransactionId = require('../utills/generateTxnId');
- // Assuming a function to generate unique transaction IDs
-const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
+const { 
+    getMembershipTransactionsForToday, 
+    getMembershipTransactionsForWeek, 
+    getMembershipTransactionsForMonth 
+} = require('../utills/companyTurnover');
 
-const updateTransactionAndBalance = async (memberId, rank_no, amount, type, subType, message) => {
-    const transactionId = generateTransactionId(); 
+// Commission rates configuration
+const commissionRates = {
+    1: 0.015,
+    2: 0.016,
+    3: 0.0165,
+    4: 0.0175,
+    5: 0.02,
+    6: 0.01,
+    7: 0.01
+};
 
-    console.log(transactionId,memberId, rank_no, amount, type, subType, message)
-    const query = `
-        INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-    const [universal_result]=await pool.query(query, [
-        transactionId,
-        memberId,
-        "Rank Income",  
-        subType,             
-        amount,
-        "success",       
-        message
-    ]);
-    if (universal_result.affectedRows > 0) {
-        console.log('Transaction added to universal table successfully');
+// Helper function to get period start date
+const getPeriodStart = (type) => {
+    switch (type) {
+        case 'daily': return moment().startOf('day');
+        case 'weekly': return moment().startOf('week');
+        case 'monthly': return moment().startOf('month');
+        default: throw new Error('Invalid period type');
     }
+};
+
+// Check if closing exists for period
+const checkClosingExists = async (type) => {
+    try {
+        const periodStart = getPeriodStart(type).format('YYYY-MM-DD');
+        const [rows] = await pool.query(
+            `SELECT * FROM company_closing 
+            WHERE type = ? AND date_and_time_of_closing >= ? 
+            LIMIT 1`,
+            [type, periodStart]
+        );
+        return rows.length > 0;
+    } catch (error) {
+        console.error('Error checking closing exists:', error);
+        throw error;
+    }
+};
+
+// Main distribution function
+const distributeRankIncome = async (type) => {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // Check if closing already done
+        if (await checkClosingExists(type)) {
+            await connection.rollback();
+            return { success: false, message: `${type} closing already completed` };
+        }
+
+        // Get total income for period
+        const incomeResult = await getTotalIncome(type);
+        const totalIncome = incomeResult[`${type}Income`];
+        
+        if (!totalIncome || totalIncome <= 0) {
+            await connection.rollback();
+            await createZeroAmountClosing(type);
+            return { success: true, message: `${type} income was zero, closing recorded` };
+        }
+
+        // Get eligible members
+        const [members] = await connection.query(
+            'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0'
+        );
+
+        let distributedAmount = 0;
+        const membersList = [];
+
+        // Process each member
+        for (const member of members) {
+            const { member_id, rank_no } = member;
+            const rate = commissionRates[rank_no] || 0;
+            const amount = parseFloat((totalIncome * rate).toFixed(2));
+
+            if (amount > 0) {
+                await updateMemberBalance(connection, member_id, amount, type, rank_no);
+                distributedAmount += amount;
+                membersList.push({ member_id, rank: rank_no, amount });
+            }
+        }
+
+        // Record company closing
+        await connection.query(
+            `INSERT INTO company_closing 
+            (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+            VALUES (?, NOW(), ?, ?, ?)`,
+            [type, totalIncome, distributedAmount, JSON.stringify(membersList)]
+        );
+
+        await connection.commit();
+        return { success: true, message: `${type} distribution completed successfully` };
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error(`${type} distribution error:`, error);
+        return { success: false, message: `${type} distribution failed` };
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// Helper functions
+const getTotalIncome = async (type) => {
+    switch (type) {
+        case 'daily': return getMembershipTransactionsForToday();
+        case 'weekly': return getMembershipTransactionsForWeek();
+        case 'monthly': return getMembershipTransactionsForMonth();
+        default: throw new Error('Invalid income type');
+    }
+};
+
+const updateMemberBalance = async (connection, memberId, amount, type, rank) => {
+    const txnId = generateTransactionId();
+    const subType = type.charAt(0).toUpperCase() + type.slice(1);
     
-
-    // 2. Update the user's commission wallet and total balance
-    const updateCommissionWalletQuery = `
-        INSERT INTO commission_wallet
-       ( member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, level)VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    const [commission_result]=await pool.query(updateCommissionWalletQuery, [memberId,"Rank Income" ,transactionId,transactionId, amount,"null"]);
-    if (commission_result.affectedRows > 0) {
-        console.log(`${subType} Rank Commission added to commission wallet successfully`);
-    }
-    const updateTotalBalanceQuery = `
-        UPDATE users_total_balance
-        SET user_total_balance = user_total_balance + ?
-        WHERE member_id = ?
-    `;
-    const [balance_result]=await pool.query(updateTotalBalanceQuery, [amount, memberId]);
-    if (balance_result.affectedRows > 0) {
-        console.log('Total balance updated successfully');
-    }
-    console.log('Transaction and balance updated successfully');
-
-
-};
-
-
-const distributeDailyrankIncome = async (req, res) => {
     try {
-        const todayIncome = await getMembershipTransactionsForToday(); // Assuming this function returns today's total income
-        const { todayIncome: totalIncome } = todayIncome;
+        // Update universal transaction table
+        await connection.query(
+            `INSERT INTO universal_transaction_table 
+            (transaction_id, member_id, type, subType, amount, status, message) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [txnId, memberId, 'Rank Income', subType, amount, 'success', 
+            `${subType} rank income for rank ${rank}`]
+        );
 
-        // Fetch all members with their rank_nos (You may need to implement this query based on your DB schema)
-        const [members] = await pool.query('SELECT member_id, rank_no FROM ranktable where rank_no > 0');
-        console.log(members);
+        // Update commission wallet
+        await connection.query(
+            `INSERT INTO commission_wallet 
+            (member_id, commissionBy, transaction_id_for_member_id, credit,level) 
+            VALUES (?, ?, ?, ?,?)`,
+            [memberId, 'System', txnId, amount,"null"]
+        );
 
-        for (let member of members) {
-            const { member_id, rank_no } = member;
-
-            // Calculate the commission rate based on the rank_no
-            let commissionRate = 0;
-            switch (rank_no) {
-                case 1:
-                    commissionRate = 0.015; // 1.5%
-                    break;
-                case 2:
-                    commissionRate = 0.016; // 1.6%
-                    break;
-                case 3:
-                    commissionRate = 0.0165; // 1.65%
-                    break;
-                case 4:
-                    commissionRate = 0.0175; // 1.75%
-                    break;
-                case 5:
-                    commissionRate = 0.02; // 2%
-                    break;
-                case 6:
-                    commissionRate = 0.01; // 1%
-                    break;
-                case 7:
-                    commissionRate = 0.01; // 1%
-                    break;
-                default:
-                    commissionRate = 0;
-            }
-
-            const amount = totalIncome * commissionRate;
-            if (amount > 0) {
-            // Prepare the message and call the helper function
-            const message = `Daily rank Income for ${member_id} ${rank_no} ${amount}`;
-            console.log(message);
-
-            // Call the function to update transaction and balance
-            await updateTransactionAndBalance(member_id, rank_no, amount, 'Rank Income', 'Daily', 'Daily rank_no Income distributed successfully.');
-            }
-        }
-
-        return {
-            success: 'true',
-            message: 'Daily rank_no income distributed successfully.',
-        };
+        // Update total balance
+        await connection.query(
+            `UPDATE users_total_balance 
+            SET user_total_balance = user_total_balance + ? 
+            WHERE member_id = ?`,
+            [amount, memberId]
+        );
     } catch (error) {
-        console.error('Error distributing daily rank_no income:', error);
-        return {
-            success: 'false',
-            message: 'Error distributing daily rank_no income',
-        };
+        console.error('Balance update error:', error);
+        throw error;
     }
 };
 
-const distributeWeeklyrankIncome = async (req, res) => {
+const createZeroAmountClosing = async (type) => {
     try {
-        const weeklyIncome = await getMembershipTransactionsForWeek(); // Assuming this function returns weekly total income
-        const { weeklyIncome: totalIncome } = weeklyIncome;
-        // console.log(totalIncome);
-
-        const [members] = await pool.query('SELECT member_id, rank_no FROM ranktable where rank_no > 0');
-        console.log(members);
-
-        for (let member of members) {
-            const { member_id, rank_no } = member;
-
-            // Calculate the commission rate based on the rank_no
-            let commissionRate = 0;
-            switch (rank_no) {
-                case 1:
-                    commissionRate = 0.015; // 1.5%
-                    break;
-                case 2:
-                    commissionRate = 0.016; // 1.6%
-                    break;
-                case 3:
-                    commissionRate = 0.0165; // 1.65%
-                    break;
-                case 4:
-                    commissionRate = 0.0175; // 1.75%
-                    break;
-                case 5:
-                    commissionRate = 0.02; // 2%
-                    break;
-                case 6:
-                    commissionRate = 0.01; // 1%
-                    break;
-                case 7:
-                    commissionRate = 0.01; // 1%
-                    break;
-                default:
-                    commissionRate = 0;
-            }
-
-            const amount = totalIncome * commissionRate;
-            if (amount > 0) {
-            // Prepare the message and call the helper function
-            const message = `Weekly rank Income for ${member_id} ${rank_no} ${amount}`;
-            console.log(message);
-
-            // Call the function to update transaction and balance
-            await updateTransactionAndBalance(member_id, rank_no, amount, 'Rank Income', 'Weekly', 'Weekly rank_no Income distributed successfully.');
-            }
-        }
-
-        return {
-            success: 'true',
-            message: 'Weekly rank_no income distributed successfully.',
-        };
+        await pool.query(
+            `INSERT INTO company_closing 
+            (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+            VALUES (?, NOW(), 0, 0, '[]')`,
+            [type]
+        );
     } catch (error) {
-        console.error('Error distributing weekly rank_no income:', error);
-        return {
-            success: 'false',
-            message: 'Error distributing weekly rank_no income',
-        };
+        console.error('Zero amount closing error:', error);
+        throw error;
     }
 };
 
+// Exported functions
+const distributeDailyrankIncome = async () => distributeRankIncome('daily');
+const distributeWeeklyrankIncome = async () => distributeRankIncome('weekly');
+const distributeMonthlyrankIncome = async () => distributeRankIncome('monthly');
 
-
-const distributeMonthlyrankIncome = async (req, res) => {
-    try {
-        const monthlyIncome = await getMembershipTransactionsForMonth(); // Assuming this function returns monthly total income
-        const { monthlyIncome: totalIncome } = monthlyIncome;
-
-        const [members] = await pool.query('SELECT member_id, rank_no FROM ranktable where rank_no > 0');
-        console.log(members);
-
-        for (let member of members) {
-            const { member_id, rank_no } = member;
-
-            // Calculate the commission rate based on the rank_no
-            let commissionRate = 0;
-            switch (rank_no) {
-                case 1:
-                    commissionRate = 0.015; // 1.5%
-                    break;
-                case 2:
-                    commissionRate = 0.016; // 1.6%
-                    break;
-                case 3:
-                    commissionRate = 0.0165; // 1.65%
-                    break;
-                case 4:
-                    commissionRate = 0.0175; // 1.75%
-                    break;
-                case 5:
-                    commissionRate = 0.02; // 2%
-                    break;
-                case 6:
-                    commissionRate = 0.01; // 1%
-                    break;
-                case 7:
-                    commissionRate = 0.01; // 1%
-                    break;
-                default:
-                    commissionRate = 0;
-            }
-
-            const amount = totalIncome * commissionRate;
-            if (amount > 0) {
-
-           
-            const message = `Monthly rank Income for ${member_id} ${rank_no} ${amount}`;
-            console.log(message);
-
-           
-            await updateTransactionAndBalance(member_id, rank_no, amount, "Rank Income", "Monthly", "Monthly rank_no Income distributed successfully.");
-            }
-        }
-
-        return({
-            success: 'true',
-            message: 'Monthly rank income distributed successfully.',
-        });
-    } catch (error) {
-        console.error('Error distributing monthly rank_no income:', error);
-        return({ success: 'false', message: 'Error distributing monthly rank_no income' });
-    }
-};
 module.exports = {
     distributeDailyrankIncome,
     distributeWeeklyrankIncome,

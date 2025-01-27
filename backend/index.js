@@ -125,6 +125,7 @@ const userRaiseTicket = require('./routes/userRaiseTicket');
 const userWithdrawAndTransfer = require('./routes/userWithdrawAndTransfer');
 const adminLoginRoute = require('./routes/adminLoginRoute');
 const ranking_system = require('./routes/ranking_system');
+const closingRoutes = require('./routes/closingRoutes');
 
 // Middleware
 const authenticateToken = require('./middleware/auth');
@@ -160,6 +161,7 @@ app.use('/api/auth', authenticateToken, user_delete_requests);
 app.use('/api/auth', authenticateToken, userRaiseTicket);
 app.use('/api/auth', authenticateToken, userWithdrawAndTransfer);
 app.use('/api/auth', authenticateToken, ranking_system);
+app.use('/api/auth', authenticateToken, closingRoutes);
 
 // Admin API for sending notifications
 app.post("/send-notification", (req, res) => {

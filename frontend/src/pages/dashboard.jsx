@@ -20,6 +20,7 @@ import UserAllTypeBalance from '../components/Payment/UserAllTypeBalance';
 import UserDeleteRequest from '../components/Users/UserDeleteRequest';
 import UserLoginHelpRequest from '../components/Users/UserLoginHelpRequest';
 import UserRankList from '../components/Users/UserRanking.jsx';
+import CompanyClosing from '../components/Admin/companyClosing.jsx';
 import * as jwt_decode from 'jwt-decode';
 
 
@@ -63,6 +64,7 @@ export default function Dashboard() {
         <Route path="User-all-type-balance" element={<UserAllTypeBalance/>} />
         <Route path="user-login-help-request" element={<UserLoginHelpRequest />} />
         <Route path="user-rank" element={<UserRankList />} />
+        <Route path="company-closing" element={<CompanyClosing />} />
 
       
 
