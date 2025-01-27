@@ -538,34 +538,29 @@ router.post('/get-user-withdraw-request', async (req, res) => {
     if (!member_id) {
         return res.status(200).json({ status: "false", message: "Member ID is required." });
     }
-    //sql injection 
     
     if (containsSQLInjectionWords(member_id)) {
         return res.status(200).json({ status: "false", message: "Invalid input. SQL injection is not allowed." });
     }
 
     try {
-        // Query withdraw_requests for member_id
         const [withdrawRows] = await pool.query(
             `SELECT * FROM withdraw_requests WHERE member_id = ?`,
             [member_id]
         );
     
-        // Query universal_transaction_table for Money Transfer and Self Transfer types
         const [transactionRows] = await pool.query(
             `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer')`
         );
     
-        // Function to format transaction data
         const formatTransactionData = (transaction) => {
             let formattedTransaction = {
                 type: transaction.type,
                 amount: transaction.amount,
-                date_time: transaction.created_at, // Assuming created_at is the datetime field
+                date_time: transaction.created_at, 
             };
     
             if (transaction.type === "Money Transfer") {
-                // Extract the receiver from the message
                 const receiverMatch = transaction.message.match(/Money Transferred to (\S+)/);
                 if (receiverMatch) {
                     formattedTransaction.receiver = receiverMatch[1];
@@ -575,27 +570,23 @@ router.post('/get-user-withdraw-request', async (req, res) => {
             return formattedTransaction;
         };
     
-        // Format withdraw request data (assuming the type will always be Bank Transfer here)
         const withdrawData = withdrawRows.map((row) => ({
             type: "Bank Transfer",
             amount: row.amount,
             status: row.status,
-            date_time: row.date_time, // Assuming created_at is the datetime field
+            date_time: row.date_time, 
         }));
     
-        // Format transaction data
         const transactionData = transactionRows.map(formatTransactionData);
     
-        // Combine both arrays
         const combinedData = [...withdrawData, ...transactionData];
     
-        // Return the response
         if (combinedData.length > 0) {
             return res.status(200).json({ success: "true", data: combinedData });
         } else {
             return res.status(200).json({
                 success: "true",
-                message: "No data found for the given Member ID in either withdraw or transaction tables.",
+                message: "No Transaction Data Found",
             });
         }
     
