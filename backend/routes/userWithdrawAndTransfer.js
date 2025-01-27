@@ -10,6 +10,8 @@ const generateTransactionId = require('../utills/generateTxnId');
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", async (req, res) => {
     const { sender_member_id, receiver_member_id, commission_amount } = req.body;
+    console.log(sender_member_id, receiver_member_id, commission_amount)
+
 
     if (!sender_member_id || !receiver_member_id || !commission_amount) {
         return res.status(200).json({ status: "false", message: "Sender Member ID, Receiver Member ID, and Commission Amount are required" });
