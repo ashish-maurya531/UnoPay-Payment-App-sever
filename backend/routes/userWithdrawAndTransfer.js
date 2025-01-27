@@ -545,20 +545,65 @@ router.post('/get-user-withdraw-request', async (req, res) => {
     }
 
     try {
-        const [rows] = await pool.query(
+        // Query withdraw_requests for member_id
+        const [withdrawRows] = await pool.query(
             `SELECT * FROM withdraw_requests WHERE member_id = ?`,
             [member_id]
         );
-
-        if (rows.length > 0) {
-            return res.status(200).json({ status: "true", data: rows });
+    
+        // Query universal_transaction_table for Money Transfer and Self Transfer types
+        const [transactionRows] = await pool.query(
+            `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer')`
+        );
+    
+        // Function to format transaction data
+        const formatTransactionData = (transaction) => {
+            let formattedTransaction = {
+                type: transaction.type,
+                amount: transaction.amount,
+                date_time: transaction.created_at, // Assuming created_at is the datetime field
+            };
+    
+            if (transaction.type === "Money Transfer") {
+                // Extract the receiver from the message
+                const receiverMatch = transaction.message.match(/Money Transferred to (\S+)/);
+                if (receiverMatch) {
+                    formattedTransaction.receiver = receiverMatch[1];
+                }
+            }
+    
+            return formattedTransaction;
+        };
+    
+        // Format withdraw request data (assuming the type will always be Bank Transfer here)
+        const withdrawData = withdrawRows.map((row) => ({
+            type: "Bank Transfer",
+            amount: row.amount,
+            status: row.status,
+            date_time: row.date_time, // Assuming created_at is the datetime field
+        }));
+    
+        // Format transaction data
+        const transactionData = transactionRows.map(formatTransactionData);
+    
+        // Combine both arrays
+        const combinedData = [...withdrawData, ...transactionData];
+    
+        // Return the response
+        if (combinedData.length > 0) {
+            return res.status(200).json({ success: "true", data: combinedData });
         } else {
-            return res.status(200).json({ status: "true", message: "No withdraw requests found for the given Member ID." });
+            return res.status(200).json({
+                success: "true",
+                message: "No data found for the given Member ID in either withdraw or transaction tables.",
+            });
         }
+    
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ status: "false", message: "Internal Server Error." });
+        console.error("Error fetching data:", error);
+        return res.status(500).json({ success: "false", message: "Internal Server Error" });
     }
+    
 });
 
 
