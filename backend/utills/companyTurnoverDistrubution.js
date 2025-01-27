@@ -8,34 +8,45 @@ const updateTransactionAndBalance = async (memberId, rank_no, amount, type, subT
     const transactionId = generateTransactionId(); 
 
     console.log(transactionId,memberId, rank_no, amount, type, subType, message)
-    // const query = `
-    //     INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
-    //     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    // `;
-    // await pool.query(query, [
-    //     transactionId,
-    //     memberId,
-    //     "Rank Income",  
-    //     subType,             
-    //     amount,
-    //     "success",       
-    //     message
-    // ]);
+    const query = `
+        INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [universal_result]=await pool.query(query, [
+        transactionId,
+        memberId,
+        "Rank Income",  
+        subType,             
+        amount,
+        "success",       
+        message
+    ]);
+    if (universal_result.affectedRows > 0) {
+        console.log('Transaction added to universal table successfully');
+    }
+    
 
-    // // 2. Update the user's commission wallet and total balance
-    // const updateWalletQuery = `
-    //     UPDATE commission_wallet
-    //     SET balance = balance + ?
-    //     WHERE member_id = ?
-    // `;
-    // await pool.query(updateWalletQuery, [amount, memberId]);
+    // 2. Update the user's commission wallet and total balance
+    const updateCommissionWalletQuery = `
+        INSERT INTO commission_wallet
+       ( member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, level)VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const [commission_result]=await pool.query(updateCommissionWalletQuery, [memberId,"Rank Income" ,transactionId,transactionId, amount,"null"]);
+    if (commission_result.affectedRows > 0) {
+        console.log(`${subType} Rank Commission added to commission wallet successfully`);
+    }
+    const updateTotalBalanceQuery = `
+        UPDATE users_total_balance
+        SET user_total_balance = user_total_balance + ?
+        WHERE member_id = ?
+    `;
+    const [balance_result]=await pool.query(updateTotalBalanceQuery, [amount, memberId]);
+    if (balance_result.affectedRows > 0) {
+        console.log('Total balance updated successfully');
+    }
+    console.log('Transaction and balance updated successfully');
 
-    // const updateTotalBalanceQuery = `
-    //     UPDATE total_user_balance
-    //     SET balance = balance + ?
-    //     WHERE member_id = ?
-    // `;
-    // await pool.query(updateTotalBalanceQuery, [amount, memberId]);
+
 };
 
 
@@ -82,7 +93,7 @@ const distributeDailyrankIncome = async (req, res) => {
             const amount = totalIncome * commissionRate;
             if (amount > 0) {
             // Prepare the message and call the helper function
-            const message = `Daily rank_no Income for ${member_id} ${rank_no} ${amount}`;
+            const message = `Daily rank Income for ${member_id} ${rank_no} ${amount}`;
             console.log(message);
 
             // Call the function to update transaction and balance
@@ -146,7 +157,7 @@ const distributeWeeklyrankIncome = async (req, res) => {
             const amount = totalIncome * commissionRate;
             if (amount > 0) {
             // Prepare the message and call the helper function
-            const message = `Weekly rank_no Income for ${member_id} ${rank_no} ${amount}`;
+            const message = `Weekly rank Income for ${member_id} ${rank_no} ${amount}`;
             console.log(message);
 
             // Call the function to update transaction and balance
@@ -212,7 +223,7 @@ const distributeMonthlyrankIncome = async (req, res) => {
             if (amount > 0) {
 
            
-            const message = `Monthly rank_no Income for ${member_id} ${rank_no} ${amount}`;
+            const message = `Monthly rank Income for ${member_id} ${rank_no} ${amount}`;
             console.log(message);
 
            
@@ -222,7 +233,7 @@ const distributeMonthlyrankIncome = async (req, res) => {
 
         return({
             success: 'true',
-            message: 'Monthly rank_no income distributed successfully.',
+            message: 'Monthly rank income distributed successfully.',
         });
     } catch (error) {
         console.error('Error distributing monthly rank_no income:', error);
