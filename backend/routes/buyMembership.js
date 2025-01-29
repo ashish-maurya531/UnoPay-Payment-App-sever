@@ -19,12 +19,39 @@ const {handleMagicPlant}=require('../utills/magicPlant');
 // handleMagicPlant("UP109776");
 // handleMagicPlant("UP109786");
 // handleMagicPlant("UP109396");
-// handleMagicPlant("UP109296");
-// handleMagicPlant("UP109896");
-// handleMagicPlant("UP109996");
-// handleMagicPlant("UP109096");
-// handleMagicPlant("UP109696");
-// handleMagicPlant("UP1095596");
+// handleMagicPlant("a");
+// handleMagicPlant("b");
+// handleMagicPlant("c");
+// handleMagicPlant("d");
+// handleMagicPlant("e");
+// handleMagicPlant("f");
+// handleMagicPlant("g");
+// handleMagicPlant("h");
+// handleMagicPlant("i");
+// handleMagicPlant("j");
+// handleMagicPlant("k");
+// handleMagicPlant("l");
+// handleMagicPlant("m");
+// handleMagicPlant("n");
+// handleMagicPlant("o");
+// handleMagicPlant("p");
+// handleMagicPlant("q");
+// handleMagicPlant("r");
+// handleMagicPlant("s");
+// handleMagicPlant("t");
+// handleMagicPlant("u");
+// handleMagicPlant("v");
+// handleMagicPlant("w");
+// handleMagicPlant("x");
+// handleMagicPlant("y");
+// handleMagicPlant("z");
+// handleMagicPlant("aa");
+// handleMagicPlant("ab");
+// handleMagicPlant("ac");
+// handleMagicPlant("ad");
+// handleMagicPlant("ae");
+
+
 
 
 
@@ -165,7 +192,22 @@ router.post('/buymembership', async (req, res) => {
             await connection.commit();
             
             res.status(200).json({ status:'success', message: 'Membership purchased successfully.' });
-            updateRankAndBacktrack(member_id);
+            // updateRankAndBacktrack(member_id);
+            await updateRankAndBacktrack(member_id)
+            console.log(`✅ Rank update completed for ${member_id}`);
+            const [magicPlantMember] = await pool.query(
+                "SELECT COUNT(*) AS count FROM magic_plant_levels WHERE JSON_CONTAINS(member_list, ?)",
+                [JSON.stringify(member_id)]
+            );
+            if (magicPlantMember[0].count > 0) {
+                console.log(`⚠️ ${member_id} already exists in magic_plant_levels. Skipping handleMagicPlant.`);
+                return;
+            }
+    
+            // Step 3: If not found, add member to magic plant
+            console.log(`🚀 Adding ${member_id} to Magic Plant Levels`);
+            await handleMagicPlant(member_id);
+            console.log(`✅ Magic Plant Levels updated for ${member_id}`);
 
         }
         catch (error) {
