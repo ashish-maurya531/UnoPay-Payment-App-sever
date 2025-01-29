@@ -9,6 +9,25 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilder')
 const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
 const {distributeDailyrankIncome,distributeWeeklyrankIncome,distributeMonthlyrankIncome} = require('../utills/companyTurnoverDistrubution.js'); 
+const {handleMagicPlant}=require('../utills/magicPlant');
+
+
+// handleMagicPlant("UP109796");
+// handleMagicPlant("UP109736");
+// handleMagicPlant("UP109756");
+// handleMagicPlant("UP109716");
+// handleMagicPlant("UP109776");
+// handleMagicPlant("UP109786");
+// handleMagicPlant("UP109396");
+// handleMagicPlant("UP109296");
+// handleMagicPlant("UP109896");
+// handleMagicPlant("UP109996");
+// handleMagicPlant("UP109096");
+// handleMagicPlant("UP109696");
+// handleMagicPlant("UP1095596");
+
+
+
 // distributeDailyrankIncome()
 // distributeWeeklyrankIncome()
 // distributeMonthlyrankIncome()
