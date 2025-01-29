@@ -146,7 +146,7 @@ app.use(express.json());
 connectToDatabase();
 
 // Public routes (no authentication required)
-app.use('/', adminLoginRoute);
+app.use('/api/auth', adminLoginRoute);
 
 // Protected routes (require authentication)
 app.use('/api/auth', authRoutes); // Public routes (e.g., login, register)
