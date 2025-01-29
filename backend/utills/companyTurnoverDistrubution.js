@@ -138,7 +138,7 @@ const updateMemberBalance = async (connection, memberId, amount, type, rank) => 
             `INSERT INTO commission_wallet 
             (member_id, commissionBy, transaction_id_for_member_id, credit,level) 
             VALUES (?, ?, ?, ?,?)`,
-            [memberId, 'System', txnId, amount,"null"]
+            [memberId, 'Rank Income', txnId, amount,"null"]
         );
 
         // Update total balance
