@@ -136,9 +136,9 @@ const updateMemberBalance = async (connection, memberId, amount, type, rank) => 
         // Update commission wallet
         await connection.query(
             `INSERT INTO commission_wallet 
-            (member_id, commissionBy, transaction_id_for_member_id, credit,level) 
-            VALUES (?, ?, ?, ?,?)`,
-            [memberId, 'Rank Income', txnId, amount,"null"]
+            (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy,credit,level) 
+            VALUES (?, ?, ?, ?,?,?)`,
+            [memberId, 'Rank Income', txnId,txnId, amount,"null"]
         );
 
         // Update total balance

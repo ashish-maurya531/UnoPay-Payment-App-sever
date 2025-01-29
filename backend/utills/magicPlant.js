@@ -85,9 +85,9 @@ const cascadeLevels = async () => {
                 );
 
                 await pool.query(
-                    `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, credit, level) 
-                     VALUES (?, 'Magic Plant', ?, ?, ?);`,
-                    [movedMember, txnId, reward, `Moved to ${nextLevel.level_name}`]
+                    `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id,transaction_id_of_commissionBy, credit, level) 
+                     VALUES (?, 'Magic Plant', ?, ?, ?,?);`,
+                    [movedMember, txnId,txnId, reward, `Moved to ${nextLevel.level_name}`]
                 );
                 
             }
