@@ -309,7 +309,7 @@ export default function LoginPage() {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${Src}/adminLogin2`, {
+      const response = await axios.post(`${Src}/api/auth/adminLogin2`, {
         name: values.username,
         password: values.password,
       });
