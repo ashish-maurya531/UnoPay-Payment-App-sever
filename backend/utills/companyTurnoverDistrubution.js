@@ -61,6 +61,7 @@ const distributeRankIncome = async (type) => {
         // Get total income for period
         const incomeResult = await getTotalIncome(type);
         const totalIncome = incomeResult[`${type}Income`];
+        console.log("->>>>>>"+totalIncome)
         
         if (!totalIncome || totalIncome <= 0) {
             await connection.rollback();
@@ -88,6 +89,7 @@ const distributeRankIncome = async (type) => {
                 membersList.push({ member_id, rank: rank_no, amount });
             }
         }
+        console.log(`Distributed ${distributedAmount} to ${membersList} members`);
 
         // Record company closing
         await connection.query(
@@ -138,7 +140,7 @@ const updateMemberBalance = async (connection, memberId, amount, type, rank) => 
             `INSERT INTO commission_wallet 
             (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy,credit,level) 
             VALUES (?, ?, ?, ?,?,?)`,
-            [memberId, 'Rank Income', txnId,txnId, amount,"null"]
+            [memberId, 'Rank Income', txnId,txnId, amount,rank]
         );
 
         // Update total balance

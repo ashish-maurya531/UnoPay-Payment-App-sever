@@ -179,6 +179,11 @@ router.post('/doMobileRecharge', async (req, res) => {
             }
              //commit the transaction
              await connection.commit();
+             console.log({
+                status: 'true',
+                message: `Recharge ${transactionStatus}.`,
+                data: apiData,
+            })
             res.status(200).json({
                 status: 'true',
                 message: `Recharge ${transactionStatus}.`,

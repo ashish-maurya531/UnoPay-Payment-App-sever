@@ -77,18 +77,36 @@ const cascadeLevels = async () => {
                 const reward = moneyRewards[i];
 
                 // Uncomment these if you want to insert transactions
-                
-                await pool.query(
-                    `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message) 
-                     VALUES (?, ?, 'Magic Plant', ?, ?, 'success', ?)`,
-                    [txnId, movedMember, `Moved to ${nextLevel.level_name}`, reward, `Moved to ${nextLevel.level_name}`]
+                const [no_of_directs] = await pool.query(
+                    `SELECT upline, member, level FROM member_hierarchy WHERE upline = ? AND level = ?`,
+                    [member_id, 1]
                 );
+        
+                if (no_of_directs.length<2){
+                    await pool.query(
+                        `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message) 
+                         VALUES (?, ?, 'Magic Plant', ?, ?, 'success', ?)`,
+                        [txnId, movedMember, `Moved to ${nextLevel.level_name}`, reward, `Moved to ${nextLevel.level_name}`]
+                    );
 
-                await pool.query(
-                    `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id,transaction_id_of_commissionBy, credit, level) 
-                     VALUES (?, 'Magic Plant', ?, ?, ?,?);`,
-                    [movedMember, txnId,txnId, reward, `Moved to ${nextLevel.level_name}`]
-                );
+                }
+                else{
+                    await pool.query(
+                        `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message) 
+                         VALUES (?, ?, 'Magic Plant', ?, ?, 'success', ?)`,
+                        [txnId, movedMember, `Moved to ${nextLevel.level_name}`, reward, `Moved to ${nextLevel.level_name}`]
+                    );
+
+                    await pool.query(
+                        `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id,transaction_id_of_commissionBy, credit, level) 
+                         VALUES (?, 'Magic Plant', ?, ?, ?,?);`,
+                        [movedMember, txnId,txnId, reward, `Moved to ${nextLevel.level_name}`]
+                    );
+
+                }
+                
+
+               
                 
             }
 
