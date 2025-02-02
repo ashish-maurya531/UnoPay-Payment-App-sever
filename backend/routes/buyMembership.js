@@ -121,6 +121,9 @@ router.post('/buymembership', async (req, res) => {
         if (userRows[0].membership==="BASIC" & package_name==="BASIC"){
             return res.status(400).json({ status: 'false', error: 'You are already a basic member.' });
         }
+        if (userRows[0].membership==="FREE" & package_name==="PREMIUM"){
+            return res.status(400).json({ status: 'false', error: 'You are not eligible for premium membership. First Buy Basic ' });
+        }
         
         if (userRows[0].membership==="PREMIUM"){
             return res.status(400).json({ status: 'false', error: 'You are already a premium member.' });
