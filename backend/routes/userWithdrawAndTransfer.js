@@ -46,7 +46,7 @@ router.post("/person-to-person-transfer", async (req, res) => {
         return res.status(200).json({ status: "false", message: "Receiver user is not active" });
     }
 
-    if (commission_amount < 10) {
+    if (commission_amount < 4) {
         return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 10" });
     }
      //check kyc is done or not 
@@ -151,7 +151,7 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
     }
-    if (commission_amount<30){
+    if (commission_amount<5){
         return res.status(200).json({status:"false", message: "Commission Amount should be greater than 200" });
     }
     const commission_wallet_balance = await getCommisionWalletBalance(member_id)
@@ -266,7 +266,9 @@ router.post('/user-withdraw-request', async (req, res) => {
 
     
     // check if user has enough money in flexi wallet
-    const user_commission_wallet_balance=getCommisionWalletBalance(member_id);
+    const user_commission_wallet_balance=await getCommisionWalletBalance(member_id);
+    console.log("withdrawal amount: ", amount);
+    console.log("Commission Wallet Balance: ", user_commission_wallet_balance);
     if (user_commission_wallet_balance < amount) {
         return res.status(200).json({ status: "false", message: "Insufficient balance in Commission Wallet." });
     }
@@ -399,7 +401,7 @@ router.post('/update-status-user-withdraw-request', async (req, res) => {
                 await connection.query(
                     `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [member_id, member_id, txn_id, txn_id, amount, 0.0, 0]
+                    [member_id, "Withdrawal Rejected", txn_id, txn_id, amount, 0.0, 0]
                 );
 
                 await connection.commit();
