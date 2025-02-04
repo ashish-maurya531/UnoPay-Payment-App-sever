@@ -546,7 +546,7 @@ const distributeMonthlyRankIncome = async () => {
 // Shared Functions with Enhanced Logging
 const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
     try {
-        console.log(`[BALANCE] Starting balance update for ${memberId} (${type})`);
+        console.log(`[${type}] Starting balance update for ${memberId} (${type})`);
         let totalAmount = 0;
 
         for (const [rankKey, amount] of Object.entries(rankDetails)) {
@@ -554,7 +554,7 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
             const txnId = generateTransactionId();
             totalAmount += amount;
 
-            console.log(`[BALANCE] Inserting to universal_transaction_table: 
+            console.log(`[${type}] Inserting to universal_transaction_table: 
                 ${txnId}, ${memberId}, ${type}, ${amount}`);
             await connection.query(
                 `INSERT INTO universal_transaction_table 
@@ -571,7 +571,7 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
                 ]
             );
 
-            console.log(`[BALANCE] Inserting to commission_wallet: 
+            console.log(`[${type}] Inserting to commission_wallet: 
                 ${memberId}, ${txnId}, ${amount}, ${rankNumber}`);
             await connection.query(
                 `INSERT INTO commission_wallet 
@@ -582,7 +582,7 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
             );
         }
 
-        console.log(`[BALANCE] Updating users_total_balance for ${memberId} with ${totalAmount}`);
+        console.log(`[${type}] Updating users_total_balance for ${memberId} with ${totalAmount}`);
         await connection.query(
             `UPDATE users_total_balance 
             SET user_total_balance = user_total_balance + ? 
@@ -590,9 +590,9 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
             [totalAmount, memberId]
         );
 
-        console.log(`[BALANCE] Successfully updated balances for ${memberId}`);
+        console.log(`[${type}] Successfully updated balances for ${memberId}`);
     } catch (error) {
-        console.error('[BALANCE] Update error:', error);
+        console.error(`[${type}] Update error:`, error);
         throw error;
     }
 };
