@@ -187,13 +187,13 @@ app.use((err, req, res, next) => {
 });
 
 // Create HTTP server
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
 // Setup WebSocket server
-setupWebSocket(server);
+// setupWebSocket(server);
 
 // Start the server
-server.listen(port, "0.0.0.0", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
