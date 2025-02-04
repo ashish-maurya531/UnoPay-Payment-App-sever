@@ -9,10 +9,10 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilder')
 const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
 const {distributeDailyrankIncome,distributeWeeklyrankIncome,distributeMonthlyrankIncome} = require('../utills/companyTurnoverDistrubution.js'); 
-const {handleMagicPlant}=require('../utills/magicPlant');
+const {handleMagicPlant,moneyPlantHoldTransactionsCheck}=require('../utills/magicPlant');
 
 
-// handleMagicPlant("UP109796");
+// handleMagicPlant("UP103841");
 // handleMagicPlant("UP109736");
 // handleMagicPlant("UP109756");
 // handleMagicPlant("UP109716");
@@ -193,24 +193,33 @@ router.post('/buymembership', async (req, res) => {
             
             //commit the transaction
             await connection.commit();
-            
-            res.status(200).json({ status:'success', message: 'Membership purchased successfully.' });
-            // updateRankAndBacktrack(member_id);
-            await updateRankAndBacktrack(member_id)
+
+            // Step 2: Send success response
+            res.status(200).json({ status: 'success', message: 'Membership purchased successfully.' });
+    
+            // Step 3: Update rank and backtrack
+            await updateRankAndBacktrack(member_id);
             console.log(`✅ Rank update completed for ${member_id}`);
+    
+            // Step 4: Check if member already exists in magic_plant_levels
             const [magicPlantMember] = await pool.query(
                 "SELECT COUNT(*) AS count FROM magic_plant_levels WHERE JSON_CONTAINS(member_list, ?)",
                 [JSON.stringify(member_id)]
             );
+    
             if (magicPlantMember[0].count > 0) {
                 console.log(`⚠️ ${member_id} already exists in magic_plant_levels. Skipping handleMagicPlant.`);
-                return;
+            } else {
+                // Step 5: If not found, add member to Magic Plant
+                console.log(`🚀 Adding ${member_id} to Magic Plant Levels`);
+                await handleMagicPlant(member_id);
+                console.log(`✅ Magic Plant Levels updated for ${member_id}`);
             }
     
-            // Step 3: If not found, add member to magic plant
-            console.log(`🚀 Adding ${member_id} to Magic Plant Levels`);
-            await handleMagicPlant(member_id);
-            console.log(`✅ Magic Plant Levels updated for ${member_id}`);
+            // Step 6: Check and process held transactions for the member in Money Plant
+            console.log(`🔍 Checking held transactions for ${member_id} in Money Plant`);
+            await moneyPlantHoldTransactionsCheck(member_id);
+            console.log(`✅ Held transactions processed for ${member_id}`);
 
         }
         catch (error) {
