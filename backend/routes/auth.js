@@ -719,15 +719,29 @@ router.post('/login2', async (req, res) => {
       // First-time login, no device ID exists
       if (!otp) {
         // Send OTP for first-time login
-        const otpResponse = await universalOtpEmailSender(memberid, 'first_time_login');
-        if (otpResponse.success) {
-          return res.status(200).json({
-            status: "false",
-            message: 'This is your first time logging in. OTP sent to email for device verification.'
-          });
-        } else {
-          return res.status(200).json({ status: "false", message: 'Failed to send OTP email' });
-        }
+        // const otpResponse = await universalOtpEmailSender(memberid, 'first_time_login');
+        // if (otpResponse.success) {
+        //   return res.status(200).json({
+        //     status: "false",
+        //     message: 'This is your first time logging in. OTP sent to email for device verification.'
+        //   });
+        // } else {
+        //   return res.status(200).json({ status: "false", message: 'Failed to send OTP email' });
+        // }
+        await pool.query(
+          'INSERT INTO login_device_info (member_id, device_id) VALUES (?, ?)',
+          [memberid, device_id]
+        );
+        return res.status(200).json({
+          status: "true",
+          message: 'User logged in successfully',
+          memberid,
+          username,
+          membership,
+          phoneNo: userRows[0].phoneno,
+          email,
+          date_of_joining: userRows[0].created_at
+        });
       } else {
         // Verify OTP for first-time login
         const otpVerification = await verifyOtp(memberid, otp);

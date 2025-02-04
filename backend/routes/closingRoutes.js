@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { distributeDailyrankIncome, distributeWeeklyrankIncome, distributeMonthlyrankIncome } = require('../utills/companyTurnoverDistrubution.js');
+const { distributeDailyRankIncome, distributeWeeklyRankIncome, distributeMonthlyRankIncome } = require('../utills/companyTurnoverDistrubution.js');
 const { pool } = require('../config/database');
 
 // Route for distributing daily rank income
 router.post('/distribute/daily', async (req, res) => {
     try {
-        const result = await distributeDailyrankIncome(req, res);
+        const result = await distributeDailyRankIncome(req, res);
         if (result.success === 'true') {
             return res.status(200).json({
                 success: true,
@@ -30,7 +30,7 @@ router.post('/distribute/daily', async (req, res) => {
 // Route for distributing weekly rank income
 router.post('/distribute/weekly', async (req, res) => {
     try {
-        const result = await distributeWeeklyrankIncome(req, res);
+        const result = await distributeWeeklyRankIncome(req, res);
         if (result.success === 'true') {
             return res.status(200).json({
                 success: true,
@@ -54,7 +54,7 @@ router.post('/distribute/weekly', async (req, res) => {
 // Route for distributing monthly rank income
 router.post('/distribute/monthly', async (req, res) => {
     try {
-        const result = await distributeMonthlyrankIncome(req, res);
+        const result = await distributeMonthlyRankIncome(req, res);
         if (result.success === 'true') {
             return res.status(200).json({
                 success: true,

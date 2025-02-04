@@ -446,7 +446,8 @@ router.post('/get-user-withdraw-request', async (req, res) => {
         );
     
         const [transactionRows] = await pool.query(
-            `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer')`
+            `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer') AND member_id = ?`, 
+            [member_id]
         );
     
         const formatTransactionData = (transaction) => {
