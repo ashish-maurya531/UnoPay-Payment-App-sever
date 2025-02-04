@@ -188,6 +188,7 @@ const moment = require('moment');
 const generateTransactionId = require('../utills/generateTxnId');
 const { 
     getMembershipTransactionsForToday,
+    getMembershipTransactionsForWeek,
     getMembershipTransactionsForMonth 
 } = require('../utills/companyTurnover');
 
@@ -263,9 +264,9 @@ const distributeDailyRankIncome = async () => {
             return { success: false, message: 'Daily closing already completed' };
         }
 
-        // const incomeResult = await getMembershipTransactionsForToday();
-        // const dailyIncome = incomeResult.dailyIncome;
-        const dailyIncome = 4000;
+        const incomeResult = await getMembershipTransactionsForToday();
+        const dailyIncome = incomeResult.todayIncome;
+        // const dailyIncome = 4000;
 
         
         if (!dailyIncome || dailyIncome <= 0) {
@@ -350,9 +351,9 @@ const distributeWeeklyRankIncome = async () => {
             return { success: false, message: 'Weekly closing already completed' };
         }
 
-        // const incomeResult = await getMembershipTransactionsForWeek();
-        // const weeklyIncome = incomeResult.weeklyIncome;
-        const weeklyIncome = 1000;
+        const incomeResult = await getMembershipTransactionsForWeek();
+        const weeklyIncome = incomeResult.weeklyIncome;
+        // const weeklyIncome = 1000;
         console.log(`[WEEKLY] Weekly turnover: ${weeklyIncome}`);
 
         if (!weeklyIncome || weeklyIncome <= 0) {
@@ -457,9 +458,9 @@ const distributeMonthlyRankIncome = async () => {
             return { success: false, message: 'Monthly closing already completed' };
         }
 
-        // const incomeResult = await getMembershipTransactionsForMonth();
-        // const monthlyIncome = incomeResult.monthlyIncome;
-        const monthlyIncome = 10000;
+        const incomeResult = await getMembershipTransactionsForMonth();
+        const monthlyIncome = incomeResult.monthlyIncome;
+        // const monthlyIncome = 10000;
 
         
         if (!monthlyIncome || monthlyIncome <= 0) {
@@ -614,9 +615,104 @@ const createZeroAmountClosing = async (type) => {
 
 
 
+// New Helper Functions
+const checkPreviousPeriodClosing = async (type) => {
+    try {
+        let periodStart;
+        const now = moment().tz("Asia/Kolkata");
+        
+        switch(type) {
+            case 'daily':
+                periodStart = now.subtract(1, 'day').startOf('day').format('YYYY-MM-DD');
+                console.log('Checking daily closing for:', periodStart);
+                break;
+            case 'weekly':
+                periodStart = now.subtract(1, 'week').startOf('week').format('YYYY-MM-DD');
+                console.log('Checking weekly closing for:', periodStart);
+                break;
+            case 'monthly':
+                periodStart = now.subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
+                console.log('Checking monthly closing for:', periodStart);
+                break;
+            default:
+                throw new Error('Invalid period type');
+        }
 
+        const [rows] = await pool.query(
+            `SELECT * FROM company_closing 
+            WHERE type = ? AND date_and_time_of_closing >= ? 
+            LIMIT 1`,
+            [type, periodStart]
+        );
+
+        return rows.length > 0;
+    } catch (error) {
+        console.error(`Error checking ${type} closing:`, error);
+        throw error;
+    }
+};
+
+// Main Check Functions
+const checkDaily = async () => {
+    try {
+        console.log('🔍 Checking previous daily closing...');
+        const exists = await checkPreviousPeriodClosing('daily');
+        
+        if (exists) {
+            console.log('✅ Previous daily closing already exists');
+            return { success: true, message: 'Daily closing already completed' };
+        }
+
+        console.log('⏳ Previous daily closing not found, starting distribution...');
+        return await distributeDailyRankIncome();
+    } catch (error) {
+        console.error('Daily check failed:', error);
+        return { success: false, message: 'Daily check failed' };
+    }
+};
+
+const checkWeekly = async () => {
+    try {
+        console.log('🔍 Checking previous weekly closing...');
+        const exists = await checkPreviousPeriodClosing('weekly');
+        
+        if (exists) {
+            console.log('✅ Previous weekly closing already exists');
+            return { success: true, message: 'Weekly closing already completed' };
+        }
+
+        console.log('⏳ Previous weekly closing not found, starting distribution...');
+        return await distributeWeeklyRankIncome();
+    } catch (error) {
+        console.error('Weekly check failed:', error);
+        return { success: false, message: 'Weekly check failed' };
+    }
+};
+
+const checkMonthly = async () => {
+    try {
+        console.log('🔍 Checking previous monthly closing...');
+        const exists = await checkPreviousPeriodClosing('monthly');
+        
+        if (exists) {
+            console.log('✅ Previous monthly closing already exists');
+            return { success: true, message: 'Monthly closing already completed' };
+        }
+
+        console.log('⏳ Previous monthly closing not found, starting distribution...');
+        return await distributeMonthlyRankIncome();
+    } catch (error) {
+        console.error('Monthly check failed:', error);
+        return { success: false, message: 'Monthly check failed' };
+    }
+};
+
+// Update Module Exports
 module.exports = {
     distributeDailyRankIncome,
     distributeWeeklyRankIncome,
-    distributeMonthlyRankIncome
+    distributeMonthlyRankIncome,
+    checkDaily,
+    checkWeekly,
+    checkMonthly
 };

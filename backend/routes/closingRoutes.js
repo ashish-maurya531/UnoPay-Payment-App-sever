@@ -1,113 +1,87 @@
 const express = require('express');
 const router = express.Router();
-const { distributeDailyRankIncome, distributeWeeklyRankIncome, distributeMonthlyRankIncome } = require('../utills/companyTurnoverDistrubution.js');
+const { 
+    checkDaily,
+    checkWeekly,
+    checkMonthly 
+} = require('../utills/companyTurnoverDistrubution.js');
 const { pool } = require('../config/database');
 
-// Route for distributing daily rank income
-router.post('/distribute/daily', async (req, res) => {
+// Route for daily check and distribution
+router.post('/check-distribute/daily', async (req, res) => {
     try {
-        const result = await distributeDailyRankIncome(req, res);
-        if (result.success === 'true') {
-            return res.status(200).json({
-                success: true,
-                message: result.message
-            });
-        } else {
-            return res.status(200).json({
-                success: false,
-                message: result.message
-            });
-        }
+        const result = await checkDaily();
+        return res.status(result.success ? 200 : 400).json({
+            success: result.success,
+            message: result.message,
+            data: result.data || null
+        });
     } catch (error) {
-        console.error("Error in daily distribution:", error);
+        console.error("Daily check-distribute error:", error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error while distributing daily income"
+            message: "Internal server error during daily processing"
         });
     }
 });
 
-// Route for distributing weekly rank income
-router.post('/distribute/weekly', async (req, res) => {
+// Route for weekly check and distribution
+router.post('/check-distribute/weekly', async (req, res) => {
     try {
-        const result = await distributeWeeklyRankIncome(req, res);
-        if (result.success === 'true') {
-            return res.status(200).json({
-                success: true,
-                message: result.message
-            });
-        } else {
-            return res.status(200).json({
-                success: false,
-                message: result.message
-            });
-        }
+        const result = await checkWeekly();
+        return res.status(result.success ? 200 : 400).json({
+            success: result.success,
+            message: result.message,
+            data: result.data || null
+        });
     } catch (error) {
-        console.error("Error in weekly distribution:", error);
+        console.error("Weekly check-distribute error:", error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error while distributing weekly income"
+            message: "Internal server error during weekly processing"
         });
     }
 });
 
-// Route for distributing monthly rank income
-router.post('/distribute/monthly', async (req, res) => {
+// Route for monthly check and distribution
+router.post('/check-distribute/monthly', async (req, res) => {
     try {
-        const result = await distributeMonthlyRankIncome(req, res);
-        if (result.success === 'true') {
-            return res.status(200).json({
-                success: true,
-                message: result.message
-            });
-        } else {
-            return res.status(200).json({
-                success: false,
-                message: result.message
-            });
-        }
+        const result = await checkMonthly();
+        return res.status(result.success ? 200 : 400).json({
+            success: result.success,
+            message: result.message,
+            data: result.data || null
+        });
     } catch (error) {
-        console.error("Error in monthly distribution:", error);
+        console.error("Monthly check-distribute error:", error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error while distributing monthly income"
+            message: "Internal server error during monthly processing"
         });
     }
 });
 
-
-
-
-
-
-// Route to get the details of company closing from the `company_closing` table
+// Route to get company closing details
 router.get('/closing-details', async (req, res) => {
     try {
-        // Query to fetch all records from company_closing table
-        const [closingDetails] = await pool.query('SELECT * FROM company_closing ORDER BY date_and_time_of_closing DESC');
+        const [closingDetails] = await pool.query(`
+            SELECT * FROM company_closing 
+            ORDER BY date_and_time_of_closing DESC
+            LIMIT 100
+        `);
 
-        // If no records are found
-        if (closingDetails.length === 0) {
-            return res.status(200).json({
-                success: false,
-                message: 'No company closing records found.'
-            });
-        }
-
-        // Return the company closing records
         return res.status(200).json({
             success: true,
+            count: closingDetails.length,
             data: closingDetails
         });
     } catch (error) {
-        console.error('Error fetching company closing details:', error);
+        console.error('Closing details error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Internal server error while fetching company closing details'
+            message: 'Failed to fetch closing details'
         });
     }
 });
 
 module.exports = router;
-
-
