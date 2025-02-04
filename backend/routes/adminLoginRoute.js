@@ -27,7 +27,6 @@ router.post('/adminLogin2', async (req, res) => {
     }
     const payload = {
       name,
-      password,
       message: "hack mt kr",
       jti: crypto.randomUUID(), // Generates a unique ID for each token
       iat: Math.floor(Date.now() / 1000), // Issued At
