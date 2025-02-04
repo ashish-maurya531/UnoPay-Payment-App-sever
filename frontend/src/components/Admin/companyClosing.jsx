@@ -38,7 +38,7 @@ export default function DistributionAndClosing() {
   const handleDistribution = async (type) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${Src}/api/auth/distribute/${type}`);
+      const response = await axios.post(`${Src}/api/auth//check-distribute/${type}`);
       notification.success({
         message: 'Distribution Successful',
         description: response.data.message,
