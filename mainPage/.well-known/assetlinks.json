@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.unotag.unopay",
+      "sha256_cert_fingerprints": [
+        "AB:5A:C2:B8:51:65:31:1B:5A:24:C9:38:24:03:E3:B9:FB:79:24:0E:B4:39:50:C3:DB:15:1A:2F:39:8A:4B:A8"
+      ]
+    }
+  }
+]
