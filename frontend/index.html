@@ -1,13 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Uno Pe Admin Panel</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnoPay - Digital Payment Solutions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        :root {
+            --primary-red: #ff0000;
+            --primary-yellow: #ffd700;
+            --dark-blue: #1a237e;
+        }
+
+        nav {
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-blue);
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-red);
+        }
+
+        .hero {
+            background-image: url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-kCqGhjsVi2jGtdenAwdgv8iV5hV46t.png');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            padding: 60px 20px 40px;
+            position: relative;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .services {
+            background-color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .services img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .packages {
+            padding: 4rem 2rem;
+            background-color: #f5f5f5;
+        }
+
+        .packages img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background-color: var(--primary-red);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            transition: transform 0.3s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        .google-play-btn {
+            background-color:green;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            transition: background-color 0.3s;
+        }
+
+        .google-play-btn:hover {
+            background-color: green;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--dark-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                gap: 1.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .hero {
+                align-items: center;
+                text-align: center;
+            }
+
+            .hero-content h2 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-links a {
+                font-size: 0.9rem;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+            }
+
+            .hero-content h2 {
+                font-size: 1.5rem;
+            }
+
+            .hero-content p {
+                font-size: 0.9rem;
+            }
+
+            .google-play-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .cta-button {
+                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-yD9kzZXFacsCYS4LoCiBjawcP2CwuF.png" alt="UnoPay Logo" style="height: 40px;">
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#about">About Us</a>
+                <a href="#features">Features</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h2>Download UnoPay App</h2>
+            <p>Available on Google Play Store</p>
+            <a href="https://play.google.com/store/apps/details?id=com.unotag.unopay" class="google-play-btn">
+                <svg height="24" viewBox="0 0 24 24" width="24">
+                    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" fill="white"/>
+                </svg>
+                Get it on Google Play
+            </a>
+        </div>
+    </section>
+
+    <section id="features" class="services">
+        <h2 class="section-title">Our Services</h2>
+        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-yD9kzZXFacsCYS4LoCiBjawcP2CwuF.png" alt="UnoPay Services" style="margin: 2rem 0;">
+        <a href="#download" class="cta-button">Get Started Now</a>
+    </section>
+
+    <section id="about" class="packages">
+        <h2 class="section-title">Choose Your Package</h2>
+        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-wUplXoMo7yjARgOdfntpQ60q0lsQIB.png" alt="UnoPay Packages" style="margin: 2rem 0;">
+    </section>
+</body>
 </html>
