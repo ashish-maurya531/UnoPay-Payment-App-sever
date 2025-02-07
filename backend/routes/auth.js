@@ -6,6 +6,11 @@ const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp, verifyOtpForRegister,deleteOtpForRegister} = require('../utills/sendOtpMail');
 
+const bcrypt = require('bcryptjs');
+
+
+
+const jwt = require('jsonwebtoken');
 // // admin login jwt 
 // router.post('/adminLogin2', async (req, res) => {
 //   const { name, password } = req.body;
@@ -148,7 +153,7 @@ console.log(newMember, upline);
 //////////////////
 
 // Get list of member hierarchy
-router.get('/getlist', async (req, res) => {
+router.get('/getlist',authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM member_hierarchy ORDER BY member,level');
     res.json(rows);
@@ -184,7 +189,7 @@ const checkSponserId = async (id) => {
     throw error; // Re-throw the error for the caller to handle
   }
 };
-router.post('/checkSponserId', async(req, res) => {
+router.post('/checkSponserId',authenticateToken, async(req, res) => {
   const { sponser_id } = req.body;
   //check for sql injection using function imported
   if (containsSQLInjectionWords(sponser_id)) {
@@ -631,7 +636,7 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
 // });
 
 //get the membership status of the user
-router.post('/getmembershipStatus', async (req, res) => {
+router.post('/getmembershipStatus',authenticateToken, async (req, res) => {
   const { member_id } = req.body;
 
   if (!member_id) {
@@ -714,6 +719,29 @@ router.post('/login2', async (req, res) => {
       'SELECT device_id FROM login_device_info WHERE member_id = ?',
       [memberid]
     );
+      const payload = {
+          member_id: memberid,
+          message: "hack mt kr",
+          jti: crypto.randomUUID(), // Generates a unique ID for each token
+          iat: Math.floor(Date.now() / 1000), // Issued At
+         
+        };
+        
+        
+        // Generate JWT token
+        const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+     //get the member kyc details 
+     let [kycRows] = await pool.query(
+      'SELECT FullName,IFSC_Code,Bank_Name,Account_number,Aadhar_Number,PanCard_Number,Nominee_name,Nominee_relation,Kyc_status FROM user_bank_kyc_details WHERE member_id = ? AND Kyc_status = ?',
+      [memberid, "approved"]
+  );
+  
+  if (!kycRows.length) { // Corrected check
+      kycRows = [{Kyc_status: "KycNotDone" }];
+  }
+  
+  console.log(kycRows[0]);
+  
 
     if (deviceIdRows.length === 0) {
       // First-time login, no device ID exists
@@ -735,12 +763,17 @@ router.post('/login2', async (req, res) => {
         return res.status(200).json({
           status: "true",
           message: 'User logged in successfully',
+          userLoginToken:token,
           memberid,
           username,
           membership,
           phoneNo: userRows[0].phoneno,
           email,
-          date_of_joining: userRows[0].created_at
+          date_of_joining: userRows[0].created_at,
+          ...kycRows[0]
+
+
+          
         });
       } else {
         // Verify OTP for first-time login
@@ -827,7 +860,7 @@ router.post('/login2', async (req, res) => {
 ////////////////////////////////////////////////////
 
 //to check tpin is correct or not 
-router.post('/checktpin', async(req,res)=>{
+router.post('/checktpin', authenticateToken,async(req,res)=>{
   const {member_id,tpin} = req.body;
   console.log(member_id,tpin)
   if (!member_id || !tpin) {
@@ -882,7 +915,7 @@ router.get('/users', authenticateToken, async (req, res) => {
 
 // POST API to toggle status between active and inactive
 // POST API to toggle user status between active and inactive
-router.post('/toggleStatus', async (req, res) => {
+router.post('/toggleStatus', authenticateToken,async (req, res) => {
   const { memberid } = req.body;
 
   if (!memberid) {
@@ -949,7 +982,7 @@ router.post('/toggleStatus', async (req, res) => {
 
 
 //generate  users ids in database 
-router.post('/generate-user-ids', async (req, res) => {
+router.post('/generate-user-ids',authenticateToken,async (req, res) => {
     try {
         // Fetch the last entry based on the sequential IDs
         const [lastEntryResult] = await pool.query(

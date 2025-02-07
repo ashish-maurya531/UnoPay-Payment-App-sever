@@ -20,12 +20,15 @@ const getMembershipTransactionsForToday = async (req, res) => {
 
         // SQL query to get all transactions where type is 'Membership', status is 'success', and the date is today
         const query = `
-            SELECT sum(amount) as "todayIncome"
+            SELECT 
+                550 * COUNT(CASE WHEN subType = 'BASIC' THEN 1 END) 
+                + 55 * COUNT(CASE WHEN subType = 'PREMIUM' THEN 1 END) 
+                AS todayIncome
             FROM universal_transaction_table 
             WHERE type = 'Membership' 
-            AND subType='BASIC'
-              AND status = 'success'
-              AND DATE(created_at) = ?;
+            AND subType IN ('BASIC', 'PREMIUM')  -- Include both subtypes
+            AND status = 'success'
+            AND DATE(created_at) = ?;
         `;
 
         const [rows] = await pool.query(query, [today]);
@@ -65,12 +68,15 @@ const getMembershipTransactionsForWeek = async (req, res) => {
 
         // Query to get weekly income
         const query = `
-            SELECT sum(amount) as "weeklyIncome"
-            FROM universal_transaction_table 
-            WHERE type = 'Membership' 
-            AND subType='BASIC'
-              AND status = 'success'
-              AND DATE(created_at) BETWEEN ? AND ?;
+            SELECT 
+    550 * COUNT(CASE WHEN subType = 'BASIC' THEN 1 END) 
+    + 55 * COUNT(CASE WHEN subType = 'PREMIUM' THEN 1 END) 
+    AS todayIncome
+FROM universal_transaction_table 
+WHERE type = 'Membership' 
+  AND subType IN ('BASIC', 'PREMIUM')  -- Include both subtypes
+  AND status = 'success'
+  AND DATE(created_at)  BETWEEN ? AND ?;
         `;
 
         const [rows] = await pool.query(query, [startOfWeek, endOfWeek]);
@@ -112,12 +118,15 @@ const getMembershipTransactionsForMonth = async (req, res) => {
 
         // Query to get monthly income
         const query = `
-            SELECT sum(amount) as "monthlyIncome"
-            FROM universal_transaction_table 
-            WHERE type = 'Membership' 
-              AND subType='BASIC'
-              AND status = 'success'
-              AND DATE(created_at) BETWEEN ? AND ?;
+           SELECT
+    550 * COUNT(CASE WHEN subType = 'BASIC' THEN 1 END)
+    + 55 * COUNT(CASE WHEN subType = 'PREMIUM' THEN 1 END)
+    AS todayIncome
+FROM universal_transaction_table
+WHERE type = 'Membership'
+  AND subType IN ('BASIC', 'PREMIUM')  -- Include both subtypes
+  AND status = 'success'
+  AND DATE(created_at) BETWEEN ? AND ?;
         `;
 
         const [rows] = await pool.query(query, [startOfMonth, endOfMonth]);

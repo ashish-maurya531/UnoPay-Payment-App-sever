@@ -5,6 +5,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 
+const authenticateToken = require('../middleware/auth');
 
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet

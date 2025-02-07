@@ -16,6 +16,8 @@ import {formatDate } from '../../utils/dateFormat';
 import axios from 'axios';
 const { Title, Text } = Typography;
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 const UserAddFundRequest = () => {
   const [data, setData] = useState([]);
@@ -44,7 +46,11 @@ const UserAddFundRequest = () => {
   const fetchFundRequests = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${Src}/api/auth/getAllUserAddFundRequest?page=${page}`);
+      const response = await axios.get(`${Src}/api/auth/getAllUserAddFundRequest?page=${page}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       if (response.data.status === 'success') {
         //sort the records decending  acc to time 
         response.data.data.sort((a, b) => new Date(b.time_date) - new Date(a.time_date));
@@ -69,9 +75,19 @@ const UserAddFundRequest = () => {
 
   const handleViewScreenshot = async (record) => {
     try {
-      const response = await axios.post(`${Src}/api/auth/getUserAddFundRequestSS`, {
-        utr_number: record.utr_number,
-      }, { responseType: 'blob' });
+      const response = await axios.post(
+        `${Src}/api/auth/getUserAddFundRequestSS`,
+        { 
+          utr_number: record.utr_number 
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure token is included
+          },
+          responseType: 'blob', // Ensure response is treated as a binary file
+        }
+      );
+      
 
       if (response.status === 200) {
         const screenshotUrl = URL.createObjectURL(response.data);
@@ -89,10 +105,20 @@ const UserAddFundRequest = () => {
 
   const handleStatusUpdate = async (status) => {
     try {
-      const response = await axios.post(`${Src}/api/auth/updateFundRequestStatus`, {
-        utr_number: selectedRecord.utr_number,
-        status,
-      });
+      const response = await axios.post(
+        `${Src}/api/auth/updateFundRequestStatus`,
+        { 
+          utr_number: selectedRecord.utr_number,
+          status,
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication
+            "Content-Type": "application/json", // Specify JSON format
+          },
+        }
+      );
+      
       
       if (response.data.status === 'success') {
         // Construct detailed notification message

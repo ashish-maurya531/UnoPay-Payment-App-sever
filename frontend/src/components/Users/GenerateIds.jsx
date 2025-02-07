@@ -1,11 +1,17 @@
 import { Button, message } from 'antd';
 import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function GenerateIds() {
   const handleGenerateIds = async () => {
     try {
-      const response = await axios.post(`${Src}/api/auth/generate-user-ids`);
+      const response = await axios.post(`${Src}/api/auth/generate-user-ids`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       if (response.data.success) {
         message.success('IDs generated successfully!');
       } else {

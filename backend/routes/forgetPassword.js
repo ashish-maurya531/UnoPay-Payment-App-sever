@@ -4,6 +4,7 @@ const router = express.Router();
 const {sendOtpEmail,verifyOtp,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender} = require('../utills/sendOtpMail');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
+const authenticateToken = require('../middleware/auth');
 
 
 // Route to send OTP

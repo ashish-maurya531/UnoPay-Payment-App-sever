@@ -373,6 +373,8 @@ const Src = import.meta.env.VITE_Src;
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 const WithdrawRequests = () => {
   const [data, setData] = useState([]);
@@ -391,7 +393,11 @@ const WithdrawRequests = () => {
   const fetchWithdrawRequests = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${Src}/api/auth/all-withdraw-request`);
+      const response = await axios.get(`${Src}/api/auth/all-withdraw-request`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       if (response.data.status === 'true') {
         response.data.data.sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
         setData(response.data.data);
@@ -416,14 +422,21 @@ const WithdrawRequests = () => {
   const handleStatusUpdate = async (status) => {
     setLoading(true);
     try {
-        const response = await axios.post(
-            `${Src}/api/auth/update-status-user-withdraw-request`,
-            {
-                transaction_id: selectedRecord.transaction_id,
-                status,
-                message: status === 'done' ? 'sent to bank' : rejectionMessage,
-            }
-        );
+      const response = await axios.post(
+        `${Src}/api/auth/update-status-user-withdraw-request`,
+        { 
+          transaction_id: selectedRecord.transaction_id,
+          status,
+          message: status === "done" ? "sent to bank" : rejectionMessage,
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication if required
+            "Content-Type": "application/json", // Explicitly define JSON format
+          },
+        }
+      );
+      
 
         if (response.data.status === 'true') {
             notification.success({

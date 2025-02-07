@@ -5,6 +5,7 @@ import axios from 'axios';
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 export default function UserChatSystem() {
   const [users, setUsers] = useState([]);
@@ -49,10 +50,20 @@ export default function UserChatSystem() {
   const fetchChats = async (memberId, ticketId) => {
     try {
       setLoadingChats(true);
-      const response = await axios.post(`${Src}/api/auth/get-user-admin-chat`, {
-        member_id: memberId,
-        ticket_id: ticketId,
-      });
+      const response = await axios.post(
+        `${Src}/api/auth/get-user-admin-chat`,
+        { 
+          member_id: memberId,
+          ticket_id: ticketId,
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication
+            "Content-Type": "application/json", // Explicitly define JSON format
+          },
+        }
+      );
+      
       setChats(response.data); // Adjust based on your API response structure
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -70,12 +81,21 @@ export default function UserChatSystem() {
 
     try {
       const { memberId, ticketId } = selectedUser;
-      await axios.post(`${Src}/api/auth/send-message`, {
-        member_id: memberId,
-        ticket_id: ticketId,
-        message_by: 'admin',
-        message: newMessage,
-      });
+      await axios.post(
+        `${Src}/api/auth/send-message`,
+        { 
+          member_id: memberId,
+          ticket_id: ticketId,
+          message_by: "admin",
+          message: newMessage,
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication if required
+            "Content-Type": "application/json", // Explicitly define JSON format
+          },
+        }
+      );
 
       setChats([...chats, { message_by: 'admin', message: newMessage, created_at: new Date().toISOString() }]);
       setNewMessage('');

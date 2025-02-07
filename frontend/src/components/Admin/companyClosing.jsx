@@ -11,6 +11,7 @@ const { RangePicker } = DatePicker;
 const Src = import.meta.env.VITE_Src;
 const RANKS = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND', 'CROWN DIAMOND'];
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 const TurnoverTrendCard = ({ data, height }) => {
   // Initial scale factor
@@ -97,7 +98,11 @@ export default function DistributionAndClosing() {
   const fetchClosingData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${Src}/api/auth/closing-details`);
+      const response = await axios.get(`${Src}/api/auth/closing-details`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       setClosingData(response.data.data);
       setFilteredData(response.data.data);
       console.log(response.data.data);
@@ -114,7 +119,11 @@ export default function DistributionAndClosing() {
   const handleManualClosing = async (type) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${Src}/api/auth/check-distribute/${type}`);
+      const response = await axios.post(`${Src}/api/auth/check-distribute/${type}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       notification.success({
         message: `${type.charAt(0).toUpperCase() + type.slice(1)} Closing Successful`,
         description: response.data.message,

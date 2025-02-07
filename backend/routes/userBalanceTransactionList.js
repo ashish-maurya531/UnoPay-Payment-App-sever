@@ -4,6 +4,7 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const authenticateToken = require('../middleware/auth');
 
 
 

@@ -530,6 +530,7 @@ const { commisionPayout_2 } = require('../utills/commisionPayout_2');
 const { validateRechargeInput, containsSQLInjectionWords } = require('../utills/validators');
 const { SERVICE_TYPES } = require('../config/constants');
 const {getFlexiWalletBalance}= require('../utills/checkUserBalance.js');
+const authenticateToken = require('../middleware/auth');
 
 // Configuration
 const RECHRAGE_API_BASE = 'https://business.a1topup.com/recharge/api';

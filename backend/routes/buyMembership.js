@@ -10,6 +10,7 @@ const {recreateRankTable,updateRankAndBacktrack} = require('../utills/rankBuilde
 const {getMembershipTransactionsForToday,getMembershipTransactionsForWeek,getMembershipTransactionsForMonth,}= require('../utills/companyTurnover');
 const {distributeDailyrankIncome,distributeWeeklyrankIncome,distributeMonthlyrankIncome} = require('../utills/companyTurnoverDistrubution.js'); 
 const {handleMagicPlant,moneyPlantHoldTransactionsCheck}=require('../utills/magicPlant');
+const authenticateToken = require('../middleware/auth');
 
 
 // handleMagicPlant("UP103841");

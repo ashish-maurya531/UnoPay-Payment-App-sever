@@ -3,6 +3,8 @@ import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 export default function QRList() {
@@ -17,7 +19,11 @@ export default function QRList() {
   const fetchQRs = async (currentPage = 1, pageSize = 5) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${Src}/api/auth/getAllAdminQRS`);
+      const response = await axios.get(`${Src}/api/auth/getAllAdminQRS`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       const fetchedData = response.data.data || [];
       setData(fetchedData);
       setPagination({
@@ -46,7 +52,11 @@ export default function QRList() {
   // Delete a QR by ID
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${Src}/api/auth/deleteAdminQR/${id}`);
+      await axios.delete(`${Src}/api/auth/deleteAdminQR/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       message.success('QR deleted successfully!');
       fetchQRs();
     } catch (error) {
@@ -59,11 +69,12 @@ export default function QRList() {
     const formData = new FormData();
     formData.append('upi_id', values.upi_id);
     formData.append('qr', values.qr.file);
-
+   
     try {
       await axios.post(`${Src}/api/auth/postAdminQRS`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
         },
       });
       message.success('QR added successfully!');
@@ -78,9 +89,16 @@ export default function QRList() {
   // Fetch QR image URL by ID
   const handleViewQR = async (qr) => {
     try {
-      const response = await axios.post(`${Src}/api/auth/getQRimage`, {
-        qr: qr,
-      }, { responseType: 'blob' });
+      const response = await axios.post(
+        `${Src}/api/auth/getQRimage`,
+        { qr }, // Request body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Correctly placed headers
+          },
+          responseType: 'blob', // Correctly placed responseType
+        }
+      );
 
       if (response.status === 200) {
         // console.log(URL.createObjectURL(response.data));

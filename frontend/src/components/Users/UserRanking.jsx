@@ -5,6 +5,7 @@ import axios from 'axios';
 const { Panel } = Collapse;
 
 const Src = import.meta.env.VITE_Src; // Assuming this is where your API URL is defined
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 export default function RankList() {
   const [rankData, setRankData] = useState([]);
@@ -27,7 +28,11 @@ export default function RankList() {
   const fetchRankData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${Src}/api/auth/getAllUsersRank`);
+      const response = await axios.get(`${Src}/api/auth/getAllUsersRank`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       setRankData(response?.data);
     } catch (error) {
       console.error('Error fetching rank data:', error);
