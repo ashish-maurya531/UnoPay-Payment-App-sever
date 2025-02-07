@@ -2,6 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const authenticateToken = require('../middleware/auth');
 
 
 router.post("/getDirectMemberList", async (req, res) => {

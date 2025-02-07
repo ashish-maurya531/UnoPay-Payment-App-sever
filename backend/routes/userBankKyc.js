@@ -6,6 +6,8 @@ const fs = require('fs');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {verifyOtp} = require('../utills/sendOtpMail');
+const authenticateToken = require('../middleware/auth');
+
 
 
 // Create directories if they don't exist
@@ -472,7 +474,7 @@ router.post('/updateUserKycStatus', async (req, res) => {
 
 
 //get all users bank and kyc details 
-router.get('/bankkycDetails/All', async (req, res)=>{
+router.get('/bankkycDetails/All', authenticateToken,async (req, res)=>{
     try{
         const [results] = await pool.query('SELECT * FROM user_bank_kyc_details');
         res.status(200).json({status: 'true', data: results});

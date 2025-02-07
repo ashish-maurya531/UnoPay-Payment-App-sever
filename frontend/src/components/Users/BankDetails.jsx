@@ -21,6 +21,8 @@ const Src = import.meta.env.VITE_Src;
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 const BankDetails = () => {
   const [data, setData] = useState([]);
@@ -32,6 +34,7 @@ const BankDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageType, setImageType] = useState(null);
   const [rejectionMessage, setRejectionMessage] = useState('KYC documents not valid');
+  const token = localStorage.getItem('adminToken');
   
   // New state for filtering
   const [searchText, setSearchText] = useState('');
@@ -50,7 +53,12 @@ const BankDetails = () => {
   const fetchBankDetails = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${Src}/api/auth/bankkycDetails/All`);
+      
+      const response = await axios.get(`${Src}/api/auth/bankkycDetails/All`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       if (response.data.status === 'true') {
         //sort by creation time
         response.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

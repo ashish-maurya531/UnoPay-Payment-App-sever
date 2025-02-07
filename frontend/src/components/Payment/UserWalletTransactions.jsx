@@ -6,6 +6,8 @@ import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
 
 const { Text } = Typography;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function UserTransactions() {
   const [transactions, setTransactions] = useState([]);
@@ -37,7 +39,11 @@ export default function UserTransactions() {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${Src}/api/auth/user-flexi-wallet-all-transactions`);
+      const response = await axios.get(`${Src}/api/auth/user-flexi-wallet-all-transactions`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       const data = response.data.transactions;
         data.sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
       setTransactions(data);

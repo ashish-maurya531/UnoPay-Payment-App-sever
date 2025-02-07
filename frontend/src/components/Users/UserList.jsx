@@ -4,6 +4,7 @@ import axios from 'axios';
 import {formatDate } from '../../utils/dateFormat';
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 export default function UserList() {
   const [users, setUsers] = useState([]);

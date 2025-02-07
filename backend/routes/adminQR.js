@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const router = express.Router();
+const authenticateToken = require('../middleware/auth');
 
 // Directory for storing QR images
 const uploadPath = path.join(__dirname, 'adminQRS');

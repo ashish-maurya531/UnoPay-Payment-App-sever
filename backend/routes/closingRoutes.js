@@ -6,6 +6,7 @@ const {
     checkMonthly 
 } = require('../utills/companyTurnoverDistrubution.js');
 const { pool } = require('../config/database');
+const authenticateToken = require('../middleware/auth');
 
 // Route for daily check and distribution
 router.post('/check-distribute/daily', async (req, res) => {

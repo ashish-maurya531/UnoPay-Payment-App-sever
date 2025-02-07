@@ -6,6 +6,7 @@ import { CheckCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 export default function LoginIssueRequestList() {
   const [loginIssues, setLoginIssues] = useState([]);
@@ -33,7 +34,11 @@ export default function LoginIssueRequestList() {
   const fetchLoginIssueRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(`${Src}/api/auth/all-login-issues`);
+      const response = await axios.post(`${Src}/api/auth/all-login-issues`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
       
       const formattedRequests = response.data.requests.map((request, index) => ({
         key: request.login_issue_id,
@@ -61,10 +66,20 @@ export default function LoginIssueRequestList() {
 
   const handleStatusChange = async (loginIssueId, newStatus) => {
     try {
-      const response = await axios.post(`${Src}/api/auth/update-login-issue-status`, {
-        login_issue_id: loginIssueId,
-        status: newStatus,
-      });
+      const response = await axios.post(
+        `${Src}/api/auth/update-login-issue-status`,
+        { 
+          login_issue_id: loginIssueId,
+          status: newStatus,
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication if required
+            "Content-Type": "application/json", // Explicitly define JSON format
+          },
+        }
+      );
+      
 
       if (response.data.message === 'Status updated successfully') {
         notification.success({
@@ -91,9 +106,19 @@ export default function LoginIssueRequestList() {
     console.log(loginIssueId);
     try {
       // Make the API request to delete the login issue
-      const response = await axios.post(`${Src}/api/auth/delete-login-issue`, {
-        login_issue_id: loginIssueId 
-      });
+      const response = await axios.post(
+        `${Src}/api/auth/delete-login-issue`,
+        { 
+          login_issue_id: loginIssueId 
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication if required
+            "Content-Type": "application/json", // Explicitly define JSON format
+          },
+        }
+      );
+      
   
       // Check the response from the backend
       console.log(response);

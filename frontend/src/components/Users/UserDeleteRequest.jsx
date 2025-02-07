@@ -5,6 +5,8 @@ import { formatDate } from '../../utils/dateFormat';
 
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
+const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function UserDeleteRequestList() {
   const [deleteRequests, setDeleteRequests] = useState([]);
@@ -34,7 +36,11 @@ export default function UserDeleteRequestList() {
   const fetchDeleteRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${Src}/api/auth/deleteRequests`);
+      const response = await axios.get(`${Src}/api/auth/deleteRequests`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token for authentication
+        },
+      });
 
       const formattedRequests = response.data.data.map((request, index) => ({
         key: request.id || index.toString(),
@@ -61,9 +67,17 @@ export default function UserDeleteRequestList() {
   };
   const handleDeleteRequest = async (memberId) => {
     try {
-      const response = await axios.delete(`${Src}/api/auth/deleteRequest`, {
-        data: { member_id: memberId },
-      });
+      const response = await axios.delete(
+        `${Src}/api/auth/deleteRequest`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication
+            "Content-Type": "application/json", // Specify JSON format
+          },
+          data: { member_id: memberId }, // Correct placement of request body
+        }
+      );
+      
   
       if (response.data.success) {
         notification.success({
@@ -180,9 +194,19 @@ export default function UserDeleteRequestList() {
 
   const handleOk = async () => {
     try {
-      await axios.post(`${Src}/api/auth/toggleStatus`, {
-        memberid: currentMemberId,
-      });
+      await axios.post(
+        `${Src}/api/auth/toggleStatus`,
+        { 
+          memberid: currentMemberId 
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure authentication
+            "Content-Type": "application/json", // Specify JSON format
+          },
+        }
+      );
+      
 
       setIsModalVisible(false);
 
