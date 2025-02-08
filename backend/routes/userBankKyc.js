@@ -51,7 +51,7 @@ const handleMulterErrors = (err, req, res, next) => {
 };
 
 
-router.post('/submitUserBankKycDetails', 
+router.post('/submitUserBankKycDetails', authenticateToken,
   upload.fields([
     { name: 'kycPancard', maxCount: 1 },
     { name: 'kycAadharcardFront', maxCount: 1 },
@@ -242,7 +242,7 @@ router.use(handleMulterErrors);
 
 
 //get kyc status and message
-router.post('/userkycstatus',async (req,res) => {
+router.post('/userkycstatus',authenticateToken,async (req,res) => {
     const {member_id} = req.body;
     console.log("kyc page status",member_id);
     //check member id not empty
@@ -349,7 +349,7 @@ router.post('/userkycstatus',async (req,res) => {
 
 
 // update user kyc status
-router.post('/updateUserKycStatus', async (req, res) => {
+router.post('/updateUserKycStatus',authenticateToken, async (req, res) => {
   const { member_id, status, message } = req.body;
   
   // Check fields are not empty
@@ -488,7 +488,7 @@ router.get('/bankkycDetails/All', authenticateToken,async (req, res)=>{
 })
 
 //get single user bank and kyc details 
-router.post('/bankkycDetails/user', async (req, res)=>{
+router.post('/bankkycDetails/user',authenticateToken, async (req, res)=>{
     const {member_id} = req.body;
     //check member id not empty
     if (!member_id) {
@@ -515,7 +515,7 @@ router.post('/bankkycDetails/user', async (req, res)=>{
 
 
 // API to fetch passbook image
-router.post('/getPassbookImage', async (req, res) => {
+router.post('/getPassbookImage', authenticateToken,async (req, res) => {
   const { member_id } = req.body;
 
   if (!member_id) {
@@ -550,7 +550,7 @@ router.post('/getPassbookImage', async (req, res) => {
 });
 
 // API to fetch pancard image
-router.post('/getPancardImage', async (req, res) => {
+router.post('/getPancardImage', authenticateToken,async (req, res) => {
   const { member_id } = req.body;
 
   if (!member_id) {
@@ -585,7 +585,7 @@ router.post('/getPancardImage', async (req, res) => {
   }
 });
 // API to fetch aadhar front image
-router.post('/getAadharcardFrontImage', async (req, res) => {
+router.post('/getAadharcardFrontImage',authenticateToken, async (req, res) => {
   const { member_id } = req.body;
   if (!member_id) {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
@@ -619,7 +619,7 @@ router.post('/getAadharcardFrontImage', async (req, res) => {
 });
 
 // API to fetch aadhar back image
-router.post('/getAadharcardBackImage', async (req, res) => {
+router.post('/getAadharcardBackImage', authenticateToken,async (req, res) => {
   const { member_id } = req.body;
   if (!member_id) {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
@@ -653,7 +653,7 @@ router.post('/getAadharcardBackImage', async (req, res) => {
 });
 
 // API to fetch user image
-router.post('/getUserImage', async (req, res) => {
+router.post('/getUserImage', authenticateToken,async (req, res) => {
   const { member_id } = req.body;
 
   if (!member_id) {

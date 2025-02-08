@@ -41,7 +41,7 @@ const handleMulterErrors = (err, req, res, next) => {
   next(err);
 };
 //upload.single('screenshot'),
-router.post('/userAddFundRequest',upload.single('screenshot'), async (req, res) => {
+router.post('/userAddFundRequest',authenticateToken,upload.single('screenshot'), async (req, res) => {
   const {  utr_number, to_upi_id, amount, member_id } = req.body;
   console.log( utr_number, amount, member_id);
 
@@ -133,7 +133,7 @@ router.use(handleMulterErrors)
 
 
 // Get all fund requests
-router.get('/getAllUserAddFundRequest', async (req, res) => {
+router.get('/getAllUserAddFundRequest',authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM user_add_fund_request');
     // sort rows descending to tome 
@@ -146,7 +146,7 @@ router.get('/getAllUserAddFundRequest', async (req, res) => {
 });
 
 //get single user addfund request
-router.post('/getUserAddFundRequest', async (req, res) => {
+router.post('/getUserAddFundRequest',authenticateToken, async (req, res) => {
   const { member_id } = req.body;
   if (!member_id) {
     return res.status(400).json({ status: "error", message: "Member ID is required" });
@@ -171,7 +171,7 @@ router.post('/getUserAddFundRequest', async (req, res) => {
 
 
 // Get screenshot by transaction ID
-router.post('/getUserAddFundRequestSS', async (req, res) => {
+router.post('/getUserAddFundRequestSS', authenticateToken,async (req, res) => {
   const { utr_number } = req.body;
 
   if (!utr_number) {
@@ -210,7 +210,7 @@ router.post('/getUserAddFundRequestSS', async (req, res) => {
 
 
 // Update transaction status
-router.post('/updateFundRequestStatus', async (req, res) => {
+router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
   const {  utr_number,status } = req.body;
 
   if (!utr_number || !status) {
@@ -319,7 +319,7 @@ router.post('/updateFundRequestStatus', async (req, res) => {
   }
 });
 
-router.post('/userBalance', async (req, res) => {
+router.post('/userBalance',authenticateToken, async (req, res) => {
   const { member_id } = req.body;
   //member_id is not empty
   if (!member_id || member_id==="") return res.status(400).json({ status: 'error', message: 'Member ID is required.' });

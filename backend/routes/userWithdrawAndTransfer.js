@@ -9,7 +9,7 @@ const authenticateToken = require('../middleware/auth');
 
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
-router.post("/person-to-person-transfer", async (req, res) => {
+router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
     const { sender_member_id, receiver_member_id, commission_amount } = req.body;
     console.log(sender_member_id, receiver_member_id, commission_amount)
 
@@ -129,7 +129,7 @@ router.post("/person-to-person-transfer", async (req, res) => {
 
 
 // code for fund transfer from commissin wallet to flexi wallet 
-router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
+router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)=>{
     const { member_id, commission_amount } = req.body;
     if (!member_id || !commission_amount) {
         return res.status(200).json({status:"false", message: "Member ID and Commission Amount are required"});
@@ -224,7 +224,7 @@ router.post("/commissin-wallet-to-flexi-wallet",async(req,res)=>{
 //code for widthdraw request 
 
 
-router.post('/user-withdraw-request', async (req, res) => {
+router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     const { member_id, amount } = req.body;
 
     if (!member_id || !amount) {
@@ -341,7 +341,7 @@ router.post('/user-withdraw-request', async (req, res) => {
 
 
 
-router.post('/update-status-user-withdraw-request', async (req, res) => {
+router.post('/update-status-user-withdraw-request',authenticateToken,async (req, res) => {
     const { transaction_id, status, message } = req.body;
 
     if (!transaction_id || !status || !message) {
@@ -428,7 +428,7 @@ router.post('/update-status-user-withdraw-request', async (req, res) => {
 
 
 
-router.post('/get-user-withdraw-request', async (req, res) => {
+router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => {
     const { member_id } = req.body;
     console.log("get user withdraw request api hit ")
 
@@ -496,7 +496,7 @@ router.post('/get-user-withdraw-request', async (req, res) => {
 });
 
 
-router.get('/all-withdraw-request', async (req, res) => {
+router.get('/all-withdraw-request',authenticateToken, async (req, res) => {
     try {
         // Fetch all withdraw requests
         const [withdrawRequests] = await pool.query(`

@@ -199,7 +199,7 @@ router.post("/verify-register-otp", async (req, res) => {
 
 
 //change password
-router.post('/changeUserPassword', async (req, res) => {
+router.post('/changeUserPassword',authenticateToken, async (req, res) => {
     const { member_id,oldPassword, newPassword } = req.body;
     //check member id not empty
     if (!member_id || !oldPassword || !newPassword) {
@@ -246,7 +246,7 @@ router.post('/changeUserPassword', async (req, res) => {
 
 
 //change password
-router.post('/changeUserTpin', async (req, res) => {
+router.post('/changeUserTpin', authenticateToken,async (req, res) => {
     const { member_id,oldtpin, newtpin } = req.body;
     //check member id not empty
     if (!member_id || !oldtpin || !newtpin) {
@@ -354,7 +354,7 @@ router.post('/forgetPassword', async (req, res) => {
 });
 
 // Route to reset TPin after OTP verification
-router.post('/forgetTpin', async (req, res) => {
+router.post('/forgetTpin',authenticateToken, async (req, res) => {
     const { member_id, newTpin, otp } = req.body;
 
     // Validate input fields

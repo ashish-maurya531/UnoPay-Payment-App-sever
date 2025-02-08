@@ -109,7 +109,7 @@ const authenticateToken = require('../middleware/auth');
 // Routes
 
 // Route: /send-message
-router.post('/send-message', async (req, res) => {
+router.post('/send-message', authenticateToken,async (req, res) => {
     const { member_id, ticket_id, message_by, message } = req.body;
 
     if (!member_id || !ticket_id || !message_by || !message) {
@@ -131,7 +131,7 @@ router.post('/send-message', async (req, res) => {
 });
 
 // Route: /get-user-admin-chat
-router.post('/get-user-admin-chat', async (req, res) => {
+router.post('/get-user-admin-chat',authenticateToken, async (req, res) => {
     const { member_id, ticket_id } = req.body;
 
     if (!member_id || !ticket_id) {
@@ -235,7 +235,7 @@ const generateLoginIssueId = () => {
   });
   
   // Route to update the status of a login issue request
-  router.post('/update-login-issue-status', async (req, res) => {
+  router.post('/update-login-issue-status',authenticateToken, async (req, res) => {
     const { login_issue_id, status } = req.body;
   
     // Validate the status
@@ -277,7 +277,7 @@ const generateLoginIssueId = () => {
   });
   
   // Route to get all login issue requests (for admin)
-  router.post('/all-login-issues', async (req, res) => {
+  router.post('/all-login-issues',authenticateToken, async (req, res) => {
     try {
       // SQL query to select all login issue requests
       const [result] = await pool.query('SELECT * FROM login_issue_help');
@@ -291,7 +291,7 @@ const generateLoginIssueId = () => {
 
 
   //route to delete the login issue
-  router.post('/delete-login-issue', async (req, res) => {
+  router.post('/delete-login-issue', authenticateToken,async (req, res) => {
     const {login_issue_id  } = req.body;
     if (!login_issue_id) {
       return res.status(200).json({ message: 'Missing required fields' });

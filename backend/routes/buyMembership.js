@@ -85,7 +85,7 @@ const authenticateToken = require('../middleware/auth');
 
 
 // route to by membership plan 
-router.post('/buymembership', async (req, res) => {
+router.post('/buymembership', authenticateToken,async (req, res) => {
     const { package_name, member_id } = req.body;
 
     // Validate input

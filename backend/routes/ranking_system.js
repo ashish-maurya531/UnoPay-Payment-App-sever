@@ -4,7 +4,7 @@ const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 
 // Route to get data for all users
-router.get('/getAllUsersRank', async (req, res) => {
+router.get('/getAllUsersRank',authenticateToken, async (req, res) => {
   try {
     const [result] = await pool.query('SELECT * FROM ranktable');
     // console.log(result);
@@ -16,7 +16,7 @@ router.get('/getAllUsersRank', async (req, res) => {
 });
 
 // Route to get data by member_id
-router.post('/getUserRank', async (req, res) => {
+router.post('/getUserRank',authenticateToken, async (req, res) => {
   const { member_id } = req.body; 
 
   console.log(member_id);

@@ -5,7 +5,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
 
-router.post("/getDirectMemberList", async (req, res) => {
+router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
     const { member_id } = req.body;
     //check input not empty
     if (!member_id) {
@@ -60,7 +60,7 @@ router.post("/getDirectMemberList", async (req, res) => {
 
 
 
-router.post("/getTeamList", async (req, res) => {
+router.post("/getTeamList", authenticateToken,async (req, res) => {
     const { member_id } = req.body;
     //check input not empty
     if (!member_id) {

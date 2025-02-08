@@ -6,7 +6,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
 
-router.post('/postMeetingDetails', async (req, res) => {
+router.post('/postMeetingDetails',authenticateToken, async (req, res) => {
     const { title, link, date_time } = req.body;
   
     if (!title || !link || !date_time) {
@@ -50,7 +50,7 @@ router.post('/postMeetingDetails', async (req, res) => {
   
 
 
-  router.post('/getMeetingDetails', async (req, res) => {
+  router.post('/getMeetingDetails', authenticateToken,async (req, res) => {
   
     try {
       const [meetingDetails] = await pool.query('SELECT title, link, date_time FROM meeting_table');

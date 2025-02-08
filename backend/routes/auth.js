@@ -11,64 +11,6 @@ const bcrypt = require('bcryptjs');
 
 
 const jwt = require('jsonwebtoken');
-// // admin login jwt 
-// router.post('/adminLogin2', async (req, res) => {
-//   const { name, password } = req.body;
-  
-//   try {
-//     const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? LIMIT 1', [name]);
-    
-//     if (rows.length === 0) {
-//       return res.status(401).json({ error: 'Invalid credentials1' });
-//     }
-    
-//     const admin = rows[0];
-//     const isPasswordValid = (password===admin.password)
-
-    
-//     if (!isPasswordValid) {
-//       return res.status(401).json({ error: 'Invalid credentials2' });
-//     }
-    
-//     // Generate JWT token
-//     const token = jwt.sign({ adminName:admin?.name,adminPass:admin?.password }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
-//     res.json({ message: 'Admin logged in successfully', token });
-//   } catch (error) {
-//     console.error('Admin login error:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
-
-
-
-//
-
-// // Admin Login
-// router.post('/adminLogin', async (req, res) => {
-//   const { name, password } = req.body;
-//   console.log(name, password);
-  
-//   // Validate inputs
-//   if (containsSQLInjectionWords(name) || containsSQLInjectionWords(password)) {
-//     return res.status(400).json({ error: "Don't try to hack." });
-//   }
-
-
-//   try {
-//     const [rows] = await pool.query('SELECT * FROM admin WHERE name = ? AND password = ?', [name, password]);
-
-//     if (rows.length === 0) {
-//       return res.status(401).json({ error: 'Invalid credentials' });
-//     }
-
-//     const admin = rows[0];
-//     res.json({ message: 'Admin logged in successfully', adminId: admin.id });
-//   } catch (error) {
-//     console.error('Admin login error:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
 
 
 ///////////////////////
@@ -189,7 +131,7 @@ const checkSponserId = async (id) => {
     throw error; // Re-throw the error for the caller to handle
   }
 };
-router.post('/checkSponserId',authenticateToken, async(req, res) => {
+router.post('/checkSponserId', async(req, res) => {
   const { sponser_id } = req.body;
   //check for sql injection using function imported
   if (containsSQLInjectionWords(sponser_id)) {
@@ -557,83 +499,7 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
 
 ////////////////////////////
   
-// User Login
-// router.post('/login', async (req, res) => {
-//   const { identifier, password } = req.body; 
 
-//   // Validate inputs
-//   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password)) {
-//     return res.status(400).json({ status:"false",message: "Don't try to hack." });
-//   }
-
-//   try {
-    
-//     // console.log(identifier);
-//     const [userRows] = await pool.query(
-//       'SELECT memberid ,username ,status,membership,phoneno,email,created_at FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
-//       [identifier, identifier, identifier]
-//     );
-//     // console.log(userRows)
-
-//     if (userRows.length === 0) {
-//       return res.status(404).json({ status:"false",message: 'User not registered' });
-//     }
-
-//     const memberid = userRows[0].memberid;
-//     const username=userRows[0].username;
-//     const status = userRows[0].status;
-//     const membership = userRows[0].membership;
-//     //checking the status of the user
-//     if (status === 'inactive') {
-//       return res.status(401).json({ status:"false",message: 'Your account is inactive'});
-//       }
-      
-
-
-
-//     // Verify the password from security_details_of_user
-//     const [passwordRows] = await pool.query(
-//       'SELECT password FROM security_details_of_user WHERE member_id = ?',
-//       [memberid]
-//     );
-
-//     if (passwordRows.length === 0 || passwordRows[0].password !== password) {
-//       return res.status(401).json({ status:"false",message: 'Wrong password' });
-//     }
-
-//     //update the user_signup_bonous table value 0 to 1
-//     //first get the current value then update if value is 0 otherwise not update
-//     const [signupBonusRows] = await pool.query(
-//       'SELECT value FROM user_signup_bonus WHERE member_id = ?',
-//       [memberid]
-//     );
-//     const currentValue = signupBonusRows[0]?.value;
-//     if (currentValue === 0) {
-//       const [updateRows] = await pool.query(
-//         'UPDATE user_signup_bonus SET value = 1 WHERE member_id = ?',
-//         [memberid]
-//         );
-
-//         if (updateRows.affectedRows === 0) {
-//           console.log("Error: Could not update user_signup_bonus table value");
-//         }
-//     }
-//     //yadd rakhna ki user signup bonus table ka trigger chnage krna hai 
-//     //SHOW CREATE TRIGGER prevent_revert_from_2;
-//     // console.log(userRows);
-
-
-
-//     // Successful login
-//     res.json({ 
-//       status:"true",
-//       message: 'User logged in successfully', memberid ,username,membership,phoneNo:userRows[0].phoneno,email:userRows[0].email,date_of_joining:userRows[0].created_at});
-//     console.log(username+" ka hogya login "+new Date())
-//   } catch (error) {
-//     console.error('User login error:', error);
-//     res.status(500).json({ status:"false",message: 'Internal server error' });
-//   }
-// });
 
 //get the membership status of the user
 router.post('/getmembershipStatus',authenticateToken, async (req, res) => {

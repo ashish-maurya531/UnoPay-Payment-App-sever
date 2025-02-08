@@ -9,7 +9,7 @@ const authenticateToken = require('../middleware/auth');
 
 
 // Route to get flexi wallet transactions
-router.post('/flexiWalletTransactions', async (req, res) => {
+router.post('/flexiWalletTransactions', authenticateToken,async (req, res) => {
     const {member_id} = req.body;
     if(containsSQLInjectionWords(member_id)){
         return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
@@ -23,7 +23,7 @@ router.post('/flexiWalletTransactions', async (req, res) => {
 });
 
 // Route to get commission wallet transactions
-router.post('/commissionWalletTransactions', async (req, res) => {
+router.post('/commissionWalletTransactions',authenticateToken, async (req, res) => {
     const {member_id} = req.body;
     if(containsSQLInjectionWords(member_id)){
         return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
@@ -37,7 +37,7 @@ router.post('/commissionWalletTransactions', async (req, res) => {
 });
 
 // Route to get self transactions
-router.post('/selfTransactions', async (req, res) => {
+router.post('/selfTransactions', authenticateToken,async (req, res) => {
     const {member_id} = req.body;
     if(containsSQLInjectionWords(member_id)){
         return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
@@ -59,7 +59,7 @@ router.post('/selfTransactions', async (req, res) => {
 });
 
 //get all income transactions
-router.post('/incomeTransactions', async (req, res) => {
+router.post('/incomeTransactions',authenticateToken, async (req, res) => {
     const {member_id} = req.body;
     if(containsSQLInjectionWords(member_id)){
         return res.status(400).json({ success: false, message: 'Invalid SQL Injection detected in member_id' });
@@ -80,7 +80,7 @@ router.post('/incomeTransactions', async (req, res) => {
 );
 
 
-router.get("/user-all-transactions",async(req,res)=>{
+router.get("/user-all-transactions",authenticateToken,async(req,res)=>{
     try{
         // Get all users transactions from the univarsal_transactions_table
         const [transactions]=await pool.query(`SELECT * FROM universal_transaction_table`);
@@ -91,7 +91,7 @@ router.get("/user-all-transactions",async(req,res)=>{
 });
 
 
-router.get("/user-flexi-wallet-all-transactions",async(req,res)=>{
+router.get("/user-flexi-wallet-all-transactions",authenticateToken,async(req,res)=>{
     try{
         // Get all users transactions from the univarsal_transactions_table
         const [transactions]=await pool.query(`SELECT * FROM flexi_wallet`);
@@ -101,7 +101,7 @@ router.get("/user-flexi-wallet-all-transactions",async(req,res)=>{
     }
 });
 
-router.get("/user-commission-wallet-all-transactions",async(req,res)=>{
+router.get("/user-commission-wallet-all-transactions",authenticateToken,async(req,res)=>{
     try{
         // Get all users transactions from the univarsal_transactions_table
         const [transactions]=await pool.query(`SELECT * FROM commission_wallet`);
@@ -112,7 +112,7 @@ router.get("/user-commission-wallet-all-transactions",async(req,res)=>{
 });
 
 //get user flexi wallet total and cummission wallet total 
-router.post("/user-wallet-wise-balance", async (req, res) => {
+router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     const { member_id } = req.body;
   
     // Check for missing member_id
@@ -142,7 +142,7 @@ router.post("/user-wallet-wise-balance", async (req, res) => {
 
 
 
-  router.post("/all-user-wallet-wise-balance", async (req, res) => {
+  router.post("/all-user-wallet-wise-balance",authenticateToken, async (req, res) => {
     try {
       // Fetch all member IDs from the usersdetails table
       const [members] = await pool.query('SELECT memberid FROM usersdetails');

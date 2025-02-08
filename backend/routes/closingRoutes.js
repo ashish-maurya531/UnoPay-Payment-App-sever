@@ -9,7 +9,7 @@ const { pool } = require('../config/database');
 const authenticateToken = require('../middleware/auth');
 
 // Route for daily check and distribution
-router.post('/check-distribute/daily', async (req, res) => {
+router.post('/check-distribute/daily',authenticateToken, async (req, res) => {
     try {
         const result = await checkDaily();
         return res.status(result.success ? 200 : 400).json({
@@ -27,7 +27,7 @@ router.post('/check-distribute/daily', async (req, res) => {
 });
 
 // Route for weekly check and distribution
-router.post('/check-distribute/weekly', async (req, res) => {
+router.post('/check-distribute/weekly',authenticateToken,async (req, res) => {
     try {
         const result = await checkWeekly();
         return res.status(result.success ? 200 : 400).json({
@@ -45,7 +45,7 @@ router.post('/check-distribute/weekly', async (req, res) => {
 });
 
 // Route for monthly check and distribution
-router.post('/check-distribute/monthly', async (req, res) => {
+router.post('/check-distribute/monthly', authenticateToken,async (req, res) => {
     try {
         const result = await checkMonthly();
         return res.status(result.success ? 200 : 400).json({
@@ -63,7 +63,7 @@ router.post('/check-distribute/monthly', async (req, res) => {
 });
 
 // Route to get company closing details
-router.get('/closing-details', async (req, res) => {
+router.get('/closing-details', authenticateToken,async (req, res) => {
     try {
         const [closingDetails] = await pool.query(`
             SELECT * FROM company_closing 

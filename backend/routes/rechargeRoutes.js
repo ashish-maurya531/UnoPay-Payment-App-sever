@@ -707,16 +707,16 @@ async function handleRechargeTransaction(serviceType, req, res) {
 }
 
 // Routes
-router.post('/doMobileRecharge', async (req, res) => {
+router.post('/doMobileRecharge', authenticateToken,async (req, res) => {
     await handleRechargeTransaction('MOBILE', req, res);
 });
 
-router.post('/doDthRecharge', async (req, res) => {
+router.post('/doDthRecharge',authenticateToken, async (req, res) => {
     await handleRechargeTransaction('DTH', req, res);
 });
 
 // Additional endpoints
-router.post('/checkAdminRechargeApiBalance', async (req, res) => {
+router.post('/checkAdminRechargeApiBalance', authenticateToken,async (req, res) => {
     try {
         const balanceData = await getRechargeBalance();
         res.status(200).json({
@@ -733,7 +733,7 @@ router.post('/checkAdminRechargeApiBalance', async (req, res) => {
 });
 
 // Route: /checkRechargeStatus
-router.post('/checkRechargeStatus', async (req, res) => {
+router.post('/checkRechargeStatus', authenticateToken,async (req, res) => {
   const { order_id, format = 'json' } = req.body;
 
 //   // Validate input

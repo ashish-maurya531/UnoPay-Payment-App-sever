@@ -45,7 +45,7 @@ const handleMulterErrors = (err, req, res, next) => {
   };
 
 // Route to upload QR code and UPI ID
-router.post('/postAdminQRS', upload.single('qr'), async (req, res) => {
+router.post('/postAdminQRS',authenticateToken, upload.single('qr'), async (req, res) => {
   const { upi_id } = req.body;
 
   if (!upi_id || !req.file) {
@@ -102,7 +102,7 @@ module.exports = router;
 
 
 // Route to get a random QR code and its details
-router.get('/getRandomQR', async (req, res) => {
+router.get('/getRandomQR',authenticateToken, async (req, res) => {
     try {
       // Fetch all entries
       const [rows] = await pool.query('SELECT * FROM admin_qrs');
@@ -163,7 +163,7 @@ router.get('/getRandomQR', async (req, res) => {
 
 
   // Route to get all QR codes and their details
-  router.get('/getAllAdminQRS', async (req, res) => {
+  router.get('/getAllAdminQRS',authenticateToken, async (req, res) => {
     try {
       // Fetch all entries
       const [rows] = await pool.query('SELECT * FROM admin_qrs');
@@ -186,7 +186,7 @@ router.get('/getRandomQR', async (req, res) => {
 
 
   //delete admin_qrs
-  router.delete('/deleteAdminQR/:id', async (req, res) => {
+  router.delete('/deleteAdminQR/:id', authenticateToken,async (req, res) => {
     const { id } = req.params;
     try {
       // Delete the entry

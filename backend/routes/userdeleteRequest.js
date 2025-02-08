@@ -7,7 +7,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
 // Create or Update Delete Request
-router.post('/deleteRequest', async (req, res) => {
+router.post('/deleteRequest',authenticateToken, async (req, res) => {
     const { memberid ,password,tpin} = req.body;
 
     // Validate input
@@ -65,7 +65,7 @@ router.post('/deleteRequest', async (req, res) => {
 
 // Get all delete requests
 // Get all delete requests with user name and status
-router.get('/deleteRequests', async (req, res) => {
+router.get('/deleteRequests',authenticateToken, async (req, res) => {
     try {
         // Join the user_delete_requests table with usersdetails table to get username and status
         const query = `
@@ -124,7 +124,7 @@ router.get('/deleteRequests', async (req, res) => {
 // });
 
 // Delete a request
-router.delete('/deleteRequest', async (req, res) => {
+router.delete('/deleteRequest',authenticateToken, async (req, res) => {
     const { member_id } = req.body;
 
     if (!member_id) {
