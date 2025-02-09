@@ -5,10 +5,11 @@ const Src = import.meta.env.VITE_Src;
 
 
 export default function GenerateIds() {
-  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   
   const handleGenerateIds = async () => {
     try {
+  const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken')
+
       const response = await axios.post(`${Src}/api/auth/generate-user-ids`, {
         headers: {
           Authorization: `Bearer ${token}`, // Include the token for authentication
