@@ -33,94 +33,140 @@ const upload = multer({
   },
 });
 
-// POST endpoint to upload images to the gallery
+// // POST endpoint to upload images to the gallery
+// router.post('/post-gallery', authenticateToken, upload.array('images', 10), (req, res) => {
+//   try {
+//     if (!req.files || req.files.length === 0) {
+//       return res.status(400).json({
+//         status: 'false',
+//         message: 'No images uploaded. Please upload at least 1 image.',
+//       });
+//     }
+
+//     if (req.files.length > 10) {
+//       return res.status(400).json({
+//         status: 'false',
+//         message: 'Maximum 10 images can be uploaded at a time.',
+//       });
+//     }
+
+//     const fileUrls = req.files.map((file) => {
+//       return `${req.protocol}://${req.get('host')}/UnoPayGallery/${file.filename}`;
+//     });
+
+//     res.json({
+//       status: 'true',
+//       message: 'Images uploaded successfully',
+//       fileUrls: fileUrls,
+//     });
+//   } catch (error) {
+//     console.error('Error uploading images:', error);
+//     res.status(500).json({ status: 'false', message: 'Internal server error' });
+//   }
+// });
+
+// // DELETE endpoint to delete a specific image from the gallery
+// router.delete('/delete-gallery-image', authenticateToken, (req, res) => {
+//   const { imageUrl } = req.body;
+
+//   if (!imageUrl) {
+//     return res.status(400).json({
+//       status: 'false',
+//       message: 'Please provide the image URL to delete',
+//     });
+//   }
+
+//   try {
+//     const imageName = path.basename(imageUrl);
+//     const imagePath = path.join(__dirname, '../UnoPayGallery', imageName);
+
+//     if (fs.existsSync(imagePath)) {
+//       fs.unlinkSync(imagePath);
+//       res.json({
+//         status: 'true',
+//         message: 'Image deleted successfully',
+//       });
+//     } else {
+//       res.status(404).json({
+//         status: 'false',
+//         message: 'Image not found',
+//       });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting image:', error);
+//     res.status(500).json({ status: 'false', message: 'Internal server error' });
+//   }
+// });
+
+// // GET endpoint to retrieve all images in the gallery
+// router.get('/get-gallery-images', authenticateToken, (req, res) => {
+//   try {
+//     const galleryPath = path.join(__dirname, '../UnoPayGallery');
+//     if (!fs.existsSync(galleryPath)) {
+//       return res.status(200).json({
+//         status: 'true',
+//         images: [],
+//       });
+//     }
+
+//     const images = fs.readdirSync(galleryPath).map((file) => {
+//       return `${req.protocol}://${req.get('host')}/UnoPayGallery/${file}`;
+//     });
+
+//     res.json({
+//       status: 'true',
+//       images: images,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching gallery images:', error);
+//     res.status(500).json({ status: 'false', message: 'Internal server error' });
+//   }
+// });
+
+// POST: Upload images (Ensure they are served from VPS domain)
 router.post('/post-gallery', authenticateToken, upload.array('images', 10), (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        status: 'false',
-        message: 'No images uploaded. Please upload at least 1 image.',
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ status: 'false', message: 'No images uploaded.' });
+      }
+  
+      const BASE_URL = process.env.BASE_URL || 'https://unotag.biz';
+  
+      const fileUrls = req.files.map((file) => {
+        return `https://unotag.biz/UnoPayGallery/${file.filename}`;
       });
+      
+  
+      res.json({ status: 'true', message: 'Images uploaded successfully', fileUrls });
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      res.status(500).json({ status: 'false', message: 'Internal server error' });
     }
-
-    if (req.files.length > 10) {
-      return res.status(400).json({
-        status: 'false',
-        message: 'Maximum 10 images can be uploaded at a time.',
-      });
+  });
+  
+  // DELETE: Delete images
+  router.delete('/delete-gallery-image', authenticateToken, (req, res) => {
+    const { imageUrl } = req.body;
+  
+    if (!imageUrl) {
+      return res.status(400).json({ status: 'false', message: 'Provide the image URL to delete' });
     }
-
-    const fileUrls = req.files.map((file) => {
-      return `${req.protocol}://${req.get('host')}/UnoPayGallery/${file.filename}`;
-    });
-
-    res.json({
-      status: 'true',
-      message: 'Images uploaded successfully',
-      fileUrls: fileUrls,
-    });
-  } catch (error) {
-    console.error('Error uploading images:', error);
-    res.status(500).json({ status: 'false', message: 'Internal server error' });
-  }
-});
-
-// DELETE endpoint to delete a specific image from the gallery
-router.delete('/delete-gallery-image', authenticateToken, (req, res) => {
-  const { imageUrl } = req.body;
-
-  if (!imageUrl) {
-    return res.status(400).json({
-      status: 'false',
-      message: 'Please provide the image URL to delete',
-    });
-  }
-
-  try {
-    const imageName = path.basename(imageUrl);
-    const imagePath = path.join(__dirname, '../UnoPayGallery', imageName);
-
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-      res.json({
-        status: 'true',
-        message: 'Image deleted successfully',
-      });
-    } else {
-      res.status(404).json({
-        status: 'false',
-        message: 'Image not found',
-      });
+  
+    try {
+      const imageName = path.basename(imageUrl);
+      const imagePath = path.join(__dirname, '../UnoPayGallery', imageName);
+  
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        res.json({ status: 'true', message: 'Image deleted successfully' });
+      } else {
+        res.status(404).json({ status: 'false', message: 'Image not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      res.status(500).json({ status: 'false', message: 'Internal server error' });
     }
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    res.status(500).json({ status: 'false', message: 'Internal server error' });
-  }
-});
-
-// GET endpoint to retrieve all images in the gallery
-router.get('/get-gallery-images', authenticateToken, (req, res) => {
-  try {
-    const galleryPath = path.join(__dirname, '../UnoPayGallery');
-    if (!fs.existsSync(galleryPath)) {
-      return res.status(200).json({
-        status: 'true',
-        images: [],
-      });
-    }
-
-    const images = fs.readdirSync(galleryPath).map((file) => {
-      return `${req.protocol}://${req.get('host')}/UnoPayGallery/${file}`;
-    });
-
-    res.json({
-      status: 'true',
-      images: images,
-    });
-  } catch (error) {
-    console.error('Error fetching gallery images:', error);
-    res.status(500).json({ status: 'false', message: 'Internal server error' });
-  }
-});
+  });
+  
 
 module.exports = router;

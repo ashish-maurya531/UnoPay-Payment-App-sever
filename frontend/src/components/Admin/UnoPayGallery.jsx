@@ -14,62 +14,56 @@ export default function UnoPayGallery() {
   const [form] = Form.useForm();
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
-  const fetchGalleryImages = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${Src}/api/auth/get-gallery-images`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setImages(response.data.images || []);
-    } catch (error) {
-      message.error('Failed to fetch gallery images.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const Src = "https://unotag.biz/api";
 
-  useEffect(() => {
-    fetchGalleryImages();
-  }, []);
-
-  const handleDeleteImage = async (imageUrl) => {
-    try {
-      await axios.delete(`${Src}/api/auth/delete-gallery-image`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        data: { imageUrl },
-      });
-      message.success('Image deleted successfully!');
-      fetchGalleryImages();
-    } catch (error) {
-      message.error('Failed to delete image.');
-    }
-  };
-
-  const handleUploadImages = async (values) => {
-    const formData = new FormData();
-    values.images.forEach((file) => {
-      formData.append('images', file.originFileObj);
+const fetchGalleryImages = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.get(`${Src}/auth/get-gallery-images`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
+    setImages(response.data.images || []);
+  } catch (error) {
+    message.error('Failed to fetch gallery images.');
+  } finally {
+    setLoading(false);
+  }
+};
 
-    try {
-      await axios.post(`${Src}/api/auth/post-gallery`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      message.success('Images uploaded successfully!');
-      form.resetFields();
-      setIsModalOpen(false);
-      fetchGalleryImages();
-    } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to upload images.');
-    }
-  };
+const handleDeleteImage = async (imageUrl) => {
+  try {
+    await axios.delete(`${Src}/auth/delete-gallery-image`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { imageUrl },
+    });
+    message.success('Image deleted successfully!');
+    fetchGalleryImages();
+  } catch (error) {
+    message.error('Failed to delete image.');
+  }
+};
+
+const handleUploadImages = async (values) => {
+  const formData = new FormData();
+  values.images.forEach((file) => {
+    formData.append('images', file.originFileObj);
+  });
+
+  try {
+    await axios.post(`${Src}/auth/post-gallery`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    message.success('Images uploaded successfully!');
+    form.resetFields();
+    setIsModalOpen(false);
+    fetchGalleryImages();
+  } catch (error) {
+    message.error(error.response?.data?.message || 'Failed to upload images.');
+  }
+};
 
   const beforeUpload = (file) => {
     if (!allowedMimeTypes.includes(file.type)) {

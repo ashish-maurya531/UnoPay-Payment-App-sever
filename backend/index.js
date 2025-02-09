@@ -148,7 +148,14 @@ app.use(bodyParser.json({ strict: true }));
 app.use(cors());
 app.use(express.json());
 // Serve static files from the "UnoPayGallery" directory
+// Serve static files correctly from VPS
 app.use('/UnoPayGallery', express.static(path.join(__dirname, 'UnoPayGallery')));
+
+// Ensure image URLs use the VPS domain
+const BASE_URL = process.env.BASE_URL || 'https://unotag.biz';
+
+
+
 
 // Your other routes and middleware
 // app.use('/api', require('./routes/gallery'));
@@ -201,6 +208,26 @@ app.use((err, req, res, next) => {
 
 // Setup WebSocket server
 // setupWebSocket(server);
+
+// GET endpoint to retrieve all images in the gallery with the correct domain
+app.get('/api/auth/get-gallery-images', authenticateToken, (req, res) => {
+  try {
+    const galleryPath = path.join(__dirname, 'UnoPayGallery');
+    if (!fs.existsSync(galleryPath)) {
+      return res.status(200).json({ status: 'true', images: [] });
+    }
+
+    const images = fs.readdirSync(galleryPath).map((file) => {
+      return `https://unotag.biz/UnoPayGallery/${file}`;
+    });
+    
+
+    res.json({ status: 'true', images });
+  } catch (error) {
+    console.error('Error fetching gallery images:', error);
+    res.status(500).json({ status: 'false', message: 'Internal server error' });
+  }
+});
 
 // Start the server
 app.listen(port, "0.0.0.0", () => {
