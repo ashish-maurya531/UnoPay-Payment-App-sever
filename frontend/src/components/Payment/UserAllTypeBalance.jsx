@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Input, Space, notification,Row,Col } from 'antd';
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 const WalletTable = () => {
@@ -14,6 +14,8 @@ const WalletTable = () => {
     current: 1,
     pageSize: 12,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({

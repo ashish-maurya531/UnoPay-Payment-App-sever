@@ -1,10 +1,12 @@
 import { Button, message } from 'antd';
 import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 export default function GenerateIds() {
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+  
   const handleGenerateIds = async () => {
     try {
       const response = await axios.post(`${Src}/api/auth/generate-user-ids`, {

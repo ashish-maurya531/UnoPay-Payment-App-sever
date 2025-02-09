@@ -5,7 +5,7 @@ import { formatDate } from '../../utils/dateFormat';
 
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 export default function UserDeleteRequestList() {
@@ -21,6 +21,7 @@ export default function UserDeleteRequestList() {
     current: 1,
     pageSize: 10,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({

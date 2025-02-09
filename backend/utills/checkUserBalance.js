@@ -1,7 +1,7 @@
 
 
 const { pool } = require('../config/database');
-
+const moment = require('moment-timezone');
 
 // function to get user credit and debit total from databse flexi wallet
 async function getFlexiWalletBalance(member_id) {
@@ -40,6 +40,89 @@ async function getCommisionWalletBalance(member_id) {
         return 0;
     }
 }
+
+
+
+
+
+// async function getTodayCommissionWalletBalance(member_id) {
+//     try {
+//         // Get today's start & end in Asia/Kolkata timezone
+//         const kolkataStart = moment().tz("Asia/Kolkata").startOf('day');
+//         const kolkataEnd = moment().tz("Asia/Kolkata").endOf('day');
+
+//         // Convert to UTC for database comparison
+//         const utcStart = kolkataStart.utc().format('YYYY-MM-DD HH:mm:ss');
+//         const utcEnd = kolkataEnd.utc().format('YYYY-MM-DD HH:mm:ss');
+//         const [rows2] = await pool.query(
+//             `SELECT 
+//                 *
+//              FROM commission_wallet 
+//              WHERE member_id = ?
+//              `,
+//             [member_id, utcStart, utcEnd]
+//         );
+
+//         const [rows] = await pool.query(
+//             `SELECT 
+//                 SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit,
+//                 SUM(CASE WHEN message = 'Debited Successfully' THEN debit ELSE 0 END) AS total_debit
+//              FROM commission_wallet 
+//              WHERE member_id = ?
+//              AND date_time BETWEEN ? AND ?`,
+//             [member_id, utcStart, utcEnd]
+//         );
+//         console.log(rows2);
+
+//         const balance = (rows[0].total_credit || 0) - (rows[0].total_debit || 0);
+//         return balance;
+//     } catch (error) {
+//         console.error('Error getting daily commission balance:', error);
+//         return 0;
+//     }
+// }
+
+
+
+async function getTodayCommissionWalletBalance(member_id) {
+    try {
+        // Get current IST date boundaries
+        const istStart = moment().tz("Asia/Kolkata").startOf('day');
+        const istEnd = moment().tz("Asia/Kolkata").endOf('day');
+
+        // Convert to UTC format covering full IST day
+        const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
+        const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
+
+        const [rows] = await pool.query(
+            `SELECT 
+                COALESCE(SUM(
+                    CASE WHEN message = 'Credited Successfully' 
+                    THEN credit END
+                ), 0) AS total_credit,
+                COALESCE(SUM(
+                    CASE WHEN message = 'Debited Successfully' 
+                    THEN debit END
+                ), 0) AS total_debit
+             FROM commission_wallet
+             WHERE member_id = ?
+             AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)`,
+            [
+                member_id,
+                utcStart.format('YYYY-MM-DD'),
+                utcEnd.format('YYYY-MM-DD')
+            ]
+        );
+
+        return Number((rows[0].total_credit - rows[0].total_debit).toFixed(10))
+    
+    } catch (error) {
+        console.error('Date-only commission error:', error);
+        return 0
+    }
+}
+
+
 
 
 async function getFlexiWalletTransactionList(member_id) {
@@ -234,7 +317,7 @@ async function incomeTransactionsList(member_id) {
 
 
 
-module.exports = { getFlexiWalletTransactionList,getCommissionWalletTransactionList,selfTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance,incomeTransactionsList};
+module.exports = { getFlexiWalletTransactionList,getCommissionWalletTransactionList,selfTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance,getTodayCommissionWalletBalance,incomeTransactionsList};
 
 
 

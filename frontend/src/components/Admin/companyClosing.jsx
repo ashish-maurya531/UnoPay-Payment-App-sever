@@ -11,7 +11,6 @@ const { RangePicker } = DatePicker;
 const Src = import.meta.env.VITE_Src;
 const RANKS = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND', 'CROWN DIAMOND'];
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 const TurnoverTrendCard = ({ data, height }) => {
   // Initial scale factor
@@ -86,6 +85,9 @@ export default function DistributionAndClosing() {
   const [stats, setStats] = useState({});
   const [selectedType, setSelectedType] = useState('all');
   const [chartHeight, setChartHeight] = useState(300);
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
+
 
   useEffect(() => {
     fetchClosingData();

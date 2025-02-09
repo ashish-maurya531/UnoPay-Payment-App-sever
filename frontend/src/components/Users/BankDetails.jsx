@@ -21,7 +21,6 @@ const Src = import.meta.env.VITE_Src;
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 
 const BankDetails = () => {
@@ -34,7 +33,8 @@ const BankDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageType, setImageType] = useState(null);
   const [rejectionMessage, setRejectionMessage] = useState('KYC documents not valid');
-  const token = localStorage.getItem('adminToken');
+  const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+  
   
   // New state for filtering
   const [searchText, setSearchText] = useState('');

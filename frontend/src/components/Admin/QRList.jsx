@@ -3,7 +3,6 @@ import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
 
 
 
@@ -14,6 +13,7 @@ export default function QRList() {
   const [isModalOpen, setIsModalOpen] = useState(false); // Add QR modal visibility
   const [form] = Form.useForm(); // Form instance for Add QR
   const [qrUrls, setQrUrls] = useState({}); // State to store QR image URLs by ID
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
   // Fetch all QR codes from the backend
   const fetchQRs = async (currentPage = 1, pageSize = 5) => {

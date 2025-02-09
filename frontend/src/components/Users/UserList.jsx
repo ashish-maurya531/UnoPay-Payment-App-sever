@@ -4,7 +4,7 @@ import axios from 'axios';
 import {formatDate } from '../../utils/dateFormat';
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -18,6 +18,8 @@ export default function UserList() {
     current: 1,
     pageSize: 12,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({

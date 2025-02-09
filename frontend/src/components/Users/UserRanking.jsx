@@ -5,7 +5,7 @@ import axios from 'axios';
 const { Panel } = Collapse;
 
 const Src = import.meta.env.VITE_Src; // Assuming this is where your API URL is defined
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function RankList() {
   const [rankData, setRankData] = useState([]);
@@ -16,6 +16,8 @@ export default function RankList() {
     current: 1,
     pageSize: 10, // You can adjust the pageSize here
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   useEffect(() => {
     fetchRankData();

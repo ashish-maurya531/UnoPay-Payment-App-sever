@@ -6,9 +6,11 @@ import { CheckCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function LoginIssueRequestList() {
+  const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken')
+
   const [loginIssues, setLoginIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -19,6 +21,7 @@ export default function LoginIssueRequestList() {
     current: 1,
     pageSize: 10,
   });
+
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({
@@ -32,6 +35,8 @@ export default function LoginIssueRequestList() {
   }, []);
 
   const fetchLoginIssueRequests = async () => {
+  console.log("Login token "+token);
+
     try {
       setLoading(true);
       const response = await axios.post(`${Src}/api/auth/all-login-issues`, {
@@ -39,6 +44,7 @@ export default function LoginIssueRequestList() {
           Authorization: `Bearer ${token}`, // Include the token for authentication
         },
       });
+      console.log("sdfsfsfdsfdsf->>>>"+response[0])
       
       const formattedRequests = response.data.requests.map((request, index) => ({
         key: request.login_issue_id,
