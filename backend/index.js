@@ -129,6 +129,10 @@ const adminLoginRoute = require('./routes/adminLoginRoute');
 const ranking_system = require('./routes/ranking_system');
 const closingRoutes = require('./routes/closingRoutes');
 const zoomMeeting = require('./routes/zoomMeeting');
+const UnoPayGallery = require('./routes/unoPayGallery');
+const path = require('path');
+
+
 
 // Middleware
 const authenticateToken = require('./middleware/auth');
@@ -143,6 +147,11 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json({ strict: true }));
 app.use(cors());
 app.use(express.json());
+// Serve static files from the "UnoPayGallery" directory
+app.use('/UnoPayGallery', express.static(path.join(__dirname, 'UnoPayGallery')));
+
+// Your other routes and middleware
+// app.use('/api', require('./routes/gallery'));
 
 // Connect to the database
 connectToDatabase();
@@ -166,6 +175,7 @@ app.use('/api/auth', authenticateToken, userWithdrawAndTransfer);
 app.use('/api/auth', authenticateToken, ranking_system);
 app.use('/api/auth', authenticateToken, closingRoutes);
 app.use('/api/auth', authenticateToken, zoomMeeting);
+app.use('/api/auth', authenticateToken, UnoPayGallery);
 
 // Admin API for sending notifications
 app.post("/send-notification", (req, res) => {

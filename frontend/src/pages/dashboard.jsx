@@ -22,6 +22,7 @@ import UserLoginHelpRequest from '../components/Users/UserLoginHelpRequest';
 import UserRankList from '../components/Users/UserRanking.jsx';
 import CompanyClosing from '../components/Admin/companyClosing.jsx';
 import * as jwt_decode from 'jwt-decode';
+import UnoPayGallery from '../components/Admin/UnoPayGallery.jsx';
 
 
 
@@ -65,6 +66,7 @@ export default function Dashboard() {
         <Route path="user-login-help-request" element={<UserLoginHelpRequest />} />
         <Route path="user-rank" element={<UserRankList />} />
         <Route path="company-closing" element={<CompanyClosing />} />
+        <Route path="uno-pay-gallery" element={<UnoPayGallery />} />
 
       
 

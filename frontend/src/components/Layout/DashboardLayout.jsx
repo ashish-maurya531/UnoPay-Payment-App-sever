@@ -98,6 +98,11 @@ export default function DashboardLayout({ children }) {
       key: 'CompanyClosing',
       label: 'Company Closing',
       onClick: () => navigate('/dashboard/company-closing'),
+    },
+    {
+      key: 'UnoPayGallery',
+      label: 'UnoPay Gallery',
+      onClick: () => navigate('/dashboard/uno-pay-gallery'),
     }
   ]
 
