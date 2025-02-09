@@ -5,7 +5,7 @@ dotenv.config();
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  console.log("auth token---->"+token);
+  // console.log("auth token---->"+token);
 
   if (!token) {
     return res.status(200).json({ error: 'Unauthorized' });

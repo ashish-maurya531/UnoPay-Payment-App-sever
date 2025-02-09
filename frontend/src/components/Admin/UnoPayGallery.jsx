@@ -14,12 +14,12 @@ export default function UnoPayGallery() {
   const [form] = Form.useForm();
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
-  const Src = "https://unotag.biz/api";
+  const crc = "https://unotag.biz/api";
 
 const fetchGalleryImages = async () => {
   setLoading(true);
   try {
-    const response = await axios.get(`${Src}/auth/get-gallery-images`, {
+    const response = await axios.get(`${crc}/auth/get-gallery-images`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setImages(response.data.images || []);

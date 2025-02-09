@@ -111,6 +111,7 @@ const { setupWebSocket } = require("./config/websocket");
 const { connectToDatabase } = require('./config/database');
 // Add at the end of your main server file
 require('./utills/scheduler');
+const fs = require('fs');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -209,25 +210,6 @@ app.use((err, req, res, next) => {
 // Setup WebSocket server
 // setupWebSocket(server);
 
-// GET endpoint to retrieve all images in the gallery with the correct domain
-app.get('/api/auth/get-gallery-images', authenticateToken, (req, res) => {
-  try {
-    const galleryPath = path.join(__dirname, 'UnoPayGallery');
-    if (!fs.existsSync(galleryPath)) {
-      return res.status(200).json({ status: 'true', images: [] });
-    }
-
-    const images = fs.readdirSync(galleryPath).map((file) => {
-      return `https://unotag.biz/UnoPayGallery/${file}`;
-    });
-    
-
-    res.json({ status: 'true', images });
-  } catch (error) {
-    console.error('Error fetching gallery images:', error);
-    res.status(500).json({ status: 'false', message: 'Internal server error' });
-  }
-});
 
 // Start the server
 app.listen(port, "0.0.0.0", () => {

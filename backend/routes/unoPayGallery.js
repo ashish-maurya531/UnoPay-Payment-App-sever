@@ -8,7 +8,7 @@ const authenticateToken = require('../middleware/auth');
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../UnoPayGallery'); // Corrected path
+    const uploadPath = path.join(__dirname, 'UnoPayGallery'); // Corrected path
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -167,6 +167,28 @@ router.post('/post-gallery', authenticateToken, upload.array('images', 10), (req
       res.status(500).json({ status: 'false', message: 'Internal server error' });
     }
   });
+
+  // GET endpoint to retrieve all images in the gallery with the correct domain
+router.get('/get-gallery-images', authenticateToken, (req, res) => {
+  console.log("api hit image wali")
+  try {
+    const galleryPath = path.join(__dirname, 'UnoPayGallery');
+    if (!fs.existsSync(galleryPath)) {
+      return res.status(200).json({ status: 'true', images: [] });
+    }
+
+    const images = fs.readdirSync(galleryPath).map((file) => {
+      return `https://unotag.biz/UnoPayGallery/${file}`;
+    });
+    
+
+    res.json({ status: 'true', images });
+  } catch (error) {
+    console.error('Error fetching gallery images:', error);
+    res.status(500).json({ status: 'false', message: 'Internal server error' });
+  }
+});
+
   
 
 module.exports = router;
