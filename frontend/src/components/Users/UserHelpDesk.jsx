@@ -5,7 +5,7 @@ import axios from 'axios';
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 export default function UserChatSystem() {
   const [users, setUsers] = useState([]);
@@ -15,6 +15,8 @@ export default function UserChatSystem() {
   const [loadingChats, setLoadingChats] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   // Fetch all users with tickets
   useEffect(() => {

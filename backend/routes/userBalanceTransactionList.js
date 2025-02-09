@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { pool } = require('../config/database');
-const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
+const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList ,getFlexiWalletBalance,getTodayCommissionWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
@@ -126,7 +126,8 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     }
   
     // Check if member_id is valid
-    const [memberExist] = await pool.query('SELECT memberid, status FROM usersdetails WHERE memberid = ?', [member_id]);
+    const [memberExist] = await pool.query('SELECT memberid, status,membership FROM usersdetails WHERE memberid = ?', [member_id]);
+
     if (memberExist.length === 0) {
       return res.status(404).json({ status: "false", message: "Member not found" });
     }
@@ -134,7 +135,17 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     try {
       const flexi_wallet = await getFlexiWalletBalance(member_id);
       const commission_wallet = await getCommisionWalletBalance(member_id);
-      return res.status(200).json({status: "true", flexi_wallet, commission_wallet,"signup_bonus":649 });
+      const todayIncome=await getTodayCommissionWalletBalance(member_id);
+      const membership= memberExist[0].membership
+      return res.status(200).json({
+        status: "true", 
+        flexi_wallet, 
+        commission_wallet,
+        "signup_bonus":649 ,
+        "membership":membership,
+        "today_income":todayIncome
+      
+      });
     } catch (error) {
       return res.status(500).json({ success: "false", message: "Error getting user wallet" });
     }

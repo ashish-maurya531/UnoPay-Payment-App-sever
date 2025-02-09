@@ -3,7 +3,7 @@ import { Table, Input, notification, Row, Col, Tag, Typography, Spin } from 'ant
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 const { Text } = Typography;
@@ -20,6 +20,8 @@ export default function UserTransactions() {
     current: 1,
     pageSize: 12,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({

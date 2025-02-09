@@ -373,7 +373,7 @@ const Src = import.meta.env.VITE_Src;
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 const WithdrawRequests = () => {
@@ -387,6 +387,8 @@ const WithdrawRequests = () => {
     current: 1,
     pageSize: 10,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
   const [searchText, setSearchText] = useState('');
 
   // Fetch withdrawal requests from the server

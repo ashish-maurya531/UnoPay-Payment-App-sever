@@ -6,7 +6,7 @@ import axios from 'axios';
 const Src = import.meta.env.VITE_Src;
 
 const { Text } = Typography;
-const token = localStorage.getItem('adminToken')||sessionStorage.removeItem('adminToken');
+
 
 
 export default function UserTransactions() {
@@ -21,6 +21,8 @@ export default function UserTransactions() {
     current: 1,
     pageSize: 13,
   });
+  const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({
