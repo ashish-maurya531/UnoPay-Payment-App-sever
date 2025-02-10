@@ -36,7 +36,7 @@ router.post('/adminLogin2', async (req, res) => {
     
     
     // Generate JWT token
-    const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
     
     // const token = jwt.sign({ message: "hack mt kr" }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2m' });
 
