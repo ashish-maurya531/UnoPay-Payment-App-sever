@@ -157,7 +157,7 @@
 
 const { pool } = require('../config/database');
 const generateTransactionId = require('../utills/generateTxnId');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 // Commission structures
 const COMMISSION_RATES = {
@@ -202,14 +202,45 @@ const MONTHLY_LIMITS = {
     TRANSACTIONS: 15
 };
 
+// // Helper Functions
+// async function getMonthlyRechargeStats(memberId) {
+//     try {
+//         const startDate = moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+//         const endDate = moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+//         console.log(`[STATS] Fetching monthly stats for ${memberId}`);
+        
+//         const [result] = await pool.query(
+//             `SELECT 
+//                 COUNT(*) AS transaction_count,
+//                 COALESCE(SUM(amount), 0) AS total_amount 
+//              FROM universal_transaction_table 
+//              WHERE member_id = ? 
+//                 AND type = 'Recharge' 
+//                 AND status = 'success'
+//                 AND created_at BETWEEN ? AND ?`,
+//             [memberId, startDate, endDate]
+//         );
+
+//         return result[0];
+//     } catch (error) {
+//         console.error('[ERROR] Monthly stats query failed:', error.message);
+//         throw error;
+//     }
+// }
 // Helper Functions
 async function getMonthlyRechargeStats(memberId) {
     try {
-        const startDate = moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
-        const endDate = moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+        // Get IST start and end of the month
+        const istStart = moment().tz("Asia/Kolkata").startOf('month');
+        const istEnd = moment().tz("Asia/Kolkata").endOf('month');
+
+        // Convert to UTC format
+        const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
+        const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
 
         console.log(`[STATS] Fetching monthly stats for ${memberId}`);
-        
+
         const [result] = await pool.query(
             `SELECT 
                 COUNT(*) AS transaction_count,
@@ -218,8 +249,12 @@ async function getMonthlyRechargeStats(memberId) {
              WHERE member_id = ? 
                 AND type = 'Recharge' 
                 AND status = 'success'
-                AND created_at BETWEEN ? AND ?`,
-            [memberId, startDate, endDate]
+                AND DATE(created_at) BETWEEN DATE(?) AND DATE(?)`,
+            [
+                memberId,
+                utcStart.format('YYYY-MM-DD'),
+                utcEnd.format('YYYY-MM-DD')
+            ]
         );
 
         return result[0];
@@ -268,15 +303,44 @@ async function getUplineStatuses(uplineIds) {
 }
 
 // Commission Insertion Functions
+// async function insertCommission(table, data) {
+//     try {
+//         await pool.query(
+//             `INSERT INTO ${table} 
+//              (member_id, commissionBy, transaction_id_for_member_id,
+//               transaction_id_of_commissionBy, credit, debit, level)
+//              VALUES ?`,
+//             [[Object.values(data)]]
+//         );
+//     } catch (error) {
+//         console.error(`[ERROR] ${table} insert failed:`, error.message);
+//         throw error;
+//     }
+// }
 async function insertCommission(table, data) {
     try {
-        await pool.query(
-            `INSERT INTO ${table} 
-             (member_id, commissionBy, transaction_id_for_member_id,
-              transaction_id_of_commissionBy, credit, debit, level)
-             VALUES ?`,
-            [[Object.values(data)]]
-        );
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                data.transaction_id_for_member_id = generateTransactionId();
+                await pool.query(
+                    `INSERT INTO ${table} 
+                     (member_id, commissionBy, transaction_id_for_member_id,
+                      transaction_id_of_commissionBy, credit, debit, level)
+                     VALUES ?`,
+                    [[Object.values(data)]]
+                );
+                return; // Success, exit loop
+            } catch (error) {
+                if (error.code === 'ER_DUP_ENTRY') {
+                    console.warn(`[RETRY] Duplicate transaction ID detected, retrying...`);
+                    retries--;
+                } else {
+                    throw error;
+                }
+            }
+        }
+        console.error(`[ERROR] Failed to insert after multiple retries`);
     } catch (error) {
         console.error(`[ERROR] ${table} insert failed:`, error.message);
         throw error;

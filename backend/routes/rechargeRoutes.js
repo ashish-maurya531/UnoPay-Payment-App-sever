@@ -618,8 +618,10 @@ async function handleRechargeTransaction(serviceType, req, res) {
             });
 
             const apiResponse = await axios.get(`${RECHRAGE_API_BASE}?${apiParams}`, {
-                timeout: 200000 // 10-second timeout
+                timeout: 40000 // 10-second timeout
             });
+            
+            
 
             const apiData = apiResponse.data;
             console.log(`[${transactionId}] API response: ${JSON.stringify(apiData)}`);
@@ -674,7 +676,13 @@ async function handleRechargeTransaction(serviceType, req, res) {
 
             await connection.commit();
             console.log(`[${transactionId}] Transaction committed in ${Date.now() - startTime}ms`);
-
+            console.log("-->",{
+                status: "true",
+                transactionId,
+                transactionStatus,
+                message: `Recharge ${transactionStatus}`,
+                data: apiData
+            })
             res.status(200).json({
                 status: "true",
                 transactionId,
