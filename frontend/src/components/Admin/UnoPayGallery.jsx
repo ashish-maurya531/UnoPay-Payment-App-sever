@@ -1,176 +1,344 @@
-import { Table, Button, Modal, Form, Upload, Image, message, Space, Popconfirm } from 'antd';
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { 
+  Button, 
+  Upload, 
+  Modal, 
+  Image, 
+  message, 
+  Popconfirm, 
+  Row, 
+  Col, 
+  Form,
+  Typography,
+  Space,
+  Spin,
+  Progress
+} from 'antd';
+import {
+  DeleteOutlined,
+  UploadOutlined,
+  PlusOutlined,
+  PictureOutlined,
+  EyeOutlined 
+} from '@ant-design/icons';
 import axios from 'axios';
 
+const { Title } = Typography;
 const Src = import.meta.env.VITE_Src;
 const MAX_IMAGES = 10;
-const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg'];
 
-export default function UnoPayGallery() {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function GalleryManagement() {
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [form] = Form.useForm();
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
+  const [imageUrls, setImageUrls] = useState({});
 
-  const Src = "https://unotag.biz/api";
-
-const fetchGalleryImages = async () => {
-  setLoading(true);
-  try {
-    const response = await axios.get(`${Src}/auth/get-gallery-images`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setImages(response.data.images || []);
-  } catch (error) {
-    message.error('Failed to fetch gallery images.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleDeleteImage = async (imageUrl) => {
-  try {
-    await axios.delete(`${Src}/auth/delete-gallery-image`, {
-      headers: { Authorization: `Bearer ${token}` },
-      data: { imageUrl },
-    });
-    message.success('Image deleted successfully!');
+  useEffect(() => {
     fetchGalleryImages();
-  } catch (error) {
-    message.error('Failed to delete image.');
-  }
-};
+  }, []);
 
-const handleUploadImages = async (values) => {
-  const formData = new FormData();
-  values.images.forEach((file) => {
-    formData.append('images', file.originFileObj);
-  });
+  const fetchGalleryImages = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${Src}/api/auth/get-gallery-images`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const imagePromises = response.data.images.map(async (filename) => {
+        const imageBlob = await fetchImageByFilename(filename);
+        return { filename, url: imageBlob };
+      });
+      
+      const images = await Promise.all(imagePromises);
+      const urlMap = {};
+      images.forEach(({ filename, url }) => {
+        urlMap[filename] = url;
+      });
+      
+      setGalleryImages(response.data.images);
+      setImageUrls(urlMap);
+      setLoading(false);
+    } catch (error) {
+      message.error('Failed to fetch gallery images');
+      setLoading(false);
+    }
+  };
 
-  try {
-    await axios.post(`${Src}/auth/post-gallery`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    message.success('Images uploaded successfully!');
-    form.resetFields();
-    setIsModalOpen(false);
-    fetchGalleryImages();
-  } catch (error) {
-    message.error(error.response?.data?.message || 'Failed to upload images.');
-  }
-};
+  const fetchImageByFilename = async (filename) => {
+    try {
+      const response = await axios.post(
+        `${Src}/api/auth/get-gallery-image-file`,
+        { filename },
+        { responseType: 'blob', headers: { Authorization: `Bearer ${token}` } }
+      );
+      return URL.createObjectURL(response.data);
+    } catch (error) {
+      console.error('Fetch image error:', error);
+      return '';
+    }
+  };
 
   const beforeUpload = (file) => {
     if (!allowedMimeTypes.includes(file.type)) {
-      message.error(`Invalid file type. Please upload only JPEG, JPG or PNG files.`);
+      message.error('Only PNG, JPG, and JPEG files are allowed!');
       return Upload.LIST_IGNORE;
     }
-    return true;
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Image must be smaller than 2MB!');
+      return Upload.LIST_IGNORE;
+    }
+    return false;
   };
 
-  const columns = [
-    {
-      title: 'S.No',
-      dataIndex: 'index',
-      key: 'index',
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: 'Image',
-      dataIndex: 'url',
-      key: 'url',
-      render: (url) => (
-        <Image
-          src={url}
-          alt="Gallery Image"
-          style={{ width: 100, height: 100, objectFit: 'cover' }}
-        />
-      ),
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (text, record) => (
-        <Popconfirm
-          title="Delete Image"
-          description="Are you sure you want to delete this image?"
-          onConfirm={() => handleDeleteImage(record.url)}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button type="primary" danger icon={<DeleteOutlined />}>
-            Delete
-          </Button>
-        </Popconfirm>
-      ),
-    },
-  ];
+  const handleUploadImages = async () => {
+    if (!selectedFiles.length) {
+      message.error('Please select images to upload');
+      return;
+    }
+  
+    setUploading(true);
+    setUploadProgress(0);
+    const formData = new FormData();
+    selectedFiles.forEach((file) => {
+      formData.append('images', file.originFileObj);
+    });
+  
+    try {
+      const response = await axios.post(`${Src}/api/auth/post-gallery`, formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data', 
+          Authorization: `Bearer ${token}` 
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+  
+      // Debugging: Log the server response
+      console.log('Server response:', response.data);
+  
+      if (response.data.status === "true") {
+        message.success(response.data.message || 'Images uploaded successfully');
+        setIsModalOpen(false);
+        setSelectedFiles([]);
+        form.resetFields();
+  
+        // Refetch gallery images to update the state
+        await fetchGalleryImages();
+      } else {
+        throw new Error(response.data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      message.error(error.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDelete = async (image) => {
+    try {
+      await axios.delete(`${Src}/api/auth/delete-gallery-image`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { fileName: image },
+      });
+      message.success('Image deleted successfully');
+      
+      setGalleryImages(prev => prev.filter(img => img !== image));
+      const newUrls = { ...imageUrls };
+      delete newUrls[image];
+      setImageUrls(newUrls);
+    } catch (error) {
+      message.error('Failed to delete image');
+    }
+  };
+
+  const customRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+
+  const handleChange = ({ fileList }) => {
+    setSelectedFiles(fileList);
+  };
 
   return (
-    <div>
-      <h2>Gallery Management</h2>
-      <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<UploadOutlined />} onClick={() => setIsModalOpen(true)}>
-          Upload Images
-        </Button>
-      </Space>
-      <Table
-        columns={columns}
-        dataSource={images.map((url, index) => ({ key: index, url }))}
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-        rowKey="key"
-      />
-
-      <Modal
-        title="Upload Images"
-        visible={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-      >
-        <Form form={form} onFinish={handleUploadImages} layout="vertical">
-          <Form.Item
-            name="images"
-            label="Select Images"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => {
-              if (Array.isArray(e)) {
-                return e;
-              }
-              return e?.fileList.slice(0, MAX_IMAGES); // Limit to 10 images
-            }}
-            rules={[{ required: true, message: 'Please upload at least one image' }]}
+    <div className="p-4">
+      <Space direction="vertical" size="large" className="w-full">
+        <div className="flex justify-between items-center mb-4">
+          <Title level={2} className="m-0">
+            <Space>
+              <PictureOutlined />
+              Gallery Management
+            </Space>
+          </Title>
+          <Button
+            type="primary"
+            icon={<UploadOutlined />}
+            onClick={() => setIsModalOpen(true)}
+            size="large"
           >
-            <Upload
-              beforeUpload={beforeUpload}
-              multiple
-              listType="picture-card"
-              accept={allowedMimeTypes.join(',')}
-              onChange={({ fileList }) => {
-                if (fileList.length > MAX_IMAGES) {
-                  message.warning(`You can only upload up to ${MAX_IMAGES} images.`);
-                }
+            Upload Images
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Row gutter={[8, 8]}>
+           {galleryImages.map((image, index) => (
+          <Col key={image} xs={12} sm={8} md={6} lg={4}>
+            <div 
+              className="relative group"
+              style={{ 
+                width: '100%',
+                paddingTop: '100%',
+                position: 'relative'
               }}
             >
-              {form.getFieldValue('images')?.length >= MAX_IMAGES ? null : (
-                <Button icon={<UploadOutlined />}>
-                  Upload Images ({form.getFieldValue('images')?.length || 0}/{MAX_IMAGES})
-                </Button>
-              )}
-            </Upload>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Submit
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  overflow: 'hidden'
+                }}
+              >
+                <Image
+                  alt={image}
+                  src={imageUrls[image]}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  preview={{
+                    visible: false,
+                    onVisibleChange: (visible) => {
+                      if (visible) {
+                        setPreviewVisible(true);
+                        setPreviewIndex(index);
+                      }
+                    }
+                  }}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <Space>
+                    <Button
+                      type="primary"
+                      shape="circle"
+                      icon={<EyeOutlined />}
+                      onClick={() => {
+                        setPreviewVisible(true);
+                        setPreviewIndex(index);
+                      }}
+                    />
+                    <Popconfirm
+                      title="Delete this image?"
+                      description="Are you sure you want to delete this image?"
+                      onConfirm={() => handleDelete(image)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  </Space>
+                </div>
+              </div>
+            </div>
+          </Col>
+        ))}         
+         </Row>
+        )}
+
+        <Modal
+          title={
+            <div className="flex justify-between items-center">
+              <span>Upload Images</span>
+              <span>Selected: {selectedFiles.length}/{MAX_IMAGES}</span>
+            </div>
+          }
+          open={isModalOpen}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setSelectedFiles([]);
+            form.resetFields();
+          }}
+          footer={[
+            <Button key="cancel" onClick={() => {
+              setIsModalOpen(false);
+              setSelectedFiles([]);
+              form.resetFields();
+            }}>
+              Cancel
+            </Button>,
+            <Button 
+              key="upload" 
+              type="primary" 
+              onClick={handleUploadImages}
+              loading={uploading}
+              disabled={selectedFiles.length === 0}
+            >
+              {uploading ? 'Uploading...' : 'Upload Images'}
             </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
+          ]}
+          destroyOnClose
+        >
+          <Upload
+            listType="picture-card"
+            multiple
+            beforeUpload={beforeUpload}
+            customRequest={customRequest}
+            accept={allowedMimeTypes.join(',')}
+            maxCount={MAX_IMAGES}
+            fileList={selectedFiles}
+            onChange={handleChange}
+          >
+            {selectedFiles.length >= MAX_IMAGES ? null : (
+              <div>
+                <PlusOutlined />
+                <div className="mt-2">Select</div>
+              </div>
+            )}
+          </Upload>
+          {uploading && (
+            <Progress percent={uploadProgress} status="active" />
+          )}
+        </Modal>
+
+        <div style={{ display: 'none' }}>
+          <Image.PreviewGroup
+            preview={{
+              visible: previewVisible,
+              onVisibleChange: (vis) => setPreviewVisible(vis),
+              current: previewIndex,
+              countRender: (current, total) => `${current} of ${total}`
+            }}
+          >
+            {galleryImages.map((image) => (
+              <Image key={image} src={imageUrls[image]} />
+            ))}
+          </Image.PreviewGroup>
+        </div>
+      </Space>
     </div>
   );
 }
