@@ -763,7 +763,7 @@ const BankDetails = () => {
   onCancel={() => setModalVisible(false)}
   footer={null}
   width={1000}
-  style={{ top: 20, left:20, position: 'absolute' ,top: 100}}
+  style={{ left:20, position: 'absolute' ,top: 100}}
 >
   {selectedRecord && (
     <div style={{ display: 'flex' }}>

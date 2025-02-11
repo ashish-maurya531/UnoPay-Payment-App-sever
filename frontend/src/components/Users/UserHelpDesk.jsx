@@ -1,11 +1,10 @@
 import { Card, Modal, Row, Col, Input, Button, notification, Typography, Spin } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 const Src = import.meta.env.VITE_Src;
-
 
 export default function UserChatSystem() {
   const [users, setUsers] = useState([]);
@@ -17,27 +16,31 @@ export default function UserChatSystem() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
+  const chatContainerRef = useRef(null); // Create ref for chat container
 
-  // Fetch all users with tickets
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Scroll to bottom whenever chats change or modal opens
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chats, isModalVisible]);
+
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await axios.get(`${Src}/api/auth/get-all-the-users`,{
+      const response = await axios.get(`${Src}/api/auth/get-all-the-users`, {
         headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
-          }
+          'Authorization': 'Bearer ' + localStorage.getItem('adminToken'),
+        },
       });
-      setUsers(response.data); // Adjust based on your API response structure
+      setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to fetch users.',
-      });
+      notification.error({ message: 'Error', description: 'Failed to fetch users.' });
     } finally {
       setLoadingUsers(false);
     }
@@ -54,25 +57,18 @@ export default function UserChatSystem() {
       setLoadingChats(true);
       const response = await axios.post(
         `${Src}/api/auth/get-user-admin-chat`,
-        { 
-          member_id: memberId,
-          ticket_id: ticketId,
-        }, 
+        { member_id: memberId, ticket_id: ticketId },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Ensure authentication
-            "Content-Type": "application/json", // Explicitly define JSON format
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
-      
-      setChats(response.data); // Adjust based on your API response structure
+      setChats(response.data);
     } catch (error) {
       console.error('Error fetching chats:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to fetch chat history.',
-      });
+      notification.error({ message: 'Error', description: 'Failed to fetch chat history.' });
     } finally {
       setLoadingChats(false);
     }
@@ -85,16 +81,16 @@ export default function UserChatSystem() {
       const { memberId, ticketId } = selectedUser;
       await axios.post(
         `${Src}/api/auth/send-message`,
-        { 
+        {
           member_id: memberId,
           ticket_id: ticketId,
           message_by: "admin",
           message: newMessage,
-        }, 
+        },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Ensure authentication if required
-            "Content-Type": "application/json", // Explicitly define JSON format
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -103,10 +99,7 @@ export default function UserChatSystem() {
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to send message.',
-      });
+      notification.error({ message: 'Error', description: 'Failed to send message.' });
     }
   };
 
@@ -117,8 +110,9 @@ export default function UserChatSystem() {
   };
 
   const handleRefreshChats = () => {
-    const { memberId, ticketId } = selectedUser;
-    fetchChats(memberId, ticketId); // Refresh the chat history
+    if (selectedUser) {
+      fetchChats(selectedUser.memberId, selectedUser.ticketId);
+    }
   };
 
   return (
@@ -147,7 +141,17 @@ export default function UserChatSystem() {
         footer={null}
         width={800}
       >
-        <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '16px', padding: '10px', border: '1px solid #f0f0f0', borderRadius: '4px' }}>
+        <div
+          ref={chatContainerRef} // Attach ref to chat container
+          style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            marginBottom: '16px',
+            padding: '10px',
+            border: '1px solid #f0f0f0',
+            borderRadius: '4px',
+          }}
+        >
           {loadingChats ? (
             <Spin />
           ) : chats.length > 0 ? (
@@ -179,6 +183,7 @@ export default function UserChatSystem() {
             <Text type="secondary">No messages yet.</Text>
           )}
         </div>
+
         <TextArea
           rows={4}
           value={newMessage}
