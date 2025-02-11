@@ -6,13 +6,17 @@ const fs = require('fs');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 
+// Define upload path globally
+const uploadPath = path.join(__dirname, 'UnoPayGallery');
+
+// Ensure the upload directory exists
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../UnoPayGallery'); // Corrected path
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
@@ -63,19 +67,6 @@ router.post('/post-gallery', authenticateToken, upload.array('images', 10), asyn
   }
 
   try {
-    // Process each file
-    for (const file of req.files) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const fileExtension = path.extname(file.originalname);
-      const fileName = `gallery-${uniqueSuffix}${fileExtension}`;
-      const filePath = path.join(uploadPath, fileName);
-
-      // Save file to disk
-      fs.writeFileSync(filePath, file.buffer);
-
-     
-    }
-
     res.status(201).json({
       status: 'true',
       message: 'Images uploaded successfully'
@@ -109,18 +100,12 @@ router.get('/get-gallery-images', authenticateToken, async (req, res) => {
     }
   });
   
-  // Route to get specific image by filename
-  router.post('/get-gallery-image-file',authenticateToken, async (req, res) => {
+// Route to get specific image by filename
+router.post('/get-gallery-image-file', authenticateToken, async (req, res) => {
     const { filename } = req.body;
   
     if (!filename) {
       return res.status(400).json({ status: 'false', error: "Image filename is required." });
-    }
-  
-  
-  
-    if (containsSQLInjectionWords(filename)) {
-      return res.status(400).json({ status: "false", error: "Invalid filename." });
     }
   
     try {
@@ -134,10 +119,9 @@ router.get('/get-gallery-images', authenticateToken, async (req, res) => {
       // Send the file as response
       res.sendFile(filePath);
     } catch (error) {
-      console.error('Error deleting image:', error);
+      console.error('Error fetching image:', error);
       res.status(500).json({ status: 'false', message: 'Internal server error' });
     }
   });
-  
 
 module.exports = router;

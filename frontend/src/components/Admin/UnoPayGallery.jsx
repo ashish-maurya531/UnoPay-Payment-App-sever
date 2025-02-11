@@ -41,21 +41,36 @@ export default function GalleryManagement() {
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const [imageUrls, setImageUrls] = useState({});
 
-  const Src = "https://unotag.biz/api";
+  useEffect(() => {
+    fetchGalleryImages();
+  }, []);
 
-const fetchGalleryImages = async () => {
-  setLoading(true);
-  try {
-    const response = await axios.get(`${Src}/auth/get-gallery-images`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setImages(response.data.images || []);
-  } catch (error) {
-    message.error('Failed to fetch gallery images.');
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchGalleryImages = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${Src}/api/auth/get-gallery-images`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const imagePromises = response.data.images.map(async (filename) => {
+        const imageBlob = await fetchImageByFilename(filename);
+        return { filename, url: imageBlob };
+      });
+      
+      const images = await Promise.all(imagePromises);
+      const urlMap = {};
+      images.forEach(({ filename, url }) => {
+        urlMap[filename] = url;
+      });
+      
+      setGalleryImages(response.data.images);
+      setImageUrls(urlMap);
+      setLoading(false);
+    } catch (error) {
+      message.error('Failed to fetch gallery images');
+      setLoading(false);
+    }
+  };
 
   const fetchImageByFilename = async (filename) => {
     try {
@@ -89,16 +104,16 @@ const fetchGalleryImages = async () => {
       message.error('Please select images to upload');
       return;
     }
-  
+
     setUploading(true);
     setUploadProgress(0);
     const formData = new FormData();
     selectedFiles.forEach((file) => {
       formData.append('images', file.originFileObj);
     });
-  
+    
     try {
-      const response = await axios.post(`${Src}/api/auth/post-gallery`, formData, {
+      await axios.post(`${Src}/api/auth/post-gallery`, formData, {
         headers: { 
           'Content-Type': 'multipart/form-data', 
           Authorization: `Bearer ${token}` 
@@ -110,24 +125,14 @@ const fetchGalleryImages = async () => {
           setUploadProgress(percentCompleted);
         },
       });
-  
-      // Debugging: Log the server response
-      console.log('Server response:', response.data);
-  
-      if (response.data.status === "true") {
-        message.success(response.data.message || 'Images uploaded successfully');
-        setIsModalOpen(false);
-        setSelectedFiles([]);
-        form.resetFields();
-  
-        // Refetch gallery images to update the state
-        await fetchGalleryImages();
-      } else {
-        throw new Error(response.data.message || 'Upload failed');
-      }
+      
+      message.success('Images uploaded successfully');
+      setIsModalOpen(false);
+      setSelectedFiles([]);
+      form.resetFields();
+      fetchGalleryImages();
     } catch (error) {
-      console.error('Upload error:', error);
-      message.error(error.response?.data?.message || 'Upload failed');
+      message.error(error.response?.data?.error || 'Upload failed');
     } finally {
       setUploading(false);
       setUploadProgress(0);
