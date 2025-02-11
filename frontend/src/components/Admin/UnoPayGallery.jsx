@@ -41,36 +41,21 @@ export default function GalleryManagement() {
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const [imageUrls, setImageUrls] = useState({});
 
-  useEffect(() => {
-    fetchGalleryImages();
-  }, []);
+  const Src = "https://unotag.biz/api";
 
-  const fetchGalleryImages = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${Src}/api/auth/get-gallery-images`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      const imagePromises = response.data.images.map(async (filename) => {
-        const imageBlob = await fetchImageByFilename(filename);
-        return { filename, url: imageBlob };
-      });
-      
-      const images = await Promise.all(imagePromises);
-      const urlMap = {};
-      images.forEach(({ filename, url }) => {
-        urlMap[filename] = url;
-      });
-      
-      setGalleryImages(response.data.images);
-      setImageUrls(urlMap);
-      setLoading(false);
-    } catch (error) {
-      message.error('Failed to fetch gallery images');
-      setLoading(false);
-    }
-  };
+const fetchGalleryImages = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.get(`${Src}/auth/get-gallery-images`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setImages(response.data.images || []);
+  } catch (error) {
+    message.error('Failed to fetch gallery images.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchImageByFilename = async (filename) => {
     try {

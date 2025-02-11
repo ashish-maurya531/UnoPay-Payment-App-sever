@@ -111,6 +111,7 @@ const { setupWebSocket } = require("./config/websocket");
 const { connectToDatabase } = require('./config/database');
 // Add at the end of your main server file
 require('./utills/scheduler');
+const fs = require('fs');
 
 // Routes
 const authRoutes = require('./routes/auth');

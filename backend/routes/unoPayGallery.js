@@ -5,16 +5,22 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 
-// Directory for storing gallery images
-const uploadPath = path.join(__dirname, 'UnoPayGallery');
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath);
-}
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../UnoPayGallery'); // Corrected path
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
 
-// Configure Multer for in-memory storage
-const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
@@ -128,44 +134,10 @@ router.get('/get-gallery-images', authenticateToken, async (req, res) => {
       // Send the file as response
       res.sendFile(filePath);
     } catch (error) {
-      console.error('Error while fetching image:', error);
-      res.status(500).json({ status: 'false', error: "Internal server error." });
+      console.error('Error deleting image:', error);
+      res.status(500).json({ status: 'false', message: 'Internal server error' });
     }
   });
-// Route to delete a gallery image
-router.delete('/delete-gallery-image', authenticateToken, async (req, res) => {
-  const { fileName } = req.body;
-
-  if (!fileName) {
-    return res.status(400).json({ 
-      status: 'false', 
-      error: 'File name is required.' 
-    });
-  }
-
-  try {
-    const filePath = path.join(uploadPath, fileName);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ 
-        status: 'false', 
-        error: 'Image not found.' 
-      });
-    }
-
-    // Delete the file
-    fs.unlinkSync(filePath);
-
-    res.json({
-      status: 'true',
-      message: 'Image deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    res.status(500).json({ status: 'false', error: 'Internal server error.' });
-  }
-});
-
-router.use(handleMulterErrors);
+  
 
 module.exports = router;
