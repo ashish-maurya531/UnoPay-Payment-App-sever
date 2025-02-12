@@ -607,6 +607,12 @@ router.post('/login2', async (req, res) => {
   }
   
   console.log(kycRows[0]);
+  const [rankNo] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
+    // Check if user exists
+    if (rankNo?.length === 0) {
+      rankNo = 0;
+    }
+
   
 
     if (deviceIdRows.length === 0) {
@@ -641,7 +647,8 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
           phoneNo: userRows[0].phoneno,
           email,
           date_of_joining: userRows[0].created_at,
-          ...kycRows[0]
+          ...kycRows[0],
+          ...rankNo[0]
 
 
           
