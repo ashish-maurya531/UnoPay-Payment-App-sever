@@ -405,7 +405,7 @@ async function commisionPayout_2(txn_id_of_commissionBy, membership, service, me
                     transaction_id_of_commissionBy: txn_id_of_commissionBy,
                     credit: commission,
                     debit: 0,
-                    level: level
+                    level: level-1//added -1
                 };
 
                 const table = (super_upline === "UP100010" || status === 'inactive') 

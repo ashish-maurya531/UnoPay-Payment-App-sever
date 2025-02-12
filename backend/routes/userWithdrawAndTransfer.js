@@ -47,7 +47,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         return res.status(200).json({ status: "false", message: "Receiver user is not active" });
     }
 
-    if (commission_amount < 4) {
+    if (commission_amount < 10) {
         return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 10" });
     }
      //check kyc is done or not 
@@ -61,7 +61,10 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         return res.status(200).json({ status: "false", message: "Insufficient balance in sender's wallet" });
     }
 
-    const txn_id = generateTransactionId();
+    const txn_id_for_sender = generateTransactionId();
+    const txn_id_for_receiver = generateTransactionId();
+
+
 
     const connection = await pool.getConnection();
     try {
@@ -70,16 +73,25 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         const [row1] = await connection.query(
             `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [txn_id, sender_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Transferred to ${receiver_member_id} successfully`]
+            [txn_id_for_sender, sender_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Transferred to ${receiver_member_id} successfully`]
         );
         if (row1.affectedRows > 0) {
             console.log("Sender Money Transfer Transaction added in universal transaction table");
         }
 
+        const [row0] = await connection.query(
+            `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [txn_id_for_receiver, receiver_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Received from ${sender_member_id} successfully`]
+        );
+        if (row0.affectedRows > 0) {
+            console.log("Sender Money Transfer Transaction added in universal transaction table2");
+        }
+
         const [row2] = await connection.query(
             `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [sender_member_id, sender_member_id, txn_id, txn_id, 0.0000000000, commission_amount, 0]
+            [sender_member_id, "Money Transfer", txn_id_for_sender, txn_id_for_sender, 0.0000000000, commission_amount, 0]
         );
         if (row2.affectedRows > 0) {
             console.log("Sender Commission Wallet transaction added");
@@ -88,7 +100,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         const [row3] = await connection.query(
             `INSERT INTO flexi_wallet (member_id, transaction_id, credit, debit)
             VALUES (?, ?, ?, ?)`,
-            [receiver_member_id, txn_id, commission_amount, 0.00]
+            [receiver_member_id, txn_id_for_receiver, commission_amount, 0.00]
         );
         if (row3.affectedRows > 0) {
             console.log("Receiver Flexi Wallet transaction added");
@@ -177,7 +189,7 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
         const [row2]=await connection.query(
             `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit,level)
             VALUES (?,?,?,?,?,?,?)`,
-            [member_id,member_id,txn_id,txn_id,0.0000000000,commission_amount,0]
+            [member_id,"Self Transfer",txn_id,txn_id,0.0000000000,commission_amount,0]
         );
         if(row2.affectedRows>0){
             console.log("Commission Wallet transaction added in commission wallet");
@@ -307,7 +319,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
         const [row2]=await connection.query(
             `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit,level)
             VALUES (?,?,?,?,?,?,?)`,
-            [member_id,member_id,txn_id,txn_id,0.0000000000,amount,0]
+            [member_id,"Withdrawal Request",txn_id,txn_id,0.0000000000,amount,0]
         );
         if(row2.affectedRows>0){
             console.log("Commission Wallet transaction added in commission wallet");

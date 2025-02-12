@@ -2,7 +2,15 @@ const express = require('express');
 const router = express.Router();
 
 const { pool } = require('../config/database');
-const { getFlexiWalletTransactionList, getCommissionWalletTransactionList,selfTransactionsList,incomeTransactionsList ,getFlexiWalletBalance,getTodayCommissionWalletBalance,getCommisionWalletBalance} = require('../utills/checkUserBalance');
+const { getFlexiWalletTransactionList, 
+  getCommissionWalletTransactionList,
+  selfTransactionsList,
+  incomeTransactionsList ,
+  getFlexiWalletBalance,
+  getTodayCommissionWalletBalance,
+  getCommisionWalletBalance,
+  TransactionsListForPassBook
+} = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
@@ -78,6 +86,52 @@ router.post('/incomeTransactions',authenticateToken, async (req, res) => {
     }
 }
 );
+// Route to get passbook transactions
+router.post('/passbookTransactions', authenticateToken, async (req, res) => {
+  const { member_id } = req.body;
+
+  // SQL injection check
+  if (containsSQLInjectionWords(member_id)) {
+      return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid SQL Injection detected in member_id' 
+      });
+  }
+
+  try {
+      const transactions = await TransactionsListForPassBook(member_id);
+      
+      // Check for user not found error
+      if (transactions?.message) {
+          return res.status(404).json({ 
+              success: false, 
+              message: transactions.message 
+          });
+      }
+
+      // Check for empty transactions
+      if (transactions?.data?.length === 0) {
+          return res.status(404).json({ 
+              success: false, 
+              message: 'No transactions found' 
+          });
+      }
+
+      // Return successful response
+      res.status(200).json({ 
+          success: true, 
+          transactions 
+      });
+
+  } catch (error) {
+      console.error('Error in passbook transactions route:', error);
+      res.status(500).json({ 
+          success: false, 
+          message: 'Error getting passbook transactions', 
+          error 
+      });
+  }
+});
 
 
 router.get("/user-all-transactions",authenticateToken,async(req,res)=>{

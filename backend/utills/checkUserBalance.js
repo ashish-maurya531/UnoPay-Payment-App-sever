@@ -241,6 +241,8 @@ async function selfTransactionsList(member_id) {
 
 
 
+
+
 async function incomeTransactionsList(member_id) {
     try {
          // check if member_id is present in usersdetails table
@@ -311,13 +313,139 @@ async function incomeTransactionsList(member_id) {
     }
 }
 
+async function TransactionsListForPassBook(member_id) {
+    try {
+        // Check if member_id exists
+        const [user] = await pool.query(`SELECT * FROM usersdetails WHERE memberid = ?`, [member_id]);
+        if (user.length === 0) {
+            return { message: 'User not found' };
+        }
+
+        // Fetch commission wallet data
+        const [commissionWalletRows] = await pool.query(`
+            SELECT 
+                member_id,
+                transaction_id_for_member_id,
+                transaction_id_of_commissionBy,
+                credit,
+                debit,
+                total_balance,
+                date_time
+            FROM commission_wallet
+            WHERE member_id = ?`, [member_id]);
+
+        // Fetch flexi wallet data
+        const [flexiWalletRows] = await pool.query(`
+            SELECT 
+                member_id,
+                transaction_id,
+                credit,
+                debit,
+                total_balance,
+                date_time
+            FROM flexi_wallet
+            WHERE member_id = ?`, [member_id]);
+
+        // Process commission wallet data
+        const commissionResponse = await Promise.all(commissionWalletRows.map(async (walletRow) => {
+            const { transaction_id_of_commissionBy } = walletRow;
+            delete walletRow.transaction_id_of_commissionBy;
+
+            const [transactionRows] = await pool.query(`
+                SELECT 
+                    transaction_id,
+                    member_id,
+                    type,
+                    subType,
+                    recharge_to,
+                    created_at,
+                    message
+                FROM universal_transaction_table
+                WHERE transaction_id = ?`, [transaction_id_of_commissionBy]);
+
+            if (transactionRows.length > 0) {
+                const transaction = transactionRows[0];
+                
+                if (transaction.type === 'Membership') {
+                    transaction.amount = (transaction.amount / 1.18);
+                }
+
+                return {
+                    ...walletRow,
+                    wallet_type: 'commission_wallet',
+                    type: transaction.type,
+                    subType: transaction.subType,
+                    recharge_to: transaction.recharge_to,
+                    amount: transaction.amount,
+                    message: transaction.message
+                };
+            } else {
+                return {
+                    ...walletRow,
+                    wallet_type: 'commission_wallet'
+                };
+            }
+        }));
+
+        // Process flexi wallet data
+        const flexiResponse = await Promise.all(flexiWalletRows.map(async (walletRow) => {
+            const [transactionRows] = await pool.query(`
+                SELECT 
+                    transaction_id,
+                    member_id,
+                    type,
+                    subType,
+                    recharge_to,
+                    created_at,
+                    message
+                FROM universal_transaction_table
+                WHERE transaction_id = ?`, [walletRow.transaction_id]);
+
+            if (transactionRows.length > 0) {
+                const transaction = transactionRows[0];
+
+                return {
+                    ...walletRow,
+                    wallet_type: 'flexi_wallet',
+                    type: transaction.type,
+                    subType: transaction.subType,
+                    recharge_to: transaction.recharge_to,
+                    amount: transaction.amount,
+                };
+            } else {
+                return {
+                    ...walletRow,
+                    wallet_type: 'flexi_wallet'
+                };
+            }
+        }));
+
+        // Combine both responses
+        const combinedResponse = [...commissionResponse, ...flexiResponse];
+
+        // Sort by date_time in descending order
+        combinedResponse.sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
+
+        return { data: combinedResponse };
+    } catch (error) {
+        console.error('Error fetching transactions list', error);
+        return 0;
+    }
+}
 
 
 
 
 
-
-module.exports = { getFlexiWalletTransactionList,getCommissionWalletTransactionList,selfTransactionsList ,getFlexiWalletBalance,getCommisionWalletBalance,getTodayCommissionWalletBalance,incomeTransactionsList};
+module.exports = { getFlexiWalletTransactionList,
+    getCommissionWalletTransactionList,
+    selfTransactionsList ,
+    getFlexiWalletBalance,
+    getCommisionWalletBalance,
+    getTodayCommissionWalletBalance,
+    incomeTransactionsList,
+    TransactionsListForPassBook
+};
 
 
 
