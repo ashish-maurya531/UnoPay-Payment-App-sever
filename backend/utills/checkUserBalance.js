@@ -312,7 +312,6 @@ async function incomeTransactionsList(member_id) {
         return 0;
     }
 }
-
 async function TransactionsListForPassBook(member_id) {
     try {
         // Check if member_id exists
@@ -346,6 +345,20 @@ async function TransactionsListForPassBook(member_id) {
             FROM flexi_wallet
             WHERE member_id = ?`, [member_id]);
 
+        // Helper function to convert null/undefined to empty string
+        const normalizeValue = (value) => {
+            return value === null || value === undefined ? "" : value;
+        };
+
+        // Helper function to normalize object values
+        const normalizeObject = (obj) => {
+            const normalized = {};
+            for (const [key, value] of Object.entries(obj)) {
+                normalized[key] = normalizeValue(value);
+            }
+            return normalized;
+        };
+
         // Process commission wallet data
         const commissionResponse = await Promise.all(commissionWalletRows.map(async (walletRow) => {
             const { transaction_id_of_commissionBy } = walletRow;
@@ -364,13 +377,13 @@ async function TransactionsListForPassBook(member_id) {
                 WHERE transaction_id = ?`, [transaction_id_of_commissionBy]);
 
             if (transactionRows.length > 0) {
-                const transaction = transactionRows[0];
+                const transaction = normalizeObject(transactionRows[0]);
                 
                 if (transaction.type === 'Membership') {
                     transaction.amount = (transaction.amount / 1.18);
                 }
 
-                return {
+                return normalizeObject({
                     ...walletRow,
                     wallet_type: 'commission_wallet',
                     type: transaction.type,
@@ -378,12 +391,17 @@ async function TransactionsListForPassBook(member_id) {
                     recharge_to: transaction.recharge_to,
                     amount: transaction.amount,
                     message: transaction.message
-                };
+                });
             } else {
-                return {
+                return normalizeObject({
                     ...walletRow,
-                    wallet_type: 'commission_wallet'
-                };
+                    wallet_type: 'commission_wallet',
+                    type: "",
+                    subType: "",
+                    recharge_to: "",
+                    amount: "",
+                    message: ""
+                });
             }
         }));
 
@@ -402,21 +420,27 @@ async function TransactionsListForPassBook(member_id) {
                 WHERE transaction_id = ?`, [walletRow.transaction_id]);
 
             if (transactionRows.length > 0) {
-                const transaction = transactionRows[0];
+                const transaction = normalizeObject(transactionRows[0]);
 
-                return {
+                return normalizeObject({
                     ...walletRow,
                     wallet_type: 'flexi_wallet',
                     type: transaction.type,
                     subType: transaction.subType,
                     recharge_to: transaction.recharge_to,
                     amount: transaction.amount,
-                };
+                    message: transaction.message
+                });
             } else {
-                return {
+                return normalizeObject({
                     ...walletRow,
-                    wallet_type: 'flexi_wallet'
-                };
+                    wallet_type: 'flexi_wallet',
+                    type: "",
+                    subType: "",
+                    recharge_to: "",
+                    amount: "",
+                    message: ""
+                });
             }
         }));
 
@@ -432,7 +456,6 @@ async function TransactionsListForPassBook(member_id) {
         return 0;
     }
 }
-
 
 
 
