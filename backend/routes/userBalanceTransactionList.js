@@ -191,13 +191,19 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       const commission_wallet = await getCommisionWalletBalance(member_id);
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
       const membership= memberExist[0].membership
+      const [result] = await pool.query(`SELECT active_team FROM ranktable WHERE member_id = ?`, [member_id]);
+      // Check if user exists
+      if (result?.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
       return res.status(200).json({
         status: "true", 
         flexi_wallet, 
         commission_wallet,
         "signup_bonus":649 ,
         "membership":membership,
-        "today_income":todayIncome
+        "today_income":todayIncome,
+        ...result[0]
       
       });
     } catch (error) {
