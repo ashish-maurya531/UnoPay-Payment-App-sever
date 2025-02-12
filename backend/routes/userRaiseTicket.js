@@ -148,7 +148,7 @@ router.post('/get-user-admin-chat',authenticateToken, async (req, res) => {
         `;
         const [rows] = await pool.query(query, [member_id, ticket_id]);
 
-        res.send(rows); // Replace with actual data
+        res.send({data:rows}); // Replace with actual data
     } catch (error) {
         res.status(500).send({ error: "Failed to fetch chat history", details: error.message });
     }
