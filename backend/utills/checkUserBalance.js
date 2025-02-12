@@ -331,7 +331,8 @@ async function TransactionsListForPassBook(member_id) {
                 total_balance,
                 date_time
             FROM commission_wallet
-            WHERE member_id = ?`, [member_id]);
+            WHERE member_id = ?
+            AND message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
 
         // Fetch flexi wallet data
         const [flexiWalletRows] = await pool.query(`
