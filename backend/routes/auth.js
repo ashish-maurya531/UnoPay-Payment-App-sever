@@ -595,7 +595,7 @@ router.post('/login2', async (req, res) => {
         
         
         // Generate JWT token
-        const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
      //get the member kyc details 
      let [kycRows] = await pool.query(
       'SELECT FullName,IFSC_Code,Bank_Name,Account_number,Aadhar_Number,PanCard_Number,Nominee_name,Nominee_relation,Kyc_status FROM user_bank_kyc_details WHERE member_id = ? AND Kyc_status = ?',
