@@ -611,11 +611,15 @@ router.post('/login2', async (req, res) => {
   }
   
   console.log(kycRows[0]);
-  const [rankNo] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
-    // Check if user exists
-    if (rankNo?.length === 0) {
-      rankNo = 0;
-    }
+  const [rows] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
+
+// Log the result to debug
+console.log(rows);
+
+// Ensure rankNo is extracted correctly
+const rankNo = rows.length > 0 ? rows[0].rank_no : 0;
+
+console.log(`Final Rank No: ${rankNo}`);
 
   
 
@@ -652,7 +656,7 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
           email,
           date_of_joining: userRows[0].created_at,
           ...kycRows[0],
-          ...rankNo[0]
+          rank_no:rankNo
 
 
           
