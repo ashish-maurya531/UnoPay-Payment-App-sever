@@ -164,8 +164,8 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
     }
-    if (commission_amount<200){
-        return res.status(200).json({status:"false", message: "Commission Amount should be greater than 200" });
+    if (commission_amount<50){
+        return res.status(200).json({status:"false", message: "Commission Amount should be greater than 50" });
     }
     const commission_wallet_balance = await getCommisionWalletBalance(member_id)
     console.log("commission amount: ",commission_amount);
@@ -249,7 +249,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     }
     //amount should be 250
     if (amount <250) {
-        return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 500." });
+        return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 250." });
     }
 
     //sql injection 
