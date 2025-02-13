@@ -47,8 +47,8 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         return res.status(200).json({ status: "false", message: "Receiver user is not active" });
     }
 
-    if (commission_amount < 10) {
-        return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 10" });
+    if (commission_amount < 50) {
+        return res.status(200).json({ status: "false", message: "Sending Amount should be greater than or equal to 50" });
     }
      //check kyc is done or not 
      const [kyc] = await pool.query('SELECT * FROM user_bank_kyc_details WHERE member_id=? AND Kyc_status =?', [sender_member_id, 'approved']);
@@ -164,7 +164,7 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
     if (commission_amount <= 0) {
         return res.status(200).json({status:"false", message: "Commission Amount should be a positive number" });
     }
-    if (commission_amount<5){
+    if (commission_amount<200){
         return res.status(200).json({status:"false", message: "Commission Amount should be greater than 200" });
     }
     const commission_wallet_balance = await getCommisionWalletBalance(member_id)
@@ -248,7 +248,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
     }
     //amount should be 250
-    if (amount < 5) {
+    if (amount <250) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 500." });
     }
 
