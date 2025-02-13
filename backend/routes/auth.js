@@ -542,6 +542,10 @@ router.post('/getmembershipStatus',authenticateToken, async (req, res) => {
 router.post('/login2', async (req, res) => {
   const { identifier, password, device_id, otp } = req.body;
   console.log(identifier, password, device_id+" otp=",otp);
+  const now2 = new Date();
+  const formatted2 = `${now2.getFullYear()}-${String(now2.getMonth() + 1).padStart(2, '0')}-${String(now2.getDate()).padStart(2, '0')} ` +
+                    `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}:${String(now2.getSeconds()).padStart(2, '0')}`;
+  console.log(formatted2); // Example: "2025-02-08 10:15:30"
 
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
