@@ -37,6 +37,7 @@ export default function UserChatSystem() {
           'Authorization': 'Bearer ' + localStorage.getItem('adminToken'),
         },
       });
+
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -65,7 +66,7 @@ export default function UserChatSystem() {
           },
         }
       );
-      setChats(response.data);
+      setChats(response.data.data);
     } catch (error) {
       console.error('Error fetching chats:', error);
       notification.error({ message: 'Error', description: 'Failed to fetch chat history.' });

@@ -542,6 +542,10 @@ router.post('/getmembershipStatus',authenticateToken, async (req, res) => {
 router.post('/login2', async (req, res) => {
   const { identifier, password, device_id, otp } = req.body;
   console.log(identifier, password, device_id+" otp=",otp);
+  const now2 = new Date();
+  const formatted2 = `${now2.getFullYear()}-${String(now2.getMonth() + 1).padStart(2, '0')}-${String(now2.getDate()).padStart(2, '0')} ` +
+                    `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}:${String(now2.getSeconds()).padStart(2, '0')}`;
+  console.log(formatted2); // Example: "2025-02-08 10:15:30"
 
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
@@ -607,11 +611,15 @@ router.post('/login2', async (req, res) => {
   }
   
   console.log(kycRows[0]);
-  const [rankNo] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
-    // Check if user exists
-    if (rankNo?.length === 0) {
-      rankNo = 0;
-    }
+  const [rows] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
+
+// Log the result to debug
+console.log(rows);
+
+// Ensure rankNo is extracted correctly
+const rankNo = rows.length > 0 ? rows[0].rank_no : 0;
+
+console.log(`Final Rank No: ${rankNo}`);
 
   
 
@@ -648,7 +656,7 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
           email,
           date_of_joining: userRows[0].created_at,
           ...kycRows[0],
-          ...rankNo[0]
+          rank_no:rankNo
 
 
           
