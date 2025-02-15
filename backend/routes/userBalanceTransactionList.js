@@ -193,9 +193,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       const membership= memberExist[0].membership
       const [result] = await pool.query(`SELECT active_team FROM ranktable WHERE member_id = ?`, [member_id]);
       // Check if user exists
-      if (result?.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+     
       return res.status(200).json({
         status: "true", 
         flexi_wallet, 

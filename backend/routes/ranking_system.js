@@ -32,13 +32,14 @@ router.post('/get-active-team-no',authenticateToken, async (req, res) => {
     const [result] = await pool.query(`SELECT active_team FROM ranktable WHERE member_id = ?`, [member_id]);
     // Check if user exists
     if (result?.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(200).json({ active_team: 0 }); // Return 0 if no data found
     }
     res.status(200).json(result[0]);
   } catch (error) {
     console.error('Error fetching user by member_id:', error);
     res.status(500).json({ error: 'Failed to fetch data' });
   }
+
 });
 
 
