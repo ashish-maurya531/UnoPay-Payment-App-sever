@@ -103,6 +103,11 @@ export default function DashboardLayout({ children }) {
       key: 'UnoPayGallery',
       label: 'UnoPay Gallery',
       onClick: () => navigate('/dashboard/uno-pay-gallery'),
+    },
+    {
+      key: 'DailyCollectionReport',
+      label: 'Daily Collection Report',
+      onClick: () => navigate('/dashboard/daily-collection-report'),
     }
   ]
 

@@ -5,7 +5,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
-
+const moment = require('moment-timezone');
 const authenticateToken = require('../middleware/auth');
 
 
@@ -452,6 +452,18 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         if (bank_details.length === 0) {
             return res.status(400).json({ status: "false", message: "Bank details not found." });
         }
+
+    
+        const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
+        await pool.query(
+        `INSERT INTO daily_AddFund_Withdraw_Report (Total_Bank_Withdraw, date_time)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE
+        Total_Bank_Withdraw = Total_Bank_Withdraw + VALUES(Total_Bank_Withdraw),
+        updated_at = CURRENT_TIMESTAMP`,
+        [amount, currentDateInKolkata]
+        );
+
         
         // Combine both withdrawal details and bank details into one object
         const emailData = {
@@ -462,10 +474,11 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
             Account_number: bank_details[0].Account_number
         };
         
+        
+       
+        res.status(200).json({ status: "true", message: "Withdrawal Processed and details sent successfully." });
         // Pass combined data to the sendWithdrawalEmail function
         await sendWithdrawalEmail(emailData);
-       
-        return res.status(200).json({ status: "true", message: "Withdrawal Processed and details sent successfully." });
     } catch (error) {
         console.error("Error sending withdrawal email:", error);
         res.status(500).json({ status: "false", message: "Internal Server Error." });

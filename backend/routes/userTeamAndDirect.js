@@ -9,11 +9,11 @@ router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
     const { member_id } = req.body;
     //check input not empty
     if (!member_id) {
-        return res.status(400).json({ success: false, message: 'Member ID is required' });
+        return res.status(200).json({ success: false, message: 'Member ID is required' });
     }
     //check for sql injection
     if (containsSQLInjectionWords(member_id)) {
-        return res.status(400).json({ success: false, message: 'Dont try to hack' });
+        return res.status(200).json({ success: false, message: 'Dont try to hack' });
     }
     try {
         // Query to fetch direct members from member_hierarchy
@@ -23,7 +23,7 @@ router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
         );
 
         if (!rows.length) {
-            return res.status(404).json({ success: false, message: 'No directs found' });
+            return res.status(200).json({ success: false, message: 'No directs found' });
         }
 
         // List of all member IDs from rows
@@ -36,7 +36,7 @@ router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
         );
 
         if (!rows2.length) {
-            return res.status(404).json({ success: false, message: 'Invalid member IDs' });
+            return res.status(200).json({ success: false, message: 'Invalid member IDs' });
         }
 
         // Combine rows and rows2 data
@@ -52,7 +52,7 @@ router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
 
         res.status(200).json({ success: true, directMember: combinedData });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error getting directs', error });
+        res.status(200).json({ success: false, message: 'Error getting directs', error });
     }
 });
 

@@ -5,7 +5,7 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp, verifyOtpForRegister,deleteOtpForRegister} = require('../utills/sendOtpMail');
-
+const moment = require('moment-timezone');
 const bcrypt = require('bcryptjs');
 
 
@@ -421,10 +421,12 @@ router.post('/getmembershipStatus',authenticateToken, async (req, res) => {
 router.post('/login2', async (req, res) => {
   const { identifier, password, device_id, otp } = req.body;
   console.log(identifier, password, device_id+" otp=",otp);
+
   const now2 = new Date();
   const formatted2 = `${now2.getFullYear()}-${String(now2.getMonth() + 1).padStart(2, '0')}-${String(now2.getDate()).padStart(2, '0')} ` +
                     `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}:${String(now2.getSeconds()).padStart(2, '0')}`;
-  console.log(formatted2); // Example: "2025-02-08 10:15:30"
+ 
+  console.log(identifier+"tries to login at "+formatted2); // Example:
 
   // Validate inputs
   if (containsSQLInjectionWords(identifier) || containsSQLInjectionWords(password) || containsSQLInjectionWords(device_id)) {
@@ -491,14 +493,31 @@ router.post('/login2', async (req, res) => {
   
   console.log(kycRows[0]);
   const [rows] = await pool.query(`SELECT rank_no FROM ranktable WHERE member_id = ?`, [memberid]);
+    console.log(...rows);
+    const rankNo = rows.length > 0 ? rows[0].rank_no : 0;
+    console.log(`Final Rank No: ${rankNo}`);
 
-// Log the result to debug
-console.log(rows);
 
-// Ensure rankNo is extracted correctly
-const rankNo = rows.length > 0 ? rows[0].rank_no : 0;
+    const [sponser_id] = await pool.query(`SELECT sponser_id FROM member WHERE member_id = ?`, [memberid]);
+    const [sponser_details] = await pool.query(`SELECT memberid,username,phoneno FROM usersdetails WHERE memberid = ?`, [sponser_id[0].sponser_id]);
+    console.log(sponser_details[0]);
 
-console.log(`Final Rank No: ${rankNo}`);
+    const sponserid = sponser_details[0]?.memberid || "";
+    const sponserName = sponser_details[0]?.username || "";
+    const sponserNo = sponser_details[0]?.phoneno || "";
+
+
+    
+    ////////////////////////////////
+    //code to get activation date
+    const [activation_Date] = await pool.query(`SELECT created_at FROM universal_transaction_table WHERE member_id = ?  and type=? and subType=?`, [memberid, "Membership", "BASIC"]);
+    let activationDate = "";
+    if (activation_Date && activation_Date.length > 0 && activation_Date[0].created_at) {
+      activationDate = new Date(activation_Date[0].created_at).toISOString().split('T')[0];
+    }
+
+   
+
 
   
 
@@ -515,15 +534,19 @@ console.log(`Final Rank No: ${rankNo}`);
         // } else {
         //   return res.status(200).json({ status: "false", message: 'Failed to send OTP email' });
         // }
+
+
+
+        //uncomment below to devide id login // and android device will send device id
         // await pool.query(
         //   'INSERT INTO login_device_info (member_id, device_id) VALUES (?, ?)',
         //   [memberid, device_id]
         // );
         const now = new Date();
-const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
-                  `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-console.log(formatted); // Example: "2025-02-08 10:15:30"
-
+        const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
+          `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        
+        console.log(memberid+"login successful at "+formatted);
         return res.status(200).json({
           status: "true",
           message: 'User logged in successfully',
@@ -535,11 +558,16 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
           email,
           date_of_joining: userRows[0].created_at,
           ...kycRows[0],
-          rank_no:rankNo
+          rank_no:rankNo,
+          sponserid,
+          sponserName,
+          sponserNo,
+          activationDate
 
 
           
         });
+      
       } else {
         // Verify OTP for first-time login
         const otpVerification = await verifyOtp(memberid, otp);
@@ -552,12 +580,19 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
           return res.status(200).json({
             status: "true",
             message: 'First-time login successful, device verified.',
+            userLoginToken:token,
             memberid,
             username,
             membership,
             phoneNo: userRows[0].phoneno,
             email,
-            date_of_joining: userRows[0].created_at
+            date_of_joining: userRows[0].created_at,
+            ...kycRows[0],
+            rank_no:rankNo,
+            sponserid,
+            sponserName,
+            sponserNo,
+            activationDate
           });
         } else {
           return res.status(200).json({ status: "false", message: otpVerification.message });
@@ -588,12 +623,19 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
             return res.status(200).json({
               status: "true",
               message: 'Device change verified, logged in successfully.',
+              userLoginToken:token,
               memberid,
               username,
               membership,
               phoneNo: userRows[0].phoneno,
               email,
-              date_of_joining: userRows[0].created_at
+              date_of_joining: userRows[0].created_at,
+              ...kycRows[0],
+              rank_no:rankNo,
+              sponserid,
+              sponserName,
+              sponserNo,
+              activationDate
             });
           } else {
             return res.status(200).json({ status: "false", message: otpVerification.message });
@@ -604,16 +646,25 @@ console.log(formatted); // Example: "2025-02-08 10:15:30"
         return res.status(200).json({
           status: "true",
           message: 'User logged in successfully',
+          userLoginToken:token,
           memberid,
           username,
           membership,
           phoneNo: userRows[0].phoneno,
           email,
-          date_of_joining: userRows[0].created_at
+          date_of_joining: userRows[0].created_at,
+          ...kycRows[0],
+          rank_no:rankNo,
+          sponserid,
+          sponserName,
+          sponserNo,
+          activationDate
         });
       }
     }
   } catch (error) {
+    
+
     console.error('User login error:', error);
     res.status(200).json({ status: "false", message: 'Internal server error' });
   }

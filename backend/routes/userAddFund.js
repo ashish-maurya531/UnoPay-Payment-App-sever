@@ -7,7 +7,7 @@ const router = express.Router();
 const generateTransactionId = require('../utills/generateTxnId');
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
-
+const moment = require('moment-timezone');
 
 
 // Configure multer to use memory storage
@@ -292,6 +292,20 @@ router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
             [member_id, amount]
           );
         }
+        //add in daily add fund report
+        const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');  // current date in Asia/Kolkata
+        
+
+        await pool.query(
+          `INSERT INTO daily_AddFund_Withdraw_Report (Total_Add_Fund, date_time)
+          VALUES (?, ?)
+          ON DUPLICATE KEY UPDATE
+          Total_Add_Fund = Total_Add_Fund + VALUES(Total_Add_Fund),
+          updated_at = CURRENT_TIMESTAMP`,
+          [amount, currentDateInKolkata]
+        );
+
+
       } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal server error.' });
