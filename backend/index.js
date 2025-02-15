@@ -131,7 +131,7 @@ const ranking_system = require('./routes/ranking_system');
 const closingRoutes = require('./routes/closingRoutes');
 const zoomMeeting = require('./routes/zoomMeeting');
 const UnoPayGallery = require('./routes/unoPayGallery');
-
+// const newOtp=require("./routes/newOtp")
 
 
 
@@ -173,6 +173,7 @@ app.use('/api/auth', authenticateToken, ranking_system);
 app.use('/api/auth', authenticateToken, closingRoutes);
 app.use('/api/auth', authenticateToken, zoomMeeting);
 app.use('/api/auth', authenticateToken, UnoPayGallery);
+// app.use('/api/aditya',newOtp)
 
 // Admin API for sending notifications
 app.post("/send-notification", (req, res) => {

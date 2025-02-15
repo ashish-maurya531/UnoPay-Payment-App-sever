@@ -7,38 +7,6 @@ const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const authenticateToken = require('../middleware/auth');
 
 
-// Route to send OTP
-// router.post("/send-otp", async (req, res) => {
-//     const { identifier } = req.body;
-
-//     if (!identifier) {
-//         return res.status(200).json({ success: false, message: "Fields is required" });
-//     }
-//     if (containsSQLInjectionWords(identifier)) {
-//         return res.status(200).json({ success: false, message: "Don't try to hack." });
-//     }
-//     // Check for member existence
-//     const [userRows] = await pool.query(
-//         'SELECT memberid ,phoneno,email FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
-//         [identifier, identifier, identifier]
-//       );
-//       // console.log(userRows)
-  
-//       if (userRows.length === 0) {
-//         return res.status(200).json({ status:"false",message: `User with is ${identifier} not registered` });
-//       }
-//       //extract member_id 
-//       const member_id = userRows[0].memberid;
-
-
-//     try {
-//         const result = await sendOtpEmail(member_id);
-//         res.status(200).json({ success: true, message: "OTP sent successfully", result });
-//     } catch (error) {
-//         console.error("Error sending OTP:", error);
-//         res.status(500).json({ success: false, message: "Failed to send OTP", error });
-//     }
-// });
 
 
 /////////////////////////////////////////////////
