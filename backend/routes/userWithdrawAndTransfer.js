@@ -4,6 +4,7 @@ const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
 const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
+const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 
 const authenticateToken = require('../middleware/auth');
 
@@ -427,11 +428,46 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
                 connection.release();
             }
         }
-
-        // Response for approved requests
-        return res.status(200).json({ status: "true", message: "Withdrawal request processed successfully." });
+        //now the request is accepted so also send the email notification
+        //get bank details from bank_kyc_details
+        const [withdrawalDetails] = await pool.query(
+            `SELECT member_id, amount FROM withdraw_requests WHERE transaction_id = ?`,
+            [transaction_id]
+        );
+        
+        if (withdrawalDetails.length === 0) {
+            return res.status(400).json({ status: "false", message: "Withdrawal details not found." });
+        }
+        
+        const { member_id, amount } = withdrawalDetails[0];
+        
+        const [bank_details] = await pool.query(
+            `SELECT u.email, b.Bank_Name, b.Account_number 
+             FROM usersdetails u
+             INNER JOIN user_bank_kyc_details b ON u.memberid = b.member_id
+             WHERE u.memberid = ?`,
+            [member_id]
+        );
+        
+        if (bank_details.length === 0) {
+            return res.status(400).json({ status: "false", message: "Bank details not found." });
+        }
+        
+        // Combine both withdrawal details and bank details into one object
+        const emailData = {
+            member_id,
+            amount,
+            email: bank_details[0].email,
+            Bank_Name: bank_details[0].Bank_Name,
+            Account_number: bank_details[0].Account_number
+        };
+        
+        // Pass combined data to the sendWithdrawalEmail function
+        await sendWithdrawalEmail(emailData);
+       
+        return res.status(200).json({ status: "true", message: "Withdrawal Processed and details sent successfully." });
     } catch (error) {
-        console.error(error);
+        console.error("Error sending withdrawal email:", error);
         res.status(500).json({ status: "false", message: "Internal Server Error." });
     }
 });

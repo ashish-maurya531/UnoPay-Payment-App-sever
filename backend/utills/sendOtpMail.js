@@ -471,6 +471,220 @@ async function sendWelcomeEmail(userDetails) {
   
 
 
+  ///////////////////////////////////////////////
+  //widthraw email 
+  async function sendWithdrawalEmail(emailData) {
+    const {
+        member_id,
+        Bank_Name,
+        Account_number,
+        amount
+    } = emailData;
+
+    try {
+        // Email options
+        const mailOptions = {
+            from: `"UnoPay Payment App" <${process.env.EMAIL_USER}>`,
+            to: emailData.email,  // Assuming email is in withdrawalDetails
+            subject: "UnoPay - Withdrawal Request Confirmation",
+            html: `
+                    <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+                body {
+                    font-family: 'Montserrat', Arial, sans-serif;
+                    background-color: #f3f4f6;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                .email-container {
+                    max-width: 650px;
+                    margin: 30px auto;
+                    background: linear-gradient(145deg, #ffffff, #f7f7f7);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                    animation: fadeIn 1.2s ease-in-out;
+                }
+
+                @keyframes fadeIn {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .email-header {
+                    background-color: #2a9d8f;
+                    color: #ffffff;
+                    text-align: center;
+                    padding: 25px 0;
+                    animation: slideIn 1s ease-in-out;
+                }
+
+                @keyframes slideIn {
+                    0% {
+                        transform: translateX(-100%);
+                    }
+                    100% {
+                        transform: translateX(0);
+                    }
+                }
+
+                .email-header img {
+                    max-width: 150px;
+                    margin-bottom: 15px;
+                    opacity: 0.9;
+                }
+
+                .email-header h1 {
+                    margin: 0;
+                    font-size: 26px;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                }
+
+                .email-body {
+                    padding: 25px;
+                    color: #444444;
+                    line-height: 1.7;
+                    animation: fadeIn 1.2s ease-in-out;
+                }
+
+                .email-body p {
+                    margin: 15px 0;
+                    font-size: 16px;
+                }
+
+                .email-details {
+                    margin: 20px 0;
+                    padding: 20px;
+                    background-color: #f0f7f7;
+                    border-left: 4px solid #2a9d8f;
+                    border-radius: 8px;
+                    animation: popUp 1.5s ease-in-out;
+                }
+
+                @keyframes popUp {
+                    0% {
+                        transform: scale(0.9);
+                        opacity: 0;
+                    }
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+
+                .email-details h3 {
+                    margin-bottom: 10px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #2a9d8f;
+                }
+
+                .email-footer {
+                    background-color: #eeeeee;
+                    text-align: center;
+                    padding: 15px;
+                    font-size: 13px;
+                    color: #555555;
+                    animation: fadeIn 1.8s ease-in-out;
+                }
+
+                .email-footer a {
+                    color: #2a9d8f;
+                    text-decoration: none;
+                    font-weight: 600;
+                }
+
+                .cta-button {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 12px 25px;
+                    background-color: #e76f51;
+                    color: #ffffff;
+                    text-decoration: none;
+                    font-size: 16px;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    box-shadow: 0 4px 10px rgba(231, 111, 81, 0.4);
+                    transition: background-color 0.3s ease, transform 0.3s ease;
+                }
+
+                .cta-button:hover {
+                    background-color: #d65a41;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 14px rgba(231, 111, 81, 0.6);
+                }
+            </style>
+            </head>
+            <body>
+            <div class="email-container">
+                <!-- Email Header -->
+                <div class="email-header">
+                    <img src="cid:unopay_banner" alt="UnoPay Payment App Banner">
+                    <h1>UnoPay - Withdrawal Request</h1>
+                </div>
+
+                <!-- Email Body -->
+                <div class="email-body">
+                    <p>Dear Member,</p>
+                    <p>Thank you for using UnoPay. Below are the details of your recent withdrawal request:</p>
+
+                    <div class="email-details">
+                        <h3>Withdrawal Details</h3>
+                        <p><strong>Member ID:</strong> ${member_id}</p>
+                        <p><strong>Bank Name:</strong> ${Bank_Name}</p>
+                        <p><strong>Account Number:</strong> ${Account_number}</p>
+                        <p><strong>Amount:</strong> ₹${amount}</p>
+                    </div>
+
+                    <p>Please ensure that your account details are correct. If you have any questions or need further assistance, don't hesitate to reach out to us.</p>
+
+                    <p>Best regards,<br>UnoPay Team</p>
+                </div>
+
+                <!-- Email Footer -->
+                <div class="email-footer">
+                    <p>&copy; ${new Date().getFullYear()} UNOTAG MULTI SOLUTION PVT. LTD.</p>
+                    <p><a href="https://www.unope.com">www.unope.com</a> | <a href="mailto:info@unope.com">info@unope.com</a></p>
+                    <p>Contact us: +91-1234567890, +91-0987654321</p>
+                </div>
+            </div>
+            </body>
+            </html>
+            `,
+            attachments: [
+                {
+                    filename: 'unopay.jpeg',
+                    path: 'unopay.jpeg', // Replace with the correct path to your image
+                    cid: 'unopay_banner' // Same as referenced in the HTML img tag
+                }
+            ]
+        };
+
+        // Sending the email
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Withdrawal email sent: " + info?.response);
+
+        // console.log("Withdrawal email sent: ");
+        return { success: true, message: "Withdrawal email sent successfully" };
+
+    } catch (error) {
+        console.error("Error sending withdrawal email:", error);
+        return { success: false, message: "Error sending withdrawal email", error };
+    }
+}
+
+
+
 
 
 
@@ -1334,6 +1548,6 @@ async function universalOtpEmailSender(member_id, type) {
 }
 
 /////////////////////////////////////////////
-module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender,deleteOtpForRegister};
+module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender,deleteOtpForRegister,sendWithdrawalEmail};
 
    

@@ -62,33 +62,14 @@ console.log(newMember, upline);
   }
 });
 
-/////////////
-// async function getDatafromMembertable(){
-//   const [rows] = await pool.query('SELECT * FROM member');
-//   console.log(rows)
-//   // Perform API calls to get data from Membertable
-//   // and return the data in the required format
-//   // for elements of rows run /addmember api
-//   // for elements of rows run /addmember api
-//   // for elements of rows run /addmember api
-//   // for elements of rows run /addmember ap
-//   for (let i = 0; i < rows.length; i++) {
-//     const response = await axios.post('http://localhost:3000/api/auth/addmember', {
-//       newMember: rows[i].member_id,
-//       upline: rows[i].sponser_id
-//       });
-//     console.log(response.data);
-//   }
 
-    
-// }
 
 // do not run this function directly
 
 // getDatafromMembertable();
 
 
-///////
+
 
 
 
@@ -157,110 +138,7 @@ router.post('/checkSponserId', async(req, res) => {
 });
 
 
-// // User Registration
-// router.post('/register', async (req, res) => {
-//     const { sponser_id,phoneno,username, email,password,tpin } = req.body;
 
-//     const containsSQLInjectionWords = (input) => {
-//       const sqlKeywords = [
-//         "SELECT", "DROP", "DELETE", "INSERT", "UPDATE", "WHERE", "OR", "AND", "--", "#", "/\\*", "\\*/", ";", "=", "'", "\""
-//       ];
-//       const regex = new RegExp(sqlKeywords.join('|'), 'i');
-//       console.log(regex.test(input));
-//       return regex.test(input);
-//     };
-  
-  
-  
-  
-//     // Validate inputs
-//     const checktheData = [sponser_id, phoneno, username, email, password, tpin].join('');
-//     console.log(checktheData);
-//     if (containsSQLInjectionWords(checktheData)){
-//       return res.status(400).json({ error: "Don't try to hack." });
-//     }
-//     let connection;
-  
-//     try {
-//       // Get a connection from the pool
-//       connection = await pool.getConnection();
-//       await connection.beginTransaction();
-//       checkSponserId(sponser_id);
-  
-//       // Fetch the maximum ID from the table
-//       const [maxIdResult] = await connection.query('SELECT MAX(id) AS maxId FROM useridcollection');
-//       const maxId = maxIdResult[0]?.maxId;
-  
-//       if (!maxId) {
-//         throw new Error('No IDs available in the collection');
-//       }
-  
-//       let assignedId;
-//       let isIdFound = false;
-  
-//       while (!isIdFound) {
-//         const randomId = Math.floor(Math.random() * maxId) + 1;
-  
-//         const [idCheck] = await connection.query(
-//           'SELECT pregenerated_ids, used FROM userIdCollection WHERE id = ? FOR UPDATE',
-//           [randomId]
-//         );
-  
-//         if (idCheck.length && idCheck[0].used === 'false') {
-//           assignedId = idCheck[0].pregenerated_ids;
-  
-//           await connection.query(
-//             'UPDATE useridcollection SET used = "true" WHERE pregenerated_ids = ?',
-//             [assignedId]
-//           );
-  
-//           isIdFound = true;
-//         }
-//       }
-  
-//       // Insert the new user with the assigned ID
-//       await connection.query(
-//         'INSERT INTO usersdetails (memberid,phoneno, username, email, password, tpin) VALUES (?, ?, ?, ?, ?, ?)',
-//         [assignedId, phoneno,username, email,password, tpin]
-//       );
-
-//       await connection.query(
-//         'INSERT INTO security_details_of_user (member_id,password, tpin) VALUES (?, ?, ?)',
-//         [assignedId,password, tpin]
-//       );
-
-
-//       await connection.query(
-//         'INSERT INTO member (sponser_id,member_id) VALUES (?, ?)',
-//         [sponser_id,assignedId]
-//       );
-  
-   
-//       await connection.commit();
-  
-//       res.status(201).json({
-//         message: 'User registered successfully',
-//         userId: assignedId,
-//       });
-//     } catch (error) {
-//       console.error('User registration error:', error);
-  
-//       // Rollback the transaction on error
-//       if (connection) await connection.rollback();
-  
-//       if (error.code === 'ER_DUP_ENTRY') {
-//                 res.status(400).json({ error: 'Username or email already exists' });
-//               } else {
-//                 res.status(500).json({ error: 'Internal server error' });
-//               }
-//             } finally {
-//               // Release the connection back to the pool
-//               if (connection) connection.release();
-//             }
-//           });
-
-
-/////////////////////////////////////
 
 
  // Import axios for making HTTP requests

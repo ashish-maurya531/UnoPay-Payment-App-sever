@@ -162,7 +162,7 @@ app.use('/api/auth', authenticateToken, transactionRoutes);
 app.use('/api/auth', authenticateToken, adminQR);
 app.use('/api/auth', authenticateToken, userBankKyc);
 app.use('/api/auth', authenticateToken, rechargeRoutes);
-app.use('/api/auth', authenticateToken, forgetPassword);
+app.use('/api/forget',forgetPassword);
 app.use('/api/auth', authenticateToken, buyMembership);
 app.use('/api/auth', authenticateToken, userBalanceTransactionList);
 app.use('/api/auth', authenticateToken, userTeamAndDirect);
@@ -173,7 +173,7 @@ app.use('/api/auth', authenticateToken, ranking_system);
 app.use('/api/auth', authenticateToken, closingRoutes);
 app.use('/api/auth', authenticateToken, zoomMeeting);
 app.use('/api/auth', authenticateToken, UnoPayGallery);
-// app.use('/api/aditya',newOtp)
+// app.use('/api/aditya',newOtp
 
 // Admin API for sending notifications
 app.post("/send-notification", (req, res) => {
