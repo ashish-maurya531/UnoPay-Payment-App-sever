@@ -60,16 +60,19 @@ router.post("/getDirectMemberList", authenticateToken,async (req, res) => {
 
 
 
-router.post("/getTeamList", authenticateToken,async (req, res) => {
+router.post("/getTeamList", authenticateToken, async (req, res) => {
     const { member_id } = req.body;
-    //check input not empty
+
+    // Check if member_id is provided
     if (!member_id) {
         return res.status(400).json({ success: false, message: 'Member ID is required' });
     }
-    //check for sql injection
+
+    // Check for SQL injection
     if (containsSQLInjectionWords(member_id)) {
-        return res.status(400).json({ success: false, message: 'Dont try to hack' });
+        return res.status(400).json({ success: false, message: 'Don\'t try to hack' });
     }
+
     try {
         // Query to fetch team members based on super_upline
         const [rows] = await pool.query(
@@ -87,7 +90,7 @@ router.post("/getTeamList", authenticateToken,async (req, res) => {
 
         // Query to fetch member details from usersdetails
         const [rows2] = await pool.query(
-            `SELECT memberid, username, membership, phoneno,email,created_at FROM usersdetails WHERE memberid IN (?)`,
+            `SELECT memberid, username, membership, phoneno, email, created_at FROM usersdetails WHERE memberid IN (?)`,
             [memberList]
         );
 
@@ -95,9 +98,29 @@ router.post("/getTeamList", authenticateToken,async (req, res) => {
             return res.status(404).json({ success: false, message: 'Invalid member IDs' });
         }
 
-        // Combine rows and rows2 data
-        const combinedData = rows.map(row => {
+        // Create an array of promises to resolve the activation date query for each member
+        const combinedData = await Promise.all(rows.map(async (row) => {
             const memberDetails = rows2.find(detail => detail.memberid === row.member);
+
+            // Fetch activation date asynchronously for each member
+            const [activationDateRows] = await pool.query(
+                `SELECT created_at FROM universal_transaction_table WHERE member_id = ? AND type = ? AND subType = ?`,
+                [row.member, "Membership", "BASIC"]
+            );
+
+            let activationDate = "";
+            if (activationDateRows && activationDateRows.length > 0 && activationDateRows[0].created_at) {
+                const activationDateObj = new Date(activationDateRows[0].created_at);
+
+                // Format the activation date to "12 Feb 25"
+                const day = activationDateObj.getDate();
+                const month = activationDateObj.toLocaleString('default', { month: 'short' });
+                const year = activationDateObj.getFullYear().toString().slice(-2);
+
+                activationDate = `${day < 10 ? '0' : ''}${day} ${month} ${year}`;
+            }
+
+            // Return the combined data
             return {
                 ...row,
                 username: memberDetails?.username || null,
@@ -105,11 +128,15 @@ router.post("/getTeamList", authenticateToken,async (req, res) => {
                 date_of_joining: memberDetails?.created_at || null,
                 phone: memberDetails?.phoneno || null,
                 email: memberDetails?.email || null,
+                activationDate: activationDate || "0"
             };
-        });
+        }));
 
+        // Send the response
         res.status(200).json({ success: true, teamMembers: combinedData });
+
     } catch (error) {
+        console.error(error);
         res.status(500).json({ success: false, message: 'Error getting team list', error });
     }
 });
