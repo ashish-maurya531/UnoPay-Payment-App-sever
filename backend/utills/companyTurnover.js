@@ -151,6 +151,7 @@ WHERE type = 'Membership'
         });
     }
 };
+// getMembershipTransactionsForMonth()
 
 module.exports = {
     getMembershipTransactionsForToday,

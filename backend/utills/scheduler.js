@@ -1,6 +1,6 @@
 // utils/scheduler.js
 const schedule = require('node-schedule');
-const { checkDaily, checkWeekly, checkMonthly } = require('./companyTurnoverDistrubution');
+const { checkDaily, checkWeekly} = require('./companyTurnoverDistrubution');
 
 // Daily scheduler - runs every day at 00:01 (12:01 AM)
 const dailyJob = schedule.scheduleJob('1 0 * * *', async () => {

@@ -550,10 +550,10 @@ router.post('/login2', async (req, res) => {
 
 
         //uncomment below to devide id login // and android device will send device id
-        // await pool.query(
-        //   'INSERT INTO login_device_info (member_id, device_id) VALUES (?, ?)',
-        //   [memberid, device_id]
-        // );
+        await pool.query(
+          'INSERT INTO login_device_info (member_id, device_id) VALUES (?, ?)',
+          [memberid, device_id]
+        );
         const now = new Date();
         const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
           `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
