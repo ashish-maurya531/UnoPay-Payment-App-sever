@@ -167,7 +167,7 @@ app.use('/api/auth', authenticateToken, buyMembership);
 app.use('/api/auth', authenticateToken, userBalanceTransactionList);
 app.use('/api/auth', authenticateToken, userTeamAndDirect);
 app.use('/api/auth', authenticateToken, user_delete_requests);
-app.use('/api/auth', authenticateToken, userRaiseTicket);
+app.use('/api/raiseTicket', userRaiseTicket);
 app.use('/api/auth', authenticateToken, userWithdrawAndTransfer);
 app.use('/api/auth', authenticateToken, ranking_system);
 app.use('/api/auth', authenticateToken, closingRoutes);
@@ -177,17 +177,17 @@ app.use('/api/auth', authenticateToken, dailyAddFundandWithdrawReport);
 // app.use('/api/aditya',newOtp
 
 // Admin API for sending notifications
-app.post("/send-notification", (req, res) => {
-  const { title, body } = req.body;
+// app.post("/send-notification", (req, res) => {
+//   const { title, body } = req.body;
 
-  if (!title || !body) {
-    return res.status(400).send({ error: "Title and body are required" });
-  }
+//   if (!title || !body) {
+//     return res.status(400).send({ error: "Title and body are required" });
+//   }
 
-  const message = JSON.stringify({ title, body }); // Prepare as JSON string
-  global.broadcastMessage(message); // Broadcast to all WebSocket clients
-  res.send({ success: true, message: "Notification sent" });
-});
+//   const message = JSON.stringify({ title, body }); // Prepare as JSON string
+//   global.broadcastMessage(message); // Broadcast to all WebSocket clients
+//   res.send({ success: true, message: "Notification sent" });
+// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {

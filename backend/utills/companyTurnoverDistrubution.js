@@ -268,7 +268,7 @@ const distributeWeeklyRankIncome = async () => {
 };
 
 // Monthly Distribution
-const distributeMonthlyRankIncome = async () => {
+const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) => {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -279,9 +279,13 @@ const distributeMonthlyRankIncome = async () => {
             return { success: false, message: 'Monthly closing already completed' };
         }
 
-        const incomeResult = await getMembershipTransactionsForMonth();
-        const monthlyIncome = incomeResult.monthlyIncome;
-        // const monthlyIncome = 10000;
+        // const incomeResult = await getMembershipTransactionsForMonth();
+        // const monthlyIncome = incomeResult.monthlyIncome;
+        // // const monthlyIncome = 10000;
+        // Use the custom monthly amount if it's provided, otherwise fetch from the function
+        const monthlyIncome = (custom_monthly_amount_distribution && custom_monthly_amount_distribution > 0) 
+            ? custom_monthly_amount_distribution
+            : (await getMembershipTransactionsForMonth()).monthlyIncome;
 
         
         if (!monthlyIncome || monthlyIncome <= 0) {
@@ -510,7 +514,7 @@ const checkWeekly = async () => {
     }
 };
 
-const checkMonthly = async () => {
+const checkMonthly = async (custom_monthly_amount_distribution) => {
     try {
         console.log('🔍 Checking previous monthly closing...');
         const exists = await checkPreviousPeriodClosing('monthly');
@@ -521,7 +525,7 @@ const checkMonthly = async () => {
         }
 
         console.log('⏳ Previous monthly closing not found, starting distribution...');
-        return await distributeMonthlyRankIncome();
+        return await distributeMonthlyRankIncome(custom_monthly_amount_distribution);
     } catch (error) {
         console.error('Monthly check failed:', error);
         return { success: false, message: 'Monthly check failed' };

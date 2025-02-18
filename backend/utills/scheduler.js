@@ -25,31 +25,31 @@ const weeklyJob = schedule.scheduleJob('1 0 * * 1', async () => {
 });
 
 // Monthly scheduler - runs on 1st of every month at 00:01 (12:01 AM)
-const monthlyJob = schedule.scheduleJob('1 0 1 * *', async () => {
-    console.log('🏁 Monthly scheduler triggered at', new Date());
-    try {
-        const result = await checkMonthly();
-        console.log('✅ Monthly check result:', result);
-    } catch (error) {
-        console.error('🚨 Monthly scheduler error:', error);
-    }
-});
+// const monthlyJob = schedule.scheduleJob('1 0 1 * *', async () => {
+//     console.log('🏁 Monthly scheduler triggered at', new Date());
+//     try {
+//         const result = await checkMonthly();
+//         console.log('✅ Monthly check result:', result);
+//     } catch (error) {
+//         console.error('🚨 Monthly scheduler error:', error);
+//     }
+// });
 
 // Initialize schedulers when app starts
 console.log('⏰ Schedulers initialized:', {
     daily: dailyJob.nextInvocation(),
     weekly: weeklyJob.nextInvocation(),
-    monthly: monthlyJob.nextInvocation()
+    // monthly: monthlyJob.nextInvocation()
 });
 
 module.exports = {
     dailyJob,
     weeklyJob,
-    monthlyJob
+    // monthlyJob
 };
 
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // // utils/scheduler.js

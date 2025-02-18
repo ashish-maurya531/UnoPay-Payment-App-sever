@@ -31,7 +31,6 @@ const TrendCard = ({ data, height }) => {
 export default function FinancialDashboard() {
   const [todayData, setTodayData] = useState(null);
   const [otherData, setOtherData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [stats, setStats] = useState({ totalAddFund: 0, totalWithdraw: 0, companyMoney: 0 });
   const [loading, setLoading] = useState(true);
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
@@ -53,7 +52,6 @@ export default function FinancialDashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOtherData(otherResponse.data);
-      setFilteredData(otherResponse.data);
     } catch (error) {
       notification.error({ message: 'Error', description: 'Failed to fetch data.' });
     } finally {
@@ -61,8 +59,8 @@ export default function FinancialDashboard() {
     }
   };
 
-  const calculateStats = () => {
-    const total = filteredData.reduce(
+  useEffect(() => {
+    const total = otherData.reduce(
       (acc, curr) => ({
         totalAddFund: acc.totalAddFund + parseNumber(curr.Total_Add_Fund),
         totalWithdraw: acc.totalWithdraw + parseNumber(curr.Total_Bank_Withdraw),
@@ -71,14 +69,10 @@ export default function FinancialDashboard() {
       { totalAddFund: 0, totalWithdraw: 0, companyMoney: 0 }
     );
     setStats(total);
-  };
-
-  useEffect(() => {
-    calculateStats();
-  }, [filteredData]);
+  }, [otherData]);
 
   const renderChart = () => {
-    const chartData = otherData.map((item) => ({
+    const chartData = [...otherData, todayData].filter(Boolean).map((item) => ({
       date: item.date,
       amount: parseNumber(item.Total_Add_Fund) + parseNumber(item.Total_Bank_Withdraw),
     }));
@@ -129,7 +123,16 @@ export default function FinancialDashboard() {
           </Row>
         </Card>
       )}
-      <Table loading={loading} dataSource={filteredData} rowKey="date" pagination={{ pageSize: 10 }} />
+      <Card title="Previous Days Data" className="mb-5">
+        <Table loading={loading} dataSource={otherData} rowKey="date" pagination={{ pageSize: 10 }}
+          columns={[
+            { title: 'Date', dataIndex: 'date', render: (date) => moment(date).format('YYYY-MM-DD') },
+            { title: 'Add Fund', dataIndex: 'Total_Add_Fund', render: (val) => `Rs.${parseNumber(val).toFixed(2)}` },
+            { title: 'Withdraw', dataIndex: 'Total_Bank_Withdraw', render: (val) => `Rs.${parseNumber(val).toFixed(2)}` },
+            { title: 'Company Money', dataIndex: 'Company_Money', render: (val) => `Rs.${parseNumber(val).toFixed(2)}` },
+          ]}
+        />
+      </Card>
       {renderChart()}
     </div>
   );

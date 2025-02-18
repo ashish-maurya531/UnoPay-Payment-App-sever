@@ -191,7 +191,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       const commission_wallet = await getCommisionWalletBalance(member_id);
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
       const membership= memberExist[0].membership
-      const [result] = await pool.query(`SELECT active_team FROM ranktable WHERE member_id = ?`, [member_id]);
+      const [result] = await pool.query(`SELECT active_team,rank_no FROM ranktable WHERE member_id = ?`, [member_id]);
       // Check if user exists
      
       return res.status(200).json({

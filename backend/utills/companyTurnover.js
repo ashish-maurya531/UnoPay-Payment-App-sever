@@ -139,6 +139,8 @@ WHERE type = 'Membership'
         return {
             message: "Monthly transactions fetched successfully",
             monthlyIncome: rows[0].monthlyIncome || 0, // Default to 0 if null
+            startOfMonth,
+            endOfMonth,
         };
     } catch (err) {
         // Handle error
