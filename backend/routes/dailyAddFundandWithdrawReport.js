@@ -28,7 +28,7 @@ router.get('/getDataForToday', async (req, res) => {
   
         res.status(200).json(rows); 
       } else {
-        res.status(200).json({ message: "No data found for today." });
+        res.status(200).json([]);
       }
     } catch (error) {
       console.error('Error fetching data for today:', error);
@@ -57,7 +57,7 @@ router.get('/getDataExceptToday', async (req, res) => {
   
         res.status(200).json(rows); 
       } else {
-        res.status(200).json({ message: "No data found except today." });
+        res.status(200).json([]);
       }
     } catch (error) {
       console.error('Error fetching data except today:', error);
