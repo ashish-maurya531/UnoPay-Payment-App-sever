@@ -85,11 +85,8 @@ const distributeDailyRankIncome = async () => {
             return { success: false, message: 'Daily closing already completed' };
         }
 
-        const incomeResult = await getMembershipTransactionsForToday();
-        const dailyIncome = incomeResult.todayIncome;
-        // const dailyIncome = 4000;
+        const dailyIncome = 550;
 
-        
         if (!dailyIncome || dailyIncome <= 0) {
             await connection.rollback();
             await createZeroAmountClosing('daily');
@@ -100,13 +97,33 @@ const distributeDailyRankIncome = async () => {
             'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
         );
 
+        const memberIds = members.map(member => member.member_id);
+        const [userDetails] = await connection.query(
+            'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
+            [memberIds]
+        );
+
+        const nameMap = {};
+        userDetails.forEach(user => {
+            nameMap[user.member_id] = user.name;
+        });
+        console.log(nameMap);
+
         let distributedAmount = 0;
         const membersMap = {};
 
         for (const member of members) {
             const { member_id, rank_no } = member;
+            
+            // Skip processing for member UP100010
+            if (member_id === 'UP100010') {
+                continue;
+            }
+
             let memberTotal = 0;
-            const rankDetails = {};
+            const rankDetails = {
+                name: nameMap[member_id] || 'Unknown'
+            };
 
             for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
                 const rate = DAILY_COMMISSION_RATES[currentRank] || 0;
@@ -172,9 +189,10 @@ const distributeWeeklyRankIncome = async () => {
             return { success: false, message: 'Weekly closing already completed' };
         }
 
-        const incomeResult = await getMembershipTransactionsForWeek();
-        const weeklyIncome = incomeResult.weeklyIncome;
-        // const weeklyIncome = 1000;
+        // const incomeResult = await getMembershipTransactionsForWeek();
+        // const weeklyIncome = incomeResult.weeklyIncome;
+        const weeklyIncome = 3000;
+
         console.log(`[WEEKLY] Weekly turnover: ${weeklyIncome}`);
 
         if (!weeklyIncome || weeklyIncome <= 0) {
@@ -189,6 +207,9 @@ const distributeWeeklyRankIncome = async () => {
             'SELECT member_id, active_directs FROM ranktable WHERE active_directs >= ?',
             [MIN_ACTIVE_DIRECTS]
         );
+        console.log(members);
+        // Get member names
+        
 
         if (members.length === 0) {
             console.log('[WEEKLY] No eligible members found');
@@ -205,6 +226,17 @@ const distributeWeeklyRankIncome = async () => {
                 data: { totalIncome: weeklyIncome }
             };
         }
+        const memberIds = members.map(member => member.member_id);
+        console.log(memberIds);
+        const [userDetails] = await connection.query(
+            `SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)`,
+            [memberIds]
+        );
+
+        const nameMap = {};
+        userDetails.forEach(user => {
+            nameMap[user.member_id] = user.name;
+        });
 
         let distributedAmount = 0;
         const membersMap = {};
@@ -213,11 +245,20 @@ const distributeWeeklyRankIncome = async () => {
 
         for (const member of members) {
             const { member_id } = member;
+            
+            // Skip UP100010
+            if (member_id === 'UP100010') {
+                console.log(`[WEEKLY] Skipping excluded member: ${member_id}`);
+                continue;
+            }
+
             console.log(`[WEEKLY] Processing member: ${member_id}`);
             
-            // FIX: Pass proper rankDetails object with dummy rank0 key
-            const rankDetails = { rank0: commissionPerMember };
-            
+            const rankDetails = {
+                name: nameMap[member_id] || 'Unknown',
+                rank0: commissionPerMember // Keep rank0 for transaction processing
+            };
+
             console.log(`[WEEKLY] Updating balances for ${member_id} with $${commissionPerMember}`);
             await updateMemberBalance(connection, member_id, rankDetails, 'weekly');
             
@@ -225,7 +266,13 @@ const distributeWeeklyRankIncome = async () => {
             await updateDailyWeeklyMonthlyTable(connection, member_id, { weekly: commissionPerMember });
             
             distributedAmount += commissionPerMember;
-            membersMap[member_id] = commissionPerMember;
+            
+            // Create clean output format
+            membersMap[member_id] = {
+                name: rankDetails.name,
+                amount: commissionPerMember
+            };
+            
             console.log(`[WEEKLY] Updated records for ${member_id}`);
         }
 
@@ -246,7 +293,7 @@ const distributeWeeklyRankIncome = async () => {
             data: {
                 totalIncome: weeklyIncome,
                 distributedAmount,
-                membersCount: members.length,
+                membersCount: Object.keys(membersMap).length,
                 commissionPerMember
             }
         };
@@ -266,7 +313,6 @@ const distributeWeeklyRankIncome = async () => {
         }
     }
 };
-
 // Monthly Distribution
 const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) => {
     let connection;
@@ -279,15 +325,10 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
             return { success: false, message: 'Monthly closing already completed' };
         }
 
-        // const incomeResult = await getMembershipTransactionsForMonth();
-        // const monthlyIncome = incomeResult.monthlyIncome;
-        // // const monthlyIncome = 10000;
-        // Use the custom monthly amount if it's provided, otherwise fetch from the function
         const monthlyIncome = (custom_monthly_amount_distribution && custom_monthly_amount_distribution > 0) 
             ? custom_monthly_amount_distribution
             : (await getMembershipTransactionsForMonth()).monthlyIncome;
 
-        
         if (!monthlyIncome || monthlyIncome <= 0) {
             await connection.rollback();
             await createZeroAmountClosing('monthly');
@@ -298,12 +339,33 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
             'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
         );
 
+        // Get member names from usersdetails table
+        const memberIds = members.map(member => member.member_id);
+        const [userDetails] = await connection.query(
+            'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
+            [memberIds]
+        );
+
+        // Create name mapping object
+        const nameMap = {};
+        userDetails.forEach(user => {
+            nameMap[user.member_id] = user.name;
+        });
+
         let distributedAmount = 0;
         const membersMap = {};
 
         for (const member of members) {
             const { member_id, rank_no } = member;
-            const rankDetails = {};
+            
+            // Skip processing for member UP100010
+            if (member_id === 'UP100010') {
+                continue;
+            }
+
+            const rankDetails = {
+                name: nameMap[member_id] || 'Unknown' // Add member name
+            };
             const gemstoneUpdates = {};
 
             for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
@@ -313,7 +375,6 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
                 const limit = MONTHLY_LEVEL_LIMITS[currentRank] || 0;
 
                 if (fullAmount > 0) {
-                    // Get current gemstone total
                     const [currentTotals] = await connection.query(
                         `SELECT ${gemstoneColumn} 
                         FROM daily_weekly_monthly_total 
@@ -372,16 +433,29 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
 // Shared Functions with Enhanced Logging
 const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
     try {
-        console.log(`[${type}] Starting balance update for ${memberId} (${type})`);
+        console.log(`[${type}] Starting balance update for ${memberId}`);
         let totalAmount = 0;
+        
+        // Filter only rank-related entries (rank0, rank1, rank2, etc.)
+        const rankEntries = Object.entries(rankDetails).filter(
+            ([key]) => key.startsWith('rank')
+        );
 
-        for (const [rankKey, amount] of Object.entries(rankDetails)) {
-            const rankNumber = parseInt(rankKey.replace('rank', ''));
+        console.log(`[${type}] Processing ranks:`, rankEntries);
+
+        for (const [rankKey, amount] of rankEntries) {
+            const rankNumber = parseInt(rankKey.replace('rank', '')) || 0; // Handle rank0
             const txnId = generateTransactionId();
+            
+            if (typeof amount !== 'number' || isNaN(amount)) {
+                console.error(`[${type}] Invalid amount for ${rankKey}:`, amount);
+                continue;
+            }
+
             totalAmount += amount;
 
-            console.log(`[${type}] Inserting to universal_transaction_table: 
-                ${txnId}, ${memberId}, ${type}, ${amount}`);
+            // Insert into universal transaction table
+            console.log(`[${type}] Logging transaction for ${rankKey}: ${amount}`);
             await connection.query(
                 `INSERT INTO universal_transaction_table 
                 (transaction_id, member_id, type, subType, amount, status, message) 
@@ -393,12 +467,12 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
                     type,
                     amount, 
                     'success', 
-                    `${type} income${rankKey !== 'rank0' ? ' for rank ' + rankNumber : ''}`
+                    `${type} income${rankNumber > 0 ? ` for rank ${rankNumber}` : ''}`
                 ]
             );
 
-            console.log(`[${type}] Inserting to commission_wallet: 
-                ${memberId}, ${txnId}, ${amount}, ${rankNumber}`);
+            // Insert into commission wallet
+            console.log(`[${type}] Updating commission wallet for level ${rankNumber}`);
             await connection.query(
                 `INSERT INTO commission_wallet 
                 (member_id, commissionBy, transaction_id_for_member_id, 
@@ -408,15 +482,20 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
             );
         }
 
-        console.log(`[${type}] Updating users_total_balance for ${memberId} with ${totalAmount}`);
-        await connection.query(
-            `UPDATE users_total_balance 
-            SET user_total_balance = user_total_balance + ? 
-            WHERE member_id = ?`,
-            [totalAmount, memberId]
-        );
+        // Update total balance only if there's valid amount
+        if (totalAmount > 0) {
+            console.log(`[${type}] Updating total balance with ${totalAmount}`);
+            await connection.query(
+                `UPDATE users_total_balance 
+                SET user_total_balance = user_total_balance + ? 
+                WHERE member_id = ?`,
+                [totalAmount, memberId]
+            );
+        } else {
+            console.log(`[${type}] No valid amounts to update for ${memberId}`);
+        }
 
-        console.log(`[${type}] Successfully updated balances for ${memberId}`);
+        console.log(`[${type}] Successfully processed ${memberId}`);
     } catch (error) {
         console.error(`[${type}] Update error:`, error);
         throw error;
