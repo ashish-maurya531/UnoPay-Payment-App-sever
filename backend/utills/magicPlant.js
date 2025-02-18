@@ -139,7 +139,7 @@ const moneyPlantHoldTransactionsCheck = async (childMemberId) => {
         //check that parent have more than 2 active directs
         console.log(parentRecords[0]?.active_directs)
         if (parentRecords[0].active_directs<2) {
-            console.log('⏩ Parent have less than 2 directs so commission will remain on hold');
+            console.log('⏩ Parent have less than 2 active directs so commission will remain on hold');
             return;
             }
 
