@@ -65,7 +65,7 @@ const UserAddFundRequest = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching fund requests:', error);
+      // console.error('Error fetching fund requests:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch fund requests.',
@@ -97,7 +97,7 @@ const UserAddFundRequest = () => {
         setModalVisible(true);
       }
     } catch (error) {
-      console.error('Error fetching screenshot:', error);
+      // console.error('Error fetching screenshot:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch screenshot.',
@@ -144,7 +144,7 @@ const UserAddFundRequest = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating transaction status:', error);
+      // console.error('Error updating transaction status:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to update transaction status.',

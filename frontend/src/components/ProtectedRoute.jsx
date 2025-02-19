@@ -110,7 +110,7 @@ const ProtectedRoute = ({ children }) => {
         }
       } catch (error) {
         // Handle invalid or malformed token
-        console.error('Invalid or expired token:', error);
+        // console.error('Invalid or expired token:', error);
         
         localStorage.removeItem('adminToken');
         sessionStorage.removeItem('adminToken');

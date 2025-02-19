@@ -81,7 +81,7 @@ export default function GalleryManagement() {
       );
       return URL.createObjectURL(response.data);
     } catch (error) {
-      console.error('Fetch image error:', error);
+      // console.error('Fetch image error:', error);
       return '';
     }
   };

@@ -63,7 +63,7 @@ export default function UserList() {
       setUsers(formattedUsers);
       setTotalUsers(formattedUsers.length);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      // console.error('Error fetching users:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch users.',
@@ -176,7 +176,7 @@ export default function UserList() {
 
       fetchUsers();
     } catch (error) {
-      console.error('Error updating user status:', error);
+      // console.error('Error updating user status:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to update status. Please try again later.',

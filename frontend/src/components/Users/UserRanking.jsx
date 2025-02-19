@@ -265,7 +265,7 @@ const RankList = () => {
       });
       setRankData(response?.data || []);
     } catch (error) {
-      console.error('Error fetching rank data:', error);
+      // console.error('Error fetching rank data:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch rank data.',

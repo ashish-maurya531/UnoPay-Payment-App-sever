@@ -109,7 +109,7 @@ export default function QRList() {
         return URL.createObjectURL(response.data);
       }
     } catch (error) {
-      console.error('Error fetching QR image:', error);
+      // console.error('Error fetching QR image:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch QR image.',

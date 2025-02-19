@@ -57,7 +57,7 @@ export default function UserDeleteRequestList() {
       setDeleteRequests(formattedRequests);
       setTotalRequests(formattedRequests.length);
     } catch (error) {
-      console.error('Error fetching delete requests:', error);
+      // console.error('Error fetching delete requests:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch delete requests.',
@@ -95,7 +95,7 @@ export default function UserDeleteRequestList() {
         });
       }
     } catch (error) {
-      console.error('Error deleting the delete request:', error);
+      // console.error('Error deleting the delete request:', error);
       notification.error({
         message: 'Error',
         description: 'An error occurred while deleting the request. Please try again later.',
@@ -218,7 +218,7 @@ export default function UserDeleteRequestList() {
 
       fetchDeleteRequests();
     } catch (error) {
-      console.error('Error updating delete request status:', error);
+      // console.error('Error updating delete request status:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to update delete request status. Please try again later.',

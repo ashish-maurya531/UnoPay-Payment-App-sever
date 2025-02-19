@@ -60,7 +60,7 @@ export default function UserTransactions() {
       setSuccessfulTransactions(data.filter(transaction => transaction.message === 'Credited Successfully').length);
       setFailedTransactions(data.filter(transaction => transaction.message === 'Debited Successfully').length);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      // console.error('Error fetching transactions:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch transactions.',

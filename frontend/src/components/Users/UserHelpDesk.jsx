@@ -40,7 +40,7 @@ export default function UserChatSystem() {
 
       setUsers(response.data);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      // console.error('Error fetching users:', error);
       notification.error({ message: 'Error', description: 'Failed to fetch users.' });
     } finally {
       setLoadingUsers(false);
@@ -68,7 +68,7 @@ export default function UserChatSystem() {
       );
       setChats(response.data.data);
     } catch (error) {
-      console.error('Error fetching chats:', error);
+      // console.error('Error fetching chats:', error);
       notification.error({ message: 'Error', description: 'Failed to fetch chat history.' });
     } finally {
       setLoadingChats(false);
@@ -99,7 +99,7 @@ export default function UserChatSystem() {
       setChats([...chats, { message_by: 'admin', message: newMessage, created_at: new Date().toISOString() }]);
       setNewMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      // console.error('Error sending message:', error);
       notification.error({ message: 'Error', description: 'Failed to send message.' });
     }
   };

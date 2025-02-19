@@ -410,7 +410,7 @@ const WithdrawRequests = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching withdraw requests:', error);
+      // console.error('Error fetching withdraw requests:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch withdraw requests.',
@@ -465,7 +465,7 @@ const WithdrawRequests = () => {
             });
         }
     } catch (error) {
-        console.error('Error updating withdrawal status:', error);
+        // console.error('Error updating withdrawal status:', error);
         notification.error({
             message: 'Error',
             description: 'Failed to update withdrawal status.',

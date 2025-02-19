@@ -25,7 +25,7 @@ const WalletTable = () => {
   };
   useEffect(() => {
     // Fetch user wallet balance data
-    console.log('1234567890');
+    // console.log('1234567890');
     axios
       .post(`${Src}/api/auth/all-user-wallet-wise-balance`, {
         headers: {

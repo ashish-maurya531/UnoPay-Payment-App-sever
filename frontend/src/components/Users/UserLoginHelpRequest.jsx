@@ -35,7 +35,7 @@ export default function LoginIssueRequestList() {
   }, []);
 
   const fetchLoginIssueRequests = async () => {
-  console.log("Login token "+token);
+  // console.log("Login token "+token);
 
     try {
       setLoading(true);
@@ -44,7 +44,7 @@ export default function LoginIssueRequestList() {
           Authorization: `Bearer ${token}`, // Include the token for authentication
         },
       });
-      console.log("sdfsfsfdsfdsf->>>>"+response[0])
+      // console.log("sdfsfsfdsfdsf->>>>"+response[0])
       
       const formattedRequests = response.data.requests.map((request, index) => ({
         key: request.login_issue_id,
@@ -60,7 +60,7 @@ export default function LoginIssueRequestList() {
 
       setLoginIssues(formattedRequests);
     } catch (error) {
-      console.error('Error fetching login issue requests:', error);
+      // console.error('Error fetching login issue requests:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch login issue requests.',
@@ -100,7 +100,7 @@ export default function LoginIssueRequestList() {
         });
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      // console.error('Error updating status:', error);
       notification.error({
         message: 'Error',
         description: 'An error occurred while updating the status. Please try again later.',
@@ -109,7 +109,7 @@ export default function LoginIssueRequestList() {
   };
 
   const handleDeleteRequest = async (loginIssueId) => {
-    console.log(loginIssueId);
+    // console.log(loginIssueId);
     try {
       // Make the API request to delete the login issue
       const response = await axios.post(
@@ -127,7 +127,7 @@ export default function LoginIssueRequestList() {
       
   
       // Check the response from the backend
-      console.log(response);
+      // console.log(response);
       if (response.data.message === 'Login issue deleted successfully') {
         notification.success({
           message: 'Request Deleted',
@@ -142,7 +142,7 @@ export default function LoginIssueRequestList() {
         });
       }
     } catch (error) {
-      console.error('Error deleting the login issue request:', error);
+      // console.error('Error deleting the login issue request:', error);
       notification.error({
         message: 'Error',
         description: 'An error occurred while deleting the request. Please try again later.',

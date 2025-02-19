@@ -531,7 +531,7 @@ const BankDetails = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching bank details:', error);
+      // console.error('Error fetching bank details:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch bank details.',
@@ -546,7 +546,7 @@ const BankDetails = () => {
       const response = await axios.post(`${Src}/api/auth/get${imageType}Image`, {
         member_id: selectedRecord.member_id
       }, { responseType: 'blob' });
-      console.log(response);
+      // console.log(response);
 
       if (response.status === 200) {
         const imageUrl = URL.createObjectURL(response.data);
@@ -556,7 +556,7 @@ const BankDetails = () => {
         setImageModalVisible(true);
       }
     } catch (error) {
-      console.error(`Error fetching ${imageType} image:`, error);
+      // console.error(`Error fetching ${imageType} image:`, error);
       notification.error({
         message: 'Error',
         description: `Failed to fetch ${imageType} image.`,
@@ -608,7 +608,7 @@ const BankDetails = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating KYC status:', error);
+      // console.error('Error updating KYC status:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to update KYC status.',

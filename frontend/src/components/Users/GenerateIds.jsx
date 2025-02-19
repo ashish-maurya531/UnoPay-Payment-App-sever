@@ -21,7 +21,7 @@ export default function GenerateIds() {
         message.error('Failed to generate IDs.');
       }
     } catch (error) {
-      console.error('Error generating IDs:', error);
+      // console.error('Error generating IDs:', error);
       message.error('An error occurred.');
     }
   };

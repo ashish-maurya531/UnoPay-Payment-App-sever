@@ -358,7 +358,7 @@ export default function LoginPage() {
         // Unexpected error
         message.error('An unexpected error occurred. Please try again.');
       }
-      console.error('Login failed:', error);
+      // console.error('Login failed:', error);
     } finally {
       setLoading(false);
     }
