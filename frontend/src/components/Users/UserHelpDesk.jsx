@@ -32,7 +32,7 @@ export default function UserChatSystem() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await axios.get(`${Src}/api/auth/get-all-the-users`, {
+      const response = await axios.get(`${Src}/api/raiseTicket/get-all-the-users`, {
         headers: {
           'Authorization': 'Bearer ' + localStorage.getItem('adminToken'),
         },
@@ -57,7 +57,7 @@ export default function UserChatSystem() {
     try {
       setLoadingChats(true);
       const response = await axios.post(
-        `${Src}/api/auth/get-user-admin-chat`,
+        `${Src}/api/raiseTicket/get-user-admin-chat`,
         { member_id: memberId, ticket_id: ticketId },
         {
           headers: {
@@ -81,7 +81,7 @@ export default function UserChatSystem() {
     try {
       const { memberId, ticketId } = selectedUser;
       await axios.post(
-        `${Src}/api/auth/send-message`,
+        `${Src}/api/raiseTicket/send-message`,
         {
           member_id: memberId,
           ticket_id: ticketId,
