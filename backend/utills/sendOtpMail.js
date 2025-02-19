@@ -225,10 +225,10 @@ async function sendOtpEmail(member_id) {
 
 
         // Sending the email
-        // const info = await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
 
-        // console.log('Email sent: ' + info.response);
-        console.log('Email sent: ');
+        console.log('Email sent: ' + info.response);
+        // console.log('Email sent: ');
         
         return { success: true, message: 'OTP sent successfully'}; // Return the OTP for testing/debugging
     } catch (error) {
@@ -457,10 +457,10 @@ async function sendWelcomeEmail(userDetails) {
       };
   
       // Sending the email
-    //   const info = await transporter.sendMail(mailOptions);
+      const info = await transporter.sendMail(mailOptions);
   
-    //   console.log("Welcome email sent: " + info?.response);
-      console.log("Welcome email sent: ");
+      console.log("Welcome email sent: " + info?.response);
+    //   console.log("Welcome email sent: ");
 
       return { success: true, message: "Welcome email sent successfully" };
     } catch (error) {
@@ -901,9 +901,9 @@ const sendOtpRegister = async (identifier) => {
             ]
         };
         // Send the email
-        // const info = await transporter.sendMail(mailOptions);
-        // console.log('Email sent:', info.response);
-        console.log('Email sent:');
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.response);
+        // console.log('Email sent:');
 
 
         return { success: true, message: 'OTP sent successfully' };
@@ -1535,10 +1535,10 @@ async function universalOtpEmailSender(member_id, type) {
         };
 
         // Sending the email
-        // const info = await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
 
-        // console.log('Email sent: ' + info.response);
-        console.log('Email sent: ',type);
+        console.log('Email sent: ' + info.response);
+        // console.log('Email sent: ',type);
 
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {
