@@ -84,8 +84,9 @@ const distributeDailyRankIncome = async () => {
             await connection.rollback();
             return { success: false, message: 'Daily closing already completed' };
         }
-
-        const dailyIncome = 550;
+        const incomeResult = await getMembershipTransactionsForToday();
+        const dailyIncome = incomeResult.todayIncome;
+        // const dailyIncome = 550;
 
         if (!dailyIncome || dailyIncome <= 0) {
             await connection.rollback();
@@ -189,9 +190,9 @@ const distributeWeeklyRankIncome = async () => {
             return { success: false, message: 'Weekly closing already completed' };
         }
 
-        // const incomeResult = await getMembershipTransactionsForWeek();
-        // const weeklyIncome = incomeResult.weeklyIncome;
-        const weeklyIncome = 3000;
+        const incomeResult = await getMembershipTransactionsForWeek();
+        const weeklyIncome = incomeResult.weeklyIncome;
+        // const weeklyIncome = 3000;
 
         console.log(`[WEEKLY] Weekly turnover: ${weeklyIncome}`);
 
