@@ -150,6 +150,8 @@ app.use(cors());
 app.use(express.json());
 
 
+
+
 // Connect to the database
 connectToDatabase();
 
