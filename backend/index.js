@@ -133,6 +133,7 @@ const zoomMeeting = require('./routes/zoomMeeting');
 const UnoPayGallery = require('./routes/unoPayGallery');
 // const newOtp=require("./routes/newOtp")
 const dailyAddFundandWithdrawReport = require('./routes/dailyAddFundandWithdrawReport');
+const cashKawachWebhook = require('./routes/cashKawachWebhook');
 
 
 // Middleware
@@ -174,6 +175,7 @@ app.use('/api/auth', authenticateToken, closingRoutes);
 app.use('/api/auth', authenticateToken, zoomMeeting);
 app.use('/api/auth', authenticateToken, UnoPayGallery);
 app.use('/api/auth', authenticateToken, dailyAddFundandWithdrawReport);
+app.use('/api/webhook', cashKawachWebhook);
 // app.use('/api/aditya',newOtp
 
 // Admin API for sending notifications
