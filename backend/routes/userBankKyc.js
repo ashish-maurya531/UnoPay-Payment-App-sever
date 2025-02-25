@@ -64,12 +64,12 @@ router.post('/submitUserBankKycDetails', authenticateToken,
     console.log(member_id, IFSC_Code, Bank_Name, Account_number, PanCard_Number, Nominee_name);
     // Check if required fields are provided
     if (!member_id || !FullName || !IFSC_Code || !Bank_Name || !Account_number || !Aadhar_Number || !PanCard_Number || !Nominee_name||!Nominee_relation) {
-      return res.status(404).json({ status: 'false', message:"1", error: 'All required fields must be provided.' });
+      return res.status(200).json({ status: 'false', message:"1", error: 'All required fields must be provided.' });
     }
 
     const checktheData = [member_id, FullName, IFSC_Code, Bank_Name, Account_number, Aadhar_Number, PanCard_Number, Nominee_name,Nominee_relation].join(' ');
     if (containsSQLInjectionWords(checktheData)) {
-      return res.status(400).json({ status: "false", message:"2", error: "Don't try to hack." });
+      return res.status(200).json({ status: "false", message:"2", error: "Don't try to hack." });
     }
 
     try {
@@ -82,7 +82,7 @@ router.post('/submitUserBankKycDetails', authenticateToken,
       console.log(member_id);
 
       if (userRows.length === 0) {
-        return res.status(404).json({ status: 'false', message:"4", error: 'Invalid member ID.' });
+        return res.status(200).json({ status: 'false', message:"4", error: 'Invalid member ID.' });
       }
       // Assuming verifyOtp is an async function that returns a response
       const isOtpValid = await verifyOtp(member_id, kycOtp);
@@ -124,7 +124,7 @@ router.post('/submitUserBankKycDetails', authenticateToken,
 
       if (bankKycRows.length > 0) {
         if (kyc_status.includes("approved")) {
-          return res.status(400).json({
+          return res.status(200).json({
             status: 'false',
             KycStatus: "approved",
             message: "User has already been approved."
@@ -132,7 +132,7 @@ router.post('/submitUserBankKycDetails', authenticateToken,
         }
 
         if (kyc_status.includes("pending")) {
-          return res.status(400).json({
+          return res.status(200).json({
             status: 'false',
             KycStatus: "pending",
             message: "User has already filled bank and kyc details."
@@ -146,7 +146,7 @@ router.post('/submitUserBankKycDetails', authenticateToken,
           await pool.query(`DELETE FROM user_bank_kyc_details WHERE member_id = ? AND Kyc_status = 'rejected'`, [member_id]);
         } catch (err) {
           console.error("Error deleting rejected request:", err);
-          return res.status(500).json({ status: 'false', message: "Error deleting rejected request." });
+          return res.status(200).json({ status: 'false', message: "Error deleting rejected request." });
 
         }
       }
