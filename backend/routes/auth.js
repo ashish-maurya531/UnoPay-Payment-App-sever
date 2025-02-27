@@ -153,7 +153,7 @@ router.post('/register', async (req, res) => {
   const { sponser_id, phoneno, username, email, password, tpin,emailOtp } = req.body;
   
   // Validate inputs
-  const checktheData = [sponser_id, phoneno, username, email, password, tpin,emailOtp].join(' ');
+  const checktheData = [sponser_id, phoneno, username, email, password, tpin].join(' ');
   console.log(checktheData);
   if (containsSQLInjectionWords(checktheData)) {
     return res.status(200).json({ status: "false", error: "Don't try to hack." });
