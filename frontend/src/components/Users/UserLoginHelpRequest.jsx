@@ -39,7 +39,7 @@ export default function LoginIssueRequestList() {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${Src}/api/auth/all-login-issues`, {
+      const response = await axios.post(`${Src}/api/raiseTicket/all-login-issues`, {
         headers: {
           Authorization: `Bearer ${token}`, // Include the token for authentication
         },
@@ -73,7 +73,7 @@ export default function LoginIssueRequestList() {
   const handleStatusChange = async (loginIssueId, newStatus) => {
     try {
       const response = await axios.post(
-        `${Src}/api/auth/update-login-issue-status`,
+        `${Src}/api/raiseTicket/update-login-issue-status`,
         { 
           login_issue_id: loginIssueId,
           status: newStatus,
@@ -113,7 +113,7 @@ export default function LoginIssueRequestList() {
     try {
       // Make the API request to delete the login issue
       const response = await axios.post(
-        `${Src}/api/auth/delete-login-issue`,
+        `${Src}/api/raiseTicket/delete-login-issue`,
         { 
           login_issue_id: loginIssueId 
         }, 
