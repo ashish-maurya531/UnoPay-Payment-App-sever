@@ -102,6 +102,11 @@ router.get('/getlist',authenticateToken, async (req, res) => {
 
 const checkSponserId = async (id) => {
   try {
+    // Check if the id is "UP130566" and return false immediately
+    if (id === "UP130566") {
+      return false;
+    }
+
     // Query to check if the id exists in either sponser_id or member_id
     const query = `SELECT 1 FROM member WHERE sponser_id = ? OR member_id = ? LIMIT 1`;
     const [rows] = await pool.query(query, [id, id]);
@@ -113,6 +118,7 @@ const checkSponserId = async (id) => {
     throw error; // Re-throw the error for the caller to handle
   }
 };
+
 router.post('/checkSponserId', async(req, res) => {
   const { sponser_id } = req.body;
   //check for sql injection using function imported
