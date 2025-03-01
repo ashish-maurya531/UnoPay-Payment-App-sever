@@ -27,11 +27,11 @@ function initializeSchedulers() {
             cron: '1 0 * * 1', // Runs every Monday at 00:01 AM
             task: checkWeekly
         },
-        {
-            name: 'testJob',
-            cron: '0 * * * * *', // Runs every second (for testing)
-            task: async () => console.log(`🛠 Test Job Triggered at: ${new Date()}`)
-        }
+        // {
+        //     name: 'testJob',
+        //     cron: '0 * * * * *', // Runs every second (for testing)
+        //     task: async () => console.log(`🛠 Test Job Triggered at: ${new Date()}`)
+        // }
     ];
 
     // Schedule all jobs dynamically
