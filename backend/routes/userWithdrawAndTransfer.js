@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
