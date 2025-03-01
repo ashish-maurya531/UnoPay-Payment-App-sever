@@ -53,6 +53,7 @@ const checkPeriodClosingExists = async (type) => {
         LIMIT 1`,
         [type, periodStart]
     );
+    console.log('Closing ---check result:', rows);
     return rows.length > 0;
 };
 

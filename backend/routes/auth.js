@@ -1,7 +1,9 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const axios = require('axios');
+
 const containsSQLInjectionWords= require('../utills/sqlInjectionCheck');
+
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp, verifyOtpForRegister,deleteOtpForRegister} = require('../utills/sendOtpMail');

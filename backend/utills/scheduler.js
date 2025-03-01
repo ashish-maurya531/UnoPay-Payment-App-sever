@@ -1,28 +1,67 @@
 // utils/scheduler.js
 const schedule = require('node-schedule');
-const { checkDaily, checkWeekly} = require('./companyTurnoverDistrubution');
+const { checkDaily, checkWeekly } = require('./companyTurnoverDistrubution');
 
-// Daily scheduler - runs every day at 00:01 (12:01 AM)
-const dailyJob = schedule.scheduleJob('1 0 * * *', async () => {
-    console.log('🏁 Daily scheduler triggered at', new Date());
-    try {
-        const result = await checkDaily();
-        console.log('✅ Daily check result:', result);
-    } catch (error) {
-        console.error('🚨 Daily scheduler error:', error);
-    }
-});
+let jobs = {}; // Stores active scheduler jobs
 
-// Weekly scheduler - runs every Monday at 00:01 (12:01 AM)
-const weeklyJob = schedule.scheduleJob('1 0 * * 1', async () => {
-    console.log('🏁 Weekly scheduler triggered at', new Date());
-    try {
-        const result = await checkWeekly();
-        console.log('✅ Weekly check result:', result);
-    } catch (error) {
-        console.error('🚨 Weekly scheduler error:', error);
+/**
+ * Initializes and schedules jobs only for PM2 instance 0
+ */
+function initializeSchedulers() {
+    if (process.env.NODE_APP_INSTANCE !== '0') {
+        console.log(`⚠️ Schedulers disabled for instance ${process.env.NODE_APP_INSTANCE}`);
+        return;
     }
-});
+
+    console.log('✅ Schedulers enabled for instance 0');
+
+    // Define job configurations
+    const schedulersConfig = [
+        {
+            name: 'dailyJob',
+            cron: '1 0 * * *', // Runs daily at 00:01 AM
+            task: checkDaily
+        },
+        {
+            name: 'weeklyJob',
+            cron: '1 0 * * 1', // Runs every Monday at 00:01 AM
+            task: checkWeekly
+        },
+        {
+            name: 'testJob',
+            cron: '0 * * * * *', // Runs every second (for testing)
+            task: async () => console.log(`🛠 Test Job Triggered at: ${new Date()}`)
+        }
+    ];
+
+    // Schedule all jobs dynamically
+    schedulersConfig.forEach(({ name, cron, task }) => {
+        jobs[name] = schedule.scheduleJob(cron, async () => {
+            console.log(`⏳ ${name} started at`, new Date());
+            try {
+                await task();
+                console.log(`✅ ${name} completed successfully.`);
+            } catch (error) {
+                console.error(`🚨 Error in ${name}:`, error);
+            }
+        });
+    });
+
+    // Log next job execution times
+    console.log('⏰ Schedulers initialized:', Object.keys(jobs).reduce((acc, job) => {
+        acc[job] = jobs[job].nextInvocation();
+        return acc;
+    }, {}));
+}
+
+initializeSchedulers();
+
+module.exports = jobs;
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Monthly scheduler - runs on 1st of every month at 00:01 (12:01 AM)
 // const monthlyJob = schedule.scheduleJob('1 0 1 * *', async () => {
@@ -35,55 +74,10 @@ const weeklyJob = schedule.scheduleJob('1 0 * * 1', async () => {
 //     }
 // });
 
-// Initialize schedulers when app starts
-console.log('⏰ Schedulers initialized:', {
-    daily: dailyJob.nextInvocation(),
-    weekly: weeklyJob.nextInvocation(),
-    // monthly: monthlyJob.nextInvocation()
-});
-
-module.exports = {
-    dailyJob,
-    weeklyJob,
-    // monthlyJob
-};
+// const testJob = schedule.scheduleJob('0 * * * * *', () => {
+//     console.log('Hello World! (Triggered at:', new Date(), ')');
+//   });'
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// // utils/scheduler.js
-// const schedule = require('node-schedule');
-// const { checkDaily, checkWeekly, checkMonthly } = require('./companyTurnoverDistrubution');
-
-// let currentStep = 0;
-// const checkFunctions = [
-//     { name: 'Daily', fn: checkDaily },
-//     { name: 'Weekly', fn: checkWeekly },
-//     { name: 'Monthly', fn: checkMonthly }
-// ];
-
-// // Schedule the cyclical job to run every 2 minutes
-// const cyclicalJob = schedule.scheduleJob('*/2 * * * *', async () => {
-//     try {
-//         const currentCheck = checkFunctions[currentStep];
-//         console.log(`⏳ [Cycle] Running ${currentCheck.name} check at ${new Date().toISOString()}`);
-        
-//         const result = await currentCheck.fn();
-//         console.log(`✅ [Cycle] ${currentCheck.name} check result:`, result);
-        
-//         // Move to next step in cycle
-//         currentStep = (currentStep + 1) % 3;
-        
-//     } catch (error) {
-//         console.error(`🚨 [Cycle] Error in ${checkFunctions[currentStep].name} check:`, error);
-//         currentStep = (currentStep + 1) % 3; // Continue cycle even on error
-//     }
-// });
-
-// // Initialize with first run time
-// console.log('⏰ Cyclical scheduler initialized. First run at:', cyclicalJob.nextInvocation());
-
-// module.exports = {
-//     cyclicalJob
-// };

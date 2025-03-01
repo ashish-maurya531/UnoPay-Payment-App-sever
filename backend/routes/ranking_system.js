@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database'); // Assuming the pool is set up for DB connection
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 
 // Route to get data for all users
 router.get('/getAllUsersRank',authenticateToken, async (req, res) => {

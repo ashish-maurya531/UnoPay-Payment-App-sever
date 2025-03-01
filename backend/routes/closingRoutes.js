@@ -15,6 +15,7 @@ const authenticateToken = require('../middleware/auth');
 router.post('/check-distribute/daily',authenticateToken, async (req, res) => {
     try {
         const result = await checkDaily();
+        console.log(result);
         return res.status(result.success ? 200 : 400).json({
             success: result.success,
             message: result.message,
