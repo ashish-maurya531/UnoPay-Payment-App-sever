@@ -930,7 +930,7 @@ router.post('/userkycstatus', authenticateToken, async (req, res) => {
       status: 'true',
       data:{
         "Kyc_status": overallStatus,
-        "Kyc_message": "not done"
+        "Kyc_message": overallStatus==="approved"?"done":"not done"
 
       }
       
