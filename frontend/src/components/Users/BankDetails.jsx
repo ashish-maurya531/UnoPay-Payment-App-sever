@@ -1098,6 +1098,13 @@ const KycManagement = () => {
 
   const columns = [
     {
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      render: (_, __, index) =>
+        (currentPage - 1) * 10 + index + 1,
+    },
+    {
       title: "Member ID",
       dataIndex: "member_id",
       key: "member_id",

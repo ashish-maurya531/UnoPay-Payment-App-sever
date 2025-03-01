@@ -1093,7 +1093,7 @@ router.post('/admin/update-part-status', authenticateToken, async (req, res) => 
       }
     }
 
-    res.json({ status: 'true', message: 'Status updated' });
+    res.json({ status: 'success', message: 'Status updated' });
   } catch (error) {
     res.status(200).json({ status: 'false', message: error.message });
   }
@@ -1336,7 +1336,7 @@ router.post('/getAllKycDetails', authenticateToken, async (req, res) => {
     });
 
     res.status(200).json({
-      status: 'true',
+      status: 'success',
       data: formattedUsers,
       pagination: {
         page,
