@@ -919,7 +919,7 @@ router.post('/userkycstatus', authenticateToken, async (req, res) => {
     
     // Determine overall status
     const partsStatus = [user[0]?.status||"not_filled", pancard[0]?.status||"not_filled", aadhar[0]?.status||"not_filled", bank[0]?.status||"not_filled"];
-    console.log(partsStatus)
+    // console.log(partsStatus)
     const overallStatus = partsStatus.every(s => s === 'approved')
       ? 'approved'
       : partsStatus.every(s => s === "not_filled") ? "not done" : partsStatus.some(s => s === 'rejected')
@@ -929,7 +929,8 @@ router.post('/userkycstatus', authenticateToken, async (req, res) => {
     res.json({
       status: 'true',
       data:{
-        "Kyc_status": overallStatus
+        "Kyc_status": overallStatus,
+        "Kyc_message": "not done"
 
       }
       
