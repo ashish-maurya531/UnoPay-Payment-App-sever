@@ -641,7 +641,7 @@ router.post('/submit-user-details', authenticateToken,
       //check the member_id in userdetails table 
       const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
       if (userRows.length === 0) {
-        return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+        return res.status(404).json({ status: 'false', message: 'Member ID not found' });
       }
       
       // // Validate OTP
@@ -678,9 +678,9 @@ router.post('/submit-user-details', authenticateToken,
         ON DUPLICATE KEY UPDATE image_name = ?
       `, [member_id, imageName, imageName]);
 
-      res.status(201).json({ status: 'success', message: 'User details submitted' });
+      res.status(201).json({ status: 'true', message: 'User details submitted' });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 'false', message: error.message });
     }
   });
 
@@ -693,7 +693,7 @@ router.post('/submit-pancard', authenticateToken,
        //check the member_id in userdetails table 
        const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
        if (userRows.length === 0) {
-         return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+         return res.status(404).json({ status: 'false', message: 'Member ID not found' });
        }
       
       // // Validate OTP
@@ -722,9 +722,9 @@ router.post('/submit-pancard', authenticateToken,
         ON DUPLICATE KEY UPDATE image_name = ?
       `, [member_id, imageName, imageName]);
 
-      res.status(201).json({ status: 'success', message: 'Pancard submitted' });
+      res.status(201).json({ status: 'true', message: 'Pancard submitted' });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 'false', message: error.message });
     }
   });
 
@@ -737,7 +737,7 @@ router.post('/submit-aadhar-front', authenticateToken,
        //check the member_id in userdetails table 
        const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
        if (userRows.length === 0) {
-         return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+         return res.status(404).json({ status: 'true', message: 'Member ID not found' });
        }
       
       // Validate OTP
@@ -746,7 +746,7 @@ router.post('/submit-aadhar-front', authenticateToken,
       
       // Check existing status
       const existingStatus = await checkExistingSubmission(member_id, 'aadhar_front');
-      if (existingStatus === 'approved') return res.status(200).json({ status: 'flase', message: 'Aadhar front already approved' });
+      if (existingStatus === 'approved') return res.status(200).json({ status: 'false', message: 'Aadhar front already approved' });
       if (existingStatus === 'pending') return res.status(200).json({ status: 'false', message: 'Aadhar front already submitted' });
 
 
@@ -767,9 +767,9 @@ router.post('/submit-aadhar-front', authenticateToken,
         ON DUPLICATE KEY UPDATE image_name = ?
       `, [member_id, imageName, imageName]);
 
-      res.status(201).json({ status: 'success', message: 'Aadhar front submitted' });
+      res.status(201).json({ status: 'true', message: 'Aadhar front submitted' });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 'false', message: error.message });
     }
   });
 
@@ -782,7 +782,7 @@ router.post('/submit-aadhar-back', authenticateToken,
        //check the member_id in userdetails table 
        const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
        if (userRows.length === 0) {
-         return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+         return res.status(404).json({ status: 'false', message: 'Member ID not found' });
        }
       
       // Validate OTP
@@ -791,7 +791,7 @@ router.post('/submit-aadhar-back', authenticateToken,
       
       // Check existing status
       const existingStatus = await checkExistingSubmission(member_id, 'aadhar_back');
-      if (existingStatus === 'approved') return res.status(200).json({ status: 'flase', message: 'Aadhar back already approved' });
+      if (existingStatus === 'approved') return res.status(200).json({ status: 'false', message: 'Aadhar back already approved' });
       // if (existingStatus === 'pending') return res.status(200).json({ status: 'false', message: 'Aadhar back already submitted' });
 
 
@@ -804,9 +804,9 @@ router.post('/submit-aadhar-back', authenticateToken,
         ON DUPLICATE KEY UPDATE image_name = ?
       `, [member_id, imageName, imageName]);
 
-      res.status(201).json({ status: 'success', message: 'Aadhar back submitted' });
+      res.status(201).json({ status: 'true', message: 'Aadhar back submitted' });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 'false', message: error.message });
     }
   });
 
@@ -819,7 +819,7 @@ router.post('/submit-bank-details', authenticateToken,
        //check the member_id in userdetails table 
        const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
        if (userRows.length === 0) {
-         return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+         return res.status(404).json({ status: 'false', message: 'Member ID not found' });
        }
       
       // Validate OTP
@@ -854,9 +854,9 @@ router.post('/submit-bank-details', authenticateToken,
         ON DUPLICATE KEY UPDATE image_name = ?
       `, [member_id, imageName, imageName]);
 
-      res.status(201).json({ status: 'success', message: 'Bank details submitted' });
+      res.status(201).json({ status: 'true', message: 'Bank details submitted' });
     } catch (error) {
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(200).json({ status: 'false', message: error.message });
     }
   });
 
@@ -867,7 +867,7 @@ router.post('/kyc-status', authenticateToken, async (req, res) => {
      //check the member_id in userdetails table 
      const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
      if (userRows.length === 0) {
-       return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+       return res.status(404).json({ status: 'false', message: 'Member ID not found' });
      }
     
     // Get all parts status
@@ -886,7 +886,7 @@ router.post('/kyc-status', authenticateToken, async (req, res) => {
         : 'pending';
 
     res.json({
-      status: 'success',
+      status: 'true',
       member_id,
       "kyc_status": overallStatus,
       userdata: {
@@ -898,7 +898,7 @@ router.post('/kyc-status', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'false', message: error.message });
   }
 });
 //just like old api 
@@ -908,7 +908,7 @@ router.post('/userkycstatus', authenticateToken, async (req, res) => {
      //check the member_id in userdetails table 
      const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
      if (userRows.length === 0) {
-       return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+       return res.status(404).json({ status: 'false', message: 'Member ID not found' });
      }
     
     // Get all parts status
@@ -936,7 +936,7 @@ router.post('/userkycstatus', authenticateToken, async (req, res) => {
       
     });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(200).json({ status: 'false', message: error.message });
   }
 });
 
@@ -999,7 +999,7 @@ router.post('/admin/update-part-status', authenticateToken, async (req, res) => 
      //check the member_id in userdetails table 
      const [userRows] = await pool.query(`SELECT memberid FROM usersdetails WHERE memberid = ?`,[member_id]);
      if (userRows.length === 0) {
-       return res.status(404).json({ status: 'error', message: 'Member ID not found' });
+       return res.status(404).json({ status: 'false', message: 'Member ID not found' });
      }
     
     // Validate part
@@ -1019,7 +1019,7 @@ router.post('/admin/update-part-status', authenticateToken, async (req, res) => 
     const currentStatus = currentStatusResult[0]?.status;
 
     if (currentStatus === 'approved' && status !== 'approved') {
-      return res.status(400).json({ status: 'error', message: 'Cannot modify an already approved part' });
+      return res.status(400).json({ status: 'false', message: 'Cannot modify an already approved part' });
     }
     
     // Update status
@@ -1093,9 +1093,9 @@ router.post('/admin/update-part-status', authenticateToken, async (req, res) => 
       }
     }
 
-    res.json({ status: 'success', message: 'Status updated' });
+    res.json({ status: 'true', message: 'Status updated' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(200).json({ status: 'false', message: error.message });
   }
 });
 
@@ -1336,7 +1336,7 @@ router.post('/getAllKycDetails', authenticateToken, async (req, res) => {
     });
 
     res.status(200).json({
-      status: 'success',
+      status: 'true',
       data: formattedUsers,
       pagination: {
         page,
@@ -1347,7 +1347,7 @@ router.post('/getAllKycDetails', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching KYC details:', error);
-    res.status(500).json({ status: 'error', message: 'Internal server error' });
+    res.status(200).json({ status: 'false', message: 'Internal server error' });
   }
 });
 module.exports = router;  
