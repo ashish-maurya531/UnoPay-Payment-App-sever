@@ -100,6 +100,25 @@ const distributeDailyRankIncome = async () => {
         );
 
         const memberIds = members.map(member => member.member_id);
+        // console.log("member ids->>>"+memberIds)
+        if (!memberIds ||memberIds==""){
+            await connection.query(
+                `INSERT INTO company_closing 
+                (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+                VALUES (?, NOW(), ?, ?, ?)`,
+                ['daily', dailyIncome, 0, "{}"]
+            );
+            await connection.commit();
+            return { 
+                success: true, 
+                message: 'Daily distribution completed || to 0 members',
+                data: {
+                    totalIncome: dailyIncome,
+                    distributedAmount:0,
+                    membersCount:0
+                }
+            };
+        }
         const [userDetails] = await connection.query(
             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
             [memberIds]
@@ -343,6 +362,24 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
 
         // Get member names from usersdetails table
         const memberIds = members.map(member => member.member_id);
+        if (!memberIds ||memberIds==""){
+            await connection.query(
+                `INSERT INTO company_closing 
+                (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+                VALUES (?, NOW(), ?, ?, ?)`,
+                ['monthly', monthlyIncome, 0, "{}"]
+            );
+            await connection.commit();
+            return { 
+                success: true, 
+                message: 'No eligible members for Monthly distribution',
+                data: {
+                    totalIncome: dailyIncome,
+                    distributedAmount:0,
+                    membersCount:0
+                }
+            };
+        }
         const [userDetails] = await connection.query(
             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
             [memberIds]

@@ -508,7 +508,7 @@ router.post('/login2', async (req, res) => {
 
     const [sponser_id] = await pool.query(`SELECT sponser_id FROM member WHERE member_id = ?`, [memberid]);
     const [sponser_details] = await pool.query(`SELECT memberid,username,phoneno FROM usersdetails WHERE memberid = ?`, [sponser_id[0].sponser_id]);
-    console.log(sponser_details[0]);
+    // console.log(sponser_details[0]);
 
     const sponserid = sponser_details[0]?.memberid || "";
     const sponserName = sponser_details[0]?.username || "";
