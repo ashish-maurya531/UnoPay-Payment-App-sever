@@ -25,7 +25,8 @@ import * as jwt_decode from 'jwt-decode';
 import UnoPayGallery from '../components/Admin/UnoPayGallery.jsx';
 import UserCommissionWalletTransactions from '../components/Admin/dailyAddFundWithdrawReport.jsx';
 
-
+import TeamList from '../components/Users/TeamList.jsx';
+import UserTree from '../components/Users/UserTree.jsx';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -69,7 +70,8 @@ export default function Dashboard() {
         <Route path="company-closing" element={<CompanyClosing />} />
         <Route path="uno-pay-gallery" element={<UnoPayGallery />} />
         <Route path="daily-collection-report" element={<UserCommissionWalletTransactions />} />
-
+        <Route path="team-list" element={<TeamList />} />
+        <Route path="user-tree" element={<UserTree />} />
       
 
       </Routes>

@@ -26,6 +26,16 @@ export default function DashboardLayout({ children }) {
       onClick: () => navigate('/dashboard/users'),
     },
     {
+      key: 'TeamList',
+      label: 'Team List',
+      onClick: () => navigate('/dashboard/team-list'),
+    },
+    {
+      key: 'UserTree',
+      label: 'User Tree',
+      onClick: () => navigate('/dashboard/user-tree'),
+    },
+    {
       key: 'bankDetails',
       label: 'Bank and Kyc Details',
       onClick: () => navigate('/dashboard/bank-details'),
