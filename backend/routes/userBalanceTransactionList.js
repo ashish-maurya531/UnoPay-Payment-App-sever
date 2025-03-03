@@ -11,7 +11,7 @@ const { getFlexiWalletTransactionList,
   getCommisionWalletBalance,
   TransactionsListForPassBook
 } = require('../utills/checkUserBalance');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const authenticateToken = require('../middleware/auth');
 
 
