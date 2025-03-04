@@ -402,6 +402,7 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
                      VALUES (?, ?, ?, ?, ?, ?)`,
                     [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal rejected, money refunded."]
                 );
+                
 
                 // Update the user's wallet balance
                 await connection.query(
