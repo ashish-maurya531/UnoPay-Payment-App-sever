@@ -18,7 +18,7 @@ router.post('/cashkavach', (req, res) => {
 
         if (events === 'Payout') {
             console.log('🔔 Webhook Received:', JSON.stringify(dataContent, null, 2));
-            // Process the payout status update (e.g., verify UTR and update your system)
+            // Process the payout status update (e.g., verify UTR and update your system) 
         }
 
         res.status(200).json({ message: "Webhook received successfully" });
