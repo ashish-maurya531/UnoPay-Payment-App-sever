@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const generateTransactionId = require('../utills/generateTxnId');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const authenticateToken = require('../middleware/auth');
 const moment = require('moment-timezone');
 
@@ -53,6 +53,10 @@ router.post('/userAddFundRequest',authenticateToken,upload.single('screenshot'),
   // console.log(checktheData)
   if (containsSQLInjectionWords(checktheData)) {
     return res.status(400).json({ status: "false", error: "Don't try to hack." });
+  }
+  //check amount to be min 100
+  if (amount < 100) {
+    return res.status(400).json({ status: 'false', error: 'Minimum amount is 100.' });
   }
 
   try {

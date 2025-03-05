@@ -1,19 +1,33 @@
 const express = require('express');
 const axios = require('axios');
 const authenticateToken = require("../middleware/auth");
+const dotenv = require('dotenv');
+dotenv.config();
 
 
 
-// Configuration
-const AUTHORIZED_KEY = 'YOUR_AUTHORIZED_KEY';
-const API_BASE_URL = 'https://api.cashkavach.com/api';
+
+
+const API_BASE_URL = process.env.CASHKAWACH_API_BASE_URL;
+const AUTHORIZED_KEY = process.env.CASHKAWACH_AUTHORIZED_KEY;
 
 // 1. Payout Transfer
 async function payoutTransfer(payload) {
     try {
+        // Check if balance is sufficient before proceeding
+        const balanceData = await getBalance();
+        const currentBalance = parseFloat(balanceData.dataContent); // Ensure the API returns 'balance' field
+        const transferAmount = parseFloat(payload.Amount);
+        const requiredBalance = transferAmount + 10;
+
+        if (currentBalance < requiredBalance) {
+            return 'Low payout API balance';
+        }
+
+        // Proceed with the payout transfer
         const response = await axios.post(`${API_BASE_URL}/PayoutTransfer`, payload, {
             headers: {
-                'AuthorizedKey': AUTHORIZED_KEY,  // Added missing key
+                'AuthorizedKey': AUTHORIZED_KEY,
                 'Content-Type': 'application/json'
             },
             maxBodyLength: Infinity
@@ -21,11 +35,11 @@ async function payoutTransfer(payload) {
         return response.data;
     } catch (error) {
         console.error('Payout Transfer Error:', error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || "Payout transfer failed");
+        throw new Error(error.message || "Payout transfer failed");
     }
 }
 
-// 2. Check Payout Status
+// 2. Check Payout Status (unchanged)
 async function checkPayoutStatus(orderId) {
     try {
         const response = await axios.post(`${API_BASE_URL}/DoCheckStatus`, 
@@ -44,7 +58,7 @@ async function checkPayoutStatus(orderId) {
     }
 }
 
-// 3. Get Balance
+// 3. Get Balance (unchanged)
 async function getBalance() {
     try {
         const response = await axios.post(`${API_BASE_URL}/CheckBalance`, 

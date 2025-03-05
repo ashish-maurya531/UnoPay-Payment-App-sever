@@ -7,7 +7,7 @@ const generateTransactionId = require('../utills/generateTxnId');
 const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
 const authenticateToken = require('../middleware/auth');
-
+const { payoutTransfer, checkPayoutStatus, getBalance}=require("../utills/cashKawach");
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
@@ -355,29 +355,24 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
 
 router.post('/update-status-user-withdraw-request',authenticateToken,async (req, res) => {
-    const { transaction_id, status, message } = req.body;
+    const { transaction_id, status, message,mode} = req.body;
 
-    if (!transaction_id || !status || !message) {
+    if (!transaction_id || !status || !message|| !mode) {
         return res.status(400).json({ status: "false", message: "Transaction ID, status, and message are required." });
     }
 
     if (!['rejected', 'done'].includes(status)) {
         return res.status(400).json({ status: "false", message: "Invalid status value." });
     }
+    //check mode to be in manual , api 
+    if (!['manual', 'api'].includes(mode)) {
+        return res.status(400).json({ status: "false", message: "Invalid mode value." });
+    }
 
     let message2 = status === "done" ? "sent to bank" : message;
 
     try {
-        // Update the status and message in the database
-        const [updateResult] = await pool.query(
-            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
-            [status, message2, transaction_id]
-        );
-
-        if (updateResult.affectedRows === 0) {
-            return res.status(400).json({ status: "false", message: "Transaction not found or not updated." });
-        }
-
+        
         // Handle additional logic for rejected status
         if (status === "rejected") {
             const [withdrawalDetails] = await pool.query(
@@ -429,7 +424,7 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
                 connection.release();
             }
         }
-        //now the request is accepted so also send the email notification
+        
         //get bank details from bank_kyc_details
         const [withdrawalDetails] = await pool.query(
             `SELECT member_id, amount FROM withdraw_requests WHERE transaction_id = ?`,
@@ -443,7 +438,7 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         const { member_id, amount } = withdrawalDetails[0];
         
         const [bank_details] = await pool.query(
-            `SELECT u.email, b.Bank_Name, b.Account_number 
+            `SELECT u.email, b.FullName,b.IFSC_Code,b.Bank_Name, b.Account_number 
              FROM usersdetails u
              INNER JOIN user_bank_kyc_details b ON u.memberid = b.member_id
              WHERE u.memberid = ?`,
@@ -453,6 +448,68 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         if (bank_details.length === 0) {
             return res.status(400).json({ status: "false", message: "Bank details not found." });
         }
+       
+        
+        if (mode==="api"){
+            const payload = {
+                "OrderId": transaction_id,
+                "BankName": bank_details[0].Bank_Name,
+                "AccountNo": bank_details[0].Account_number,
+                "Ifsc": bank_details[0].IFSC_Code,
+                "AccountHolderName": bank_details[0].FullName,
+                "AccountType": "Saving",
+                "Amount": amount,
+                "TxnMode": "IMPS",
+                "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
+                "latitude": "28.6798",
+                "longitude": "77.0927"
+            }
+            // const payload = 
+            //     {
+            //         "OrderId": "TXN8411769599",
+            //         "BankName": "UNION BANK OF INDIA",
+            //         "AccountNo": "089422010000036",
+            //         "Ifsc": "UBIN0908941",
+            //         "AccountHolderName": "ASHISH",
+            //         "AccountType": "Saving",
+            //         "Amount": "100",
+            //         "TxnMode": "IMPS",
+            //         "Remarks": "okok",
+            //         "latitude": "34.9",
+            //         "longitude": "56.9"
+            //     }
+            
+
+
+            //run the payout api 
+            const result = await payoutTransfer(payload);
+            if (result?.dataContent.status === 'SUCCESS'|| result?.dataContent?.status === 'PENDING') {
+                console.log({
+                    status: 'success',
+                    message: 'Payout initiated',
+                    result: result.dataContent
+                });
+            } else {
+                connection.release()
+                res.status(400).json({ status:false ,message: 'Payout failed', details: result });
+            }
+
+            
+
+        }
+        const connection= await pool.getConnection();
+        await connection.beginTransaction();
+        const [updateResult] = await pool.query(
+            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
+            [status, message2, transaction_id]
+        );
+
+
+        if (updateResult.affectedRows === 0) {
+            return res.status(400).json({ status: "false", message: "Transaction not found or not updated." });
+        }
+
+        
 
     
         const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
@@ -464,6 +521,7 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         updated_at = CURRENT_TIMESTAMP`,
         [amount, currentDateInKolkata]
         );
+        connection.release()
 
         
         // Combine both withdrawal details and bank details into one object
@@ -484,6 +542,8 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         console.error("Error sending withdrawal email:", error);
         res.status(500).json({ status: "false", message: "Internal Server Error." });
     }
+   
+
 });
 
 
