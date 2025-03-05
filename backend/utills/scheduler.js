@@ -24,9 +24,10 @@ function initializeSchedulers() {
         },
         {
             name: 'weeklyJob',
-            cron: '1 0 * * 1', // Runs every Monday at 00:01 AM
+            cron: '5 0 * * 1', // Runs every Monday at 00:05 AM
             task: checkWeekly
-        },
+        }
+        
         // {
         //     name: 'testJob',
         //     cron: '0 * * * * *', // Runs every second (for testing)
