@@ -1,6 +1,6 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
