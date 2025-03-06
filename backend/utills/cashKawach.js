@@ -8,8 +8,8 @@ dotenv.config();
 
 
 
-const API_BASE_URL = process.env.CASHKAWACH_API_BASE_URL;
-const AUTHORIZED_KEY = process.env.CASHKAWACH_AUTHORIZED_KEY;
+const API_BASE_URL = "https://api.cashkavach.com/api";
+const AUTHORIZED_KEY = "Ve3vxEuEJa7rYHTl0w51DJXssnGgqo6AI56U7BkYO1WwpZy1hdu/RQ==";
 
 // 1. Payout Transfer
 async function payoutTransfer(payload) {

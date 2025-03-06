@@ -249,7 +249,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
     }
     //amount should be 250
-    if (amount <250) {
+    if (amount <100) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 250." });
     }
 
@@ -451,33 +451,33 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
        
         
         if (mode==="api"){
-            const payload = {
-                "OrderId": transaction_id,
-                "BankName": bank_details[0].Bank_Name,
-                "AccountNo": bank_details[0].Account_number,
-                "Ifsc": bank_details[0].IFSC_Code,
-                "AccountHolderName": bank_details[0].FullName,
-                "AccountType": "Saving",
-                "Amount": amount,
-                "TxnMode": "IMPS",
-                "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
-                "latitude": "28.6798",
-                "longitude": "77.0927"
-            }
-            // const payload = 
-            //     {
-            //         "OrderId": "TXN8411769599",
-            //         "BankName": "UNION BANK OF INDIA",
-            //         "AccountNo": "089422010000036",
-            //         "Ifsc": "UBIN0908941",
-            //         "AccountHolderName": "ASHISH",
-            //         "AccountType": "Saving",
-            //         "Amount": "100",
-            //         "TxnMode": "IMPS",
-            //         "Remarks": "okok",
-            //         "latitude": "34.9",
-            //         "longitude": "56.9"
-            //     }
+            // const payload = {
+            //     "OrderId": transaction_id,
+            //     "BankName": bank_details[0].Bank_Name,
+            //     "AccountNo": bank_details[0].Account_number,
+            //     "Ifsc": bank_details[0].IFSC_Code,
+            //     "AccountHolderName": bank_details[0].FullName,
+            //     "AccountType": "Saving",
+            //     "Amount": amount,
+            //     "TxnMode": "IMPS",
+            //     "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
+            //     "latitude": "28.6798",
+            //     "longitude": "77.0927"
+            // }
+            const payload = 
+                {
+                    "OrderId": "abce2701495663",
+                    "BankName": "UNION BANK OF INDIA",
+                    "AccountNo": "089422010000036",
+                    "Ifsc": "UBIN0908941",
+                    "AccountHolderName": "ASHISH",
+                    "AccountType": "Saving",
+                    "Amount": "100",
+                    "TxnMode": "IMPS",
+                    "Remarks": "okok",
+                    "latitude": "34.9",
+                    "longitude": "56.9"
+                }
             
 
 
@@ -490,7 +490,7 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
                     result: result.dataContent
                 });
             } else {
-                connection.release()
+                
                 res.status(400).json({ status:false ,message: 'Payout failed', details: result });
             }
 
@@ -535,9 +535,9 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         
         
        
+        await sendWithdrawalEmail(emailData);
         res.status(200).json({ status: "true", message: "Withdrawal Processed and details sent successfully." });
         // Pass combined data to the sendWithdrawalEmail function
-        await sendWithdrawalEmail(emailData);
     } catch (error) {
         console.error("Error sending withdrawal email:", error);
         res.status(500).json({ status: "false", message: "Internal Server Error." });
