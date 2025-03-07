@@ -103,7 +103,13 @@ const UserAddFundRequest = () => {
       (currentPagination.current - 1) * currentPagination.pageSize + index + 1 },
     { title: 'UTR Number', dataIndex: 'utr_number', key: 'utr_number' },
     { title: 'Member ID', dataIndex: 'member_id', key: 'member_id' },
-    { title: 'Username', dataIndex: 'username', key: 'username' },
+    { 
+      title: 'Username', 
+      dataIndex: 'username', 
+      key: 'username',
+      sorter: (a, b) => a.username.localeCompare(b.username),
+      sortDirections: ['ascend', 'descend']
+    },
     { 
       title: 'Membership', 
       dataIndex: 'membership', 
@@ -119,7 +125,13 @@ const UserAddFundRequest = () => {
       )
     },
     { title: 'To UPI ID', dataIndex: 'to_upi_id', key: 'to_upi_id' },
-    { title: 'Amount', dataIndex: 'amount', key: 'amount' },
+    { 
+      title: 'Amount', 
+      dataIndex: 'amount', 
+      key: 'amount',
+      sorter: (a, b) => parseFloat(a.amount) - parseFloat(b.amount),
+      sortDirections: ['ascend', 'descend']
+    },
     { 
       title: 'Screenshot',
       key: 'screenshot',
