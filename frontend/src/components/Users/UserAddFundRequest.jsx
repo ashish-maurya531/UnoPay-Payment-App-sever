@@ -10,8 +10,12 @@ import {
   Row,
   Col,
   Tag,
+  Select,
+  DatePicker,
+  Space,
 } from 'antd';
 import {formatDate } from '../../utils/dateFormat';
+import moment from 'moment';
 
 import axios from 'axios';
 const { Title, Text } = Typography;
@@ -28,18 +32,21 @@ const UserAddFundRequest = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [dateRange, setDateRange] = useState(null);
   const [currentPagination, setCurrentPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 100,
   });
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
-
+  const { RangePicker } = DatePicker;
 
   const handleTableChange = (pagination) => {
     setCurrentPagination({
       current: pagination.current,
       pageSize: pagination.pageSize,
     });
+    setCurrentPage(pagination.current);
   };
   useEffect(() => {
     fetchFundRequests(currentPage);
@@ -54,10 +61,19 @@ const UserAddFundRequest = () => {
         },
       });
       if (response.data.status === 'success') {
-        //sort the records decending  acc to time 
-        response.data.data.sort((a, b) => new Date(b.time_date) - new Date(a.time_date));
         setData(response.data.data);
-        setTotalRecords(response.data.totalRecords);
+        
+        // Update pagination data from server response
+        if (response.data.pagination) {
+          setTotalRecords(response.data.pagination.totalRecords);
+          setCurrentPagination(prev => ({
+            ...prev,
+            current: response.data.pagination.currentPage,
+            pageSize: response.data.pagination.recordsPerPage || 10,
+          }));
+        } else {
+          setTotalRecords(response.data.data.length);
+        }
       } else {
         notification.error({
           message: 'Error',
@@ -65,7 +81,6 @@ const UserAddFundRequest = () => {
         });
       }
     } catch (error) {
-      // console.error('Error fetching fund requests:', error);
       notification.error({
         message: 'Error',
         description: 'Failed to fetch fund requests.',
@@ -74,9 +89,15 @@ const UserAddFundRequest = () => {
       setLoading(false);
     }
   };
-
   const handleViewScreenshot = async (record) => {
     try {
+      // Check if screenshot is already marked as deleted in the record
+      if (record.screenshot === 'deleted') {
+        setSelectedRecord({ ...record, screenshotUrl: null, isDeleted: true });
+        setModalVisible(true);
+        return;
+      }
+      
       const response = await axios.post(
         `${Src}/api/auth/getUserAddFundRequestSS`,
         { 
@@ -90,21 +111,24 @@ const UserAddFundRequest = () => {
         }
       );
       
-
       if (response.status === 200) {
         const screenshotUrl = URL.createObjectURL(response.data);
-        setSelectedRecord({ ...record, screenshotUrl });
+        setSelectedRecord({ ...record, screenshotUrl, isDeleted: false });
         setModalVisible(true);
       }
     } catch (error) {
-      // console.error('Error fetching screenshot:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to fetch screenshot.',
-      });
+      // If the API returns an error about deleted image, handle it
+      if (error.response && error.response.status === 404) {
+        setSelectedRecord({ ...record, screenshotUrl: null, isDeleted: true });
+        setModalVisible(true);
+      } else {
+        notification.error({
+          message: 'Error',
+          description: 'Failed to fetch screenshot.',
+        });
+      }
     }
   };
-
   const handleStatusUpdate = async (status) => {
     try {
       const response = await axios.post(
@@ -151,7 +175,55 @@ const UserAddFundRequest = () => {
       });
     }
   };
-
+  // Row class based on membership
+  const getRowClassName = (record) => {
+    if (record.membership === 'PREMIUM') {
+      return 'premium-row';
+    } else if (record.membership === 'BASIC') {
+      return 'basic-row';
+    }
+    return '';
+  };
+  // Filter data based on search, status, and date range
+  const filterData = (data) => {
+    let filtered = [...data];
+    
+    // Text search filter
+    if (searchText) {
+      filtered = filtered.filter(record =>
+        Object.values(record).some(value => 
+          value && value.toString().toLowerCase().includes(searchText.toLowerCase())
+        )
+      );
+    }
+    
+    // Status filter
+    if (statusFilter) {
+      filtered = filtered.filter(record => record.status === statusFilter);
+    }
+    
+    // Date range filter
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = dateRange[0].startOf('day');
+      const endDate = dateRange[1].endOf('day');
+      
+      filtered = filtered.filter(record => {
+        // Ensure we have a valid date string before parsing
+        if (!record.time_date) return false;
+        
+        // Parse the ISO date string from the API
+        const recordDate = moment(record.time_date);
+        
+        // Check if the date is valid before comparing
+        if (!recordDate.isValid()) return false;
+        
+        // Check if the record date is between the selected range (inclusive)
+        return recordDate.isBetween(startDate, endDate, 'day', '[]');
+      });
+    }
+    
+    return filtered;
+  };
   const columns = [
     {
       title: 'S.No',
@@ -169,6 +241,25 @@ const UserAddFundRequest = () => {
       title: 'Member ID',
       dataIndex: 'member_id',
       key: 'member_id',
+      sorter: (a, b) => a.member_id.localeCompare(b.member_id),
+    },
+    {
+      title: 'Membership',
+      dataIndex: 'membership',
+      key: 'membership',
+      render: (membership) => (
+        <Tag
+          color={
+            membership === 'PREMIUM'
+              ? 'blue'
+              : membership === 'BASIC'
+                ? 'orange'
+                : 'default'
+          }
+        >
+          {membership || 'FREE'}
+        </Tag>
+      ),
     },
     {
       title: 'To UPI ID',
@@ -179,6 +270,7 @@ const UserAddFundRequest = () => {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
+      sorter: (a, b) => parseFloat(a.amount) - parseFloat(b.amount),
     },
     {
       title: 'Screenshot',
@@ -214,48 +306,85 @@ const UserAddFundRequest = () => {
       ),
     },
   ];
-
-  const filteredData = data.filter(record =>
-    Object.values(record).some(value => value.toString().toLowerCase().includes(searchText.toLowerCase()))
-  );
-
+  const filteredData = filterData(data);
   const totalApprovedFunds = filteredData
     .filter(record => record.status === 'approved')
     .reduce((acc, record) => acc + parseFloat(record.amount), 0);
-
   const pendingFunds = filteredData
     .filter(record => record.status !== 'approved')
     .reduce((acc, record) => acc + parseFloat(record.amount), 0);
-
+  // Add CSS for row styling
+  const rowStyles = `
+    .premium-row {
+      background-color: #e6f7ff;
+    }
+    .basic-row {
+      background-color: #fff7e6;
+    }
+  `;
   return (
     <>
+      <style>{rowStyles}</style>
       <div>
         <Row gutter={16} align="stretch">
           <Col span={12}>
-            <div className="h-full" style={{display:"flex", flexDirection:"row", gap:20, justifyContent:"flex-start"}}>
-              <p>Total Request: {data.length}</p>
+            <div className="h-full" style={{display:"flex", flexDirection:"row", gap:14, justifyContent:"flex-start"}}>
               <p>Total Transactions: {totalRecords}</p>
+              <p>Total Request on this page: {data.length}</p>
               <p>Approved: {filteredData.filter(record => record.status === 'approved').length}</p>
               <p>Rejected: {filteredData.filter(record => record.status === 'rejected').length}</p>
               <p>Pending: {filteredData.filter(record => record.status !== 'approved' && record.status !== 'rejected').length}</p>
             </div>
           </Col>
           <Col span={12} style={{ textAlign: 'right' }}>
-            <div className="h-full" style={{display:"flex", flexDirection:"row", gap:20, justifyContent:"flex-end"}}>
-              <p>Total Approved Funds: Rs.{totalApprovedFunds.toFixed(2)}</p>
-              <p>Pending Funds: Rs.{pendingFunds.toFixed(2)}</p>
-            </div>
+           
           </Col>
         </Row>
         
-        <Row style={{ marginTop: 16 }}>
-          <Col span={24}>
+        <Row style={{ marginTop: 16, marginBottom: 16 }} gutter={16}>
+          <Col span={8}>
             <Input.Search
               placeholder="Search"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{ width: '100%' }}
             />
+          </Col>
+          <Col span={8}>
+            <Select
+              placeholder="Filter by Status"
+              allowClear
+              style={{ width: '100%' }}
+              onChange={value => setStatusFilter(value)}
+            >
+              <Select.Option value="approved">Approved</Select.Option>
+              <Select.Option value="rejected">Rejected</Select.Option>
+              <Select.Option value="pending">Pending</Select.Option>
+            </Select>
+          </Col>
+          <Col span={8}>
+           
+            <Col span={8}>
+              <RangePicker 
+                style={{ width: '300%' }}
+                onChange={(dates) => setDateRange(dates)}
+                format="YYYY-MM-DD"
+                placeholder={['Start Date', 'End Date']}
+              />
+            </Col>
+          </Col>
+        </Row>
+        
+        <Row style={{ marginBottom: 16 }}>
+          <Col span={24}>
+            <div style={{ padding: '8px', background: '#f0f2f5', borderRadius: '4px' }}>
+              <Space>
+                <span>Membership Color Guide:</span>
+                <Tag color="blue">PREMIUM</Tag>
+                <Tag color="orange">BASIC</Tag>
+                <Tag color="default">FREE</Tag>
+              </Space>
+            </div>
           </Col>
         </Row>
       </div>
@@ -269,11 +398,12 @@ const UserAddFundRequest = () => {
           current: currentPagination.current,
           pageSize: currentPagination.pageSize,
           total: totalRecords,
-       
-          
+          showSizeChanger: false,
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
         }}
-         size="small"
+        size="small"
         onChange={handleTableChange}
+        rowClassName={getRowClassName}
       />
 
       <Modal
@@ -290,12 +420,26 @@ const UserAddFundRequest = () => {
               <p>
                 <strong>S.No:</strong> {(currentPage - 1) * 10 + filteredData.indexOf(selectedRecord) + 1}
               </p>
-            
               <p>
                 <strong>UTR Number:</strong> {selectedRecord.utr_number}
               </p>
               <p>
                 <strong>Member ID:</strong> {selectedRecord.member_id}
+              </p>
+              <p>
+                <strong>Membership:</strong> 
+                <Tag
+                  color={
+                    selectedRecord.membership === 'PREMIUM'
+                      ? 'blue'
+                      : selectedRecord.membership === 'BASIC'
+                        ? 'orange'
+                        : 'default'
+                  }
+                  style={{ marginLeft: '8px' }}
+                >
+                  {selectedRecord.membership || 'FREE'}
+                </Tag>
               </p>
               <p>
                 <strong>To UPI ID:</strong> {selectedRecord.to_upi_id}
@@ -320,7 +464,6 @@ const UserAddFundRequest = () => {
                   {selectedRecord.status.toUpperCase()}
                 </Tag>
               </p>
-              
               {(selectedRecord.status === 'pending') && (
                 <>
                   <Button
@@ -347,20 +490,35 @@ const UserAddFundRequest = () => {
                   </Button>
                 </>
               )}
+          
             </div>
+       
             <div style={{ flex: 1, textAlign: 'center' }}>
-              <Image
-            
-
-                src={selectedRecord?.screenshotUrl}
-                alt="Screenshot"
-                style={{ maxHeight: '400px', objectFit: 'contain' }}
-              />
+              {selectedRecord.isDeleted ? (
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  height: '400px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '8px'
+                }}>
+                  <Title level={4} style={{ color: '#999' }}>Image Deleted</Title>
+                  <Text type="secondary">The screenshot for this transaction has been deleted.</Text>
+                </div>
+              ) : (
+                <Image
+                  src={selectedRecord?.screenshotUrl}
+                  alt="Screenshot"
+                  style={{ maxHeight: '400px', objectFit: 'contain' }}
+                  fallback="data:image/png;base64,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"
+                />
+              )}
             </div>
           </div>
         )}
       </Modal>
-
       <Modal
         title="Confirm Rejection"
         open={rejectConfirmModal}
@@ -378,6 +536,8 @@ const UserAddFundRequest = () => {
           </div>
         )}
       </Modal>
+
+   
     </>
   );
 };

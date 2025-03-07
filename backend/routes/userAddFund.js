@@ -1,8 +1,11 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const multer = require('multer');
+// const path = require('path');
+// const fs = require('fs');
+const fs = require('fs')
 const path = require('path');
-const fs = require('fs');
+
 const router = express.Router();
 const generateTransactionId = require('../utills/generateTxnId');
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
@@ -133,16 +136,46 @@ if (qrRows.length === 0) {
 });
 router.use(handleMulterErrors)
 
-
-
-
-// Get all fund requests
-router.get('/getAllUserAddFundRequest',authenticateToken, async (req, res) => {
+// Get all fund requests with pagination and membership priority sorting
+router.get('/getAllUserAddFundRequest', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM user_add_fund_request');
-    // sort rows descending to tome 
-    // rows.sort((a, b) => a.created_at - b.created_at);
-    res.status(200).json({ status: "success", data: rows });
+    // Get page number from query params, default to page 1
+    const page = parseInt(req.query.page) || 1;
+    const limit = 100; // Number of records per page
+    const offset = (page - 1) * limit;
+
+    // Get total count of records for pagination metadata
+    const [countResult] = await pool.query('SELECT COUNT(*) as total FROM user_add_fund_request');
+    const totalRecords = countResult[0].total;
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    // Get paginated records with membership priority sorting
+    const [rows] = await pool.query(
+      `SELECT uafr.*, ud.membership 
+       FROM user_add_fund_request uafr
+       JOIN usersdetails ud ON uafr.member_id = ud.memberid
+       ORDER BY 
+         CASE 
+           WHEN ud.membership = 'PREMIUM' THEN 1
+           WHEN ud.membership = 'BASIC' THEN 2
+           WHEN ud.membership = 'FREE' THEN 3
+           ELSE 4
+         END,
+         uafr.time_date DESC
+       LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: rows,
+      pagination: {
+        totalRecords,
+        totalPages,
+        currentPage: page,
+        recordsPerPage: limit
+      }
+    });
   } catch (error) {
     console.error('Error fetching fund requests:', error);
     res.status(500).json({ status: "error", message: "Internal server error" });
@@ -174,8 +207,12 @@ router.post('/getUserAddFundRequest',authenticateToken, async (req, res) => {
     });
 
 
-// Get screenshot by transaction ID
-router.post('/getUserAddFundRequestSS', authenticateToken,async (req, res) => {
+
+
+
+
+
+router.post('/getUserAddFundRequestSS', authenticateToken, async (req, res) => {
   const { utr_number } = req.body;
 
   if (!utr_number) {
@@ -184,7 +221,7 @@ router.post('/getUserAddFundRequestSS', authenticateToken,async (req, res) => {
 
   // Validate inputs
   if (containsSQLInjectionWords(utr_number)) {
-    return res.status(400).json({ status:"false",error: "Don't try to hack." });
+    return res.status(400).json({ status: "false", error: "Don't try to hack." });
   }
 
   try {
@@ -196,15 +233,22 @@ router.post('/getUserAddFundRequestSS', authenticateToken,async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ status: "error", message: "Transaction ID not found" });
     }
-    const screenshotPath = path.join(__dirname, 'adminScreenshots');
-    const filePath = path.join(screenshotPath, rows[0].screenshot);
-     // Check if the file exists
-     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "ss file not found." });
-  }
 
-  // Send the file as a response
-  res.sendFile(filePath);
+    const screenshot = rows[0].screenshot;
+
+    // Check if the image was marked as deleted
+    if (screenshot === 'deleted') {
+      return res.status(200).json({ error: "Image deleted." });
+    }
+
+    // Check if the file exists
+    const filePath = path.join(__dirname, 'adminScreenshots', screenshot);
+    if (!fs.existsSync(filePath)) {
+      return res.status(200).json({ error: "Screenshot file not found." });
+    }
+
+    // Send the file
+    res.sendFile(filePath);
   } catch (error) {
     console.error('Error fetching screenshot:', error);
     res.status(500).json({ status: "error", message: "Internal server error" });
@@ -213,29 +257,29 @@ router.post('/getUserAddFundRequestSS', authenticateToken,async (req, res) => {
 
 
 
-// Update transaction status
-router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
-  const {  utr_number,status } = req.body;
+
+
+
+router.post('/updateFundRequestStatus', authenticateToken, async (req, res) => {
+  const { utr_number, status } = req.body;
 
   if (!utr_number || !status) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
   // Validate inputs
-  if (containsSQLInjectionWords(utr_number)|| containsSQLInjectionWords(status)) {
-    return res.status(400).json({ status:"false",error: "Don't try to hack." });
+  if (containsSQLInjectionWords(utr_number) || containsSQLInjectionWords(status)) {
+    return res.status(400).json({ status: "false", error: "Don't try to hack." });
   }
 
-  if (!['approved','rejected'].includes(status)) {
+  if (!['approved', 'rejected'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status.' });
   }
 
-
-
   try {
-    // Check if the transaction ID exists
+    // Fetch transaction details including the screenshot path
     const [fundRequestRows] = await pool.query(
-      `SELECT amount, member_id, status FROM user_add_fund_request WHERE utr_number = ?`,
+      `SELECT amount, member_id, status, screenshot FROM user_add_fund_request WHERE utr_number = ?`,
       [utr_number]
     );
 
@@ -243,27 +287,37 @@ router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Transaction ID not found.' });
     }
 
-    const { amount, member_id, status: currentStatus } = fundRequestRows[0];
+    const { amount, member_id, status: currentStatus, screenshot } = fundRequestRows[0];
 
-    // Prevent duplicate approval
-    if (currentStatus === 'approved' && (status === 'approved'||status === 'rejected')) {
-      return res.status(400).json({ error: 'Transaction is already approved.' });
+    // Prevent duplicate approval/rejection
+    if ((currentStatus === 'approved' || currentStatus === 'rejected') && status !== currentStatus) {
+      return res.status(400).json({ error: `Transaction is already ${currentStatus}.` });
     }
 
-    //check if rejected before then it will never be approved
-    if (currentStatus === 'rejected' && (status === 'approved'||status==='rejected')) {
-      return res.status(400).json({ error: 'Transaction is already rejected.' });
+    // Delete the screenshot if it exists
+    if (screenshot && screenshot !== 'deleted') {
+      try {
+        const imagePath = path.join(__dirname, 'adminScreenshots', screenshot);
+        await fs.promises.unlink(imagePath); // Delete the file
+        await pool.query(
+          `UPDATE user_add_fund_request SET screenshot = 'deleted' WHERE utr_number = ?`,
+          [utr_number]
+        );
+      } catch (error) {
+        console.error('Error deleting image:', error);
       }
+    }
 
-    // Update the status of the fund request
+    // Update the status
     await pool.query(
       `UPDATE user_add_fund_request SET status = ? WHERE utr_number = ?`,
       [status, utr_number]
     );
-    const transaction_id = generateTransactionId();
 
-    // If status is approved, update the user's total balance
+    // Handle approval/rejection logic (unchanged)
+    const transaction_id = generateTransactionId();
     if (status === 'approved') {
+      // ... (existing approval logic)
       try {
         // Generate a unique transaction ID
         //add the transaction to the universal transaction table 
@@ -315,19 +369,19 @@ router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
       }
 
-    }
-    else{
+    } else {
+      // ... (existing rejection logic)
       // If status is rejected, add  transaction in universal transaction table
       try{
-      await pool.query(
-        `INSERT INTO universal_transaction_table (transaction_id, member_id, type, amount, status, message) VALUES (?, ?, ?, ?, ?, ?)`,
-        [transaction_id, member_id, 'Add Fund Request', amount,'failed', 'Fund request was rejected.']
-      );
-    }
-    catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error.' });
+        await pool.query(
+          `INSERT INTO universal_transaction_table (transaction_id, member_id, type, amount, status, message) VALUES (?, ?, ?, ?, ?, ?)`,
+          [transaction_id, member_id, 'Add Fund Request', amount,'failed', 'Fund request was rejected.']
+        );
       }
+      catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal server error.' });
+        }
     }
 
     res.json({ status: 'success', message: 'Transaction status updated successfully.' });
@@ -336,6 +390,8 @@ router.post('/updateFundRequestStatus',authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
+
+
 
 router.post('/userBalance',authenticateToken, async (req, res) => {
   const { member_id } = req.body;
@@ -362,14 +418,6 @@ router.post('/userBalance',authenticateToken, async (req, res) => {
   }
   });
  
-
-
-
-
-
-
-
-
 
 
 
