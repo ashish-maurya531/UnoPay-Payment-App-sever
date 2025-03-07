@@ -8,20 +8,16 @@ const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
 const authenticateToken = require('../middleware/auth');
 const { payoutTransfer, checkPayoutStatus, getBalance}=require("../utills/cashKawach");
-const generateOrderId = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    let randomString = '';
-    
-    // Generate a 4-character random string
-    for (let i = 0; i < 4; i++) {
-        randomString += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    
-    // Append timestamp (milliseconds)
-    const timestamp = Date.now().toString().slice(-10); // Get last 10 digits
-    
-    return randomString + timestamp;
-};
+function generateOrderId() {
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    const randomLetters = Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+    const randomNumbers = Math.floor(1000000000 + Math.random() * 9000000000); // 13-digit random number
+    return randomLetters + randomNumbers;
+}
+
+// const orderId = generateOrderId();
+// console.log(orderId); // Example output: jkd923932982332
+
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
@@ -727,6 +723,10 @@ async function handleRejectedWithdrawal(member_id, amount, transaction_id, res) 
 async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail, res) {
     console.log('Preparing API payload for transaction:', transaction_id);
     const order_id = generateOrderId();
+    await pool.query(
+        `UPDATE withdraw_requests SET order_id=? WHERE transaction_id = ?`,
+        [order_id,transaction_id]
+    );
     
     // Prepare payload for API
     const payload = {
@@ -736,20 +736,36 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
         "Ifsc": bankDetail.IFSC_Code,
         "AccountHolderName": bankDetail.FullName,
         "AccountType": "Saving",
-        "Amount": amount,
+        "Amount": `${parseInt(amount)}`,
         "TxnMode": "IMPS",
         "Remarks": `Unopay withdrawal for ${bankDetail.FullName}`,
         "latitude": "28.6798",
         "longitude": "77.0927"
     };
+    //  const payload = 
+    //             {
+    //                 "OrderId": order_id,
+    //                 "BankName": "UNION BANK OF INDIA",
+    //                 "AccountNo": "089422010000036",
+    //                 "Ifsc": "UBIN0908941",
+    //                 "AccountHolderName": "ASHISH",
+    //                 "AccountType": "Saving",
+    //                 "Amount": "100",
+    //                 "TxnMode": "IMPS",
+    //                 "Remarks": `okok`,
+    //                 "latitude": "34.9",
+    //                 "longitude": "56.9"
+    //             }
+            
     
-    console.log('API Payload:', JSON.stringify(payload));
+    console.log('API Payload:', payload);
     
     try {
         // Call the payment gateway API
         // In production, replace this with: const result = await payoutTransfer(payload);
         // For now, using mock response
         const result = await payoutTransfer(payload);
+
         
         // Mock API response for testing
         // const result = {
@@ -767,7 +783,7 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
         //     }
         // };
         
-        console.log('API Response:', JSON.stringify(result));
+        console.log('API Response:', result);
         
         // Check API response status
         if (!result || !result.dataContent) {
@@ -793,8 +809,8 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
                 
                 // Update withdrawal request status
                 await connection.query(
-                    `UPDATE withdraw_requests SET status = ?, message = ?, utr_no = ?,order_id=? WHERE transaction_id = ?`,
-                    ["done", "sent to bank", result.dataContent.UTRNumber, order_id,transaction_id]
+                    `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
+                    ["done", "sent to bank", transaction_id]
                 );
                 console.log('Updated withdraw_requests with status: done');
                 
@@ -813,27 +829,26 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
                 await connection.commit();
                 console.log('Database transaction committed successfully');
                 
-                // Send email notification
-                const emailData = {
-                    member_id,
-                    amount,
-                    email: bankDetail.email,
-                    Bank_Name: bankDetail.Bank_Name,
-                    Account_number: bankDetail.Account_number,
-                    utr_no: result.dataContent.UTRNumber,
-                    status: apiStatus
-                };
-                console.log('Sending withdrawal confirmation email to user', emailData);
+                // // Send email notification
+                // const emailData = {
+                //     member_id,
+                //     amount,
+                //     email: bankDetail.email,
+                //     Bank_Name: bankDetail.Bank_Name,
+                //     Account_number: bankDetail.Account_number,
+                //     utr_no: result.dataContent.UTRNumber,
+                //     status: apiStatus
+                // };
+                // console.log('Sending withdrawal confirmation email to user', emailData);
                 
-                await sendWithdrawalEmail(emailData);
-                console.log('Withdrawal confirmation email sent to user');
+                // await sendWithdrawalEmail(emailData);
+                // console.log('Withdrawal confirmation email sent to user');
                 
                 return res.status(200).json({ 
                     status: "true", 
                     message: `Withdrawal processed ${apiStatus === 'PENDING' ? 'and pending' : 'successfully'}`, 
                     details: {
                         transaction_id: transaction_id,
-                        utr_no: result.dataContent.UTRNumber,
                         status: apiStatus
                     }
                 });

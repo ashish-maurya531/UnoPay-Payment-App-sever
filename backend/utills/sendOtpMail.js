@@ -474,11 +474,21 @@ async function sendWelcomeEmail(userDetails) {
   ///////////////////////////////////////////////
   //widthraw email 
   async function sendWithdrawalEmail(emailData) {
+    // const emailData = {
+    //     member_id: withdrawalDetail.member_id,
+    //     amount: withdrawalDetail.amount,
+    //     email: withdrawalDetail.email,
+    //     Bank_Name: withdrawalDetail.Bank_Name,
+    //     Account_number: withdrawalDetail.Account_number,
+    //     utr_no: UTR,
+    //     status: status
+    // };
     const {
         member_id,
         Bank_Name,
         Account_number,
-        amount
+        amount,
+        utr_no
     } = emailData;
 
     try {
@@ -638,13 +648,15 @@ async function sendWelcomeEmail(userDetails) {
                     <p>Dear Member,</p>
                     <p>Thank you for using UnoPay. Below are the details of your recent withdrawal request:</p>
 
-                    <div class="email-details">
+                   <div class="email-details">
                         <h3>Withdrawal Details</h3>
                         <p><strong>Member ID:</strong> ${member_id}</p>
                         <p><strong>Bank Name:</strong> ${Bank_Name}</p>
                         <p><strong>Account Number:</strong> ${Account_number}</p>
                         <p><strong>Amount:</strong> ₹${amount}</p>
+                        ${utr_no ? `<p><strong>UTR Number:</strong> ${utr_no}</p>` : ''}
                     </div>
+
 
                     <p>Please ensure that your account details are correct. If you have any questions or need further assistance, don't hesitate to reach out to us.</p>
 
