@@ -354,7 +354,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
 
 
-router.post('/update-status-user-withdraw-request',authenticateToken,async (req, res) => {
+router.post('/old-update-status-user-withdraw-request',authenticateToken,async (req, res) => {
     const { transaction_id, status, message,mode} = req.body;
 
     if (!transaction_id || !status || !message|| !mode) {
@@ -451,38 +451,52 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
        
         
         if (mode==="api"){
-            // const payload = {
-            //     "OrderId": transaction_id,
-            //     "BankName": bank_details[0].Bank_Name,
-            //     "AccountNo": bank_details[0].Account_number,
-            //     "Ifsc": bank_details[0].IFSC_Code,
-            //     "AccountHolderName": bank_details[0].FullName,
-            //     "AccountType": "Saving",
-            //     "Amount": amount,
-            //     "TxnMode": "IMPS",
-            //     "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
-            //     "latitude": "28.6798",
-            //     "longitude": "77.0927"
-            // }
-            const payload = 
-                {
-                    "OrderId": "abce2701495663",
-                    "BankName": "UNION BANK OF INDIA",
-                    "AccountNo": "089422010000036",
-                    "Ifsc": "UBIN0908941",
-                    "AccountHolderName": "ASHISH",
-                    "AccountType": "Saving",
-                    "Amount": "100",
-                    "TxnMode": "IMPS",
-                    "Remarks": "okok",
-                    "latitude": "34.9",
-                    "longitude": "56.9"
-                }
+            const payload = {
+                "OrderId": transaction_id,
+                "BankName": bank_details[0].Bank_Name,
+                "AccountNo": bank_details[0].Account_number,
+                "Ifsc": bank_details[0].IFSC_Code,
+                "AccountHolderName": bank_details[0].FullName,
+                "AccountType": "Saving",
+                "Amount": amount,
+                "TxnMode": "IMPS",
+                "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
+                "latitude": "28.6798",
+                "longitude": "77.0927"
+            };
+            console.log("payload->>"+payload);
+            // const payload = 
+            //     {
+            //         "OrderId": "abce2701495663",
+            //         "BankName": "UNION BANK OF INDIA",
+            //         "AccountNo": "089422010000036",
+            //         "Ifsc": "UBIN0908941",
+            //         "AccountHolderName": "ASHISH",
+            //         "AccountType": "Saving",
+            //         "Amount": "100",
+            //         "TxnMode": "IMPS",
+            //         "Remarks": "okok",
+            //         "latitude": "34.9",
+            //         "longitude": "56.9"
+            //     }
             
 
 
             //run the payout api 
-            const result = await payoutTransfer(payload);
+            // const result = await payoutTransfer(payload);
+            const result ={
+                "statusCode": "TUP",
+                "statusMsg": "Transaction Pending",
+                "dataContent": {
+                  "OrderId":transaction_id,
+                  "bankrrnno": "lkf340930932093203",
+                  "accountno": "6713XXXXXXXX",
+                  "amount": "100",
+                  "status": "PENDING",
+                  "Ifsccode": "UBINXXXXXX",
+                  "name": "Test"
+                }
+              }
             if (result?.dataContent.status === 'SUCCESS'|| result?.dataContent?.status === 'PENDING') {
                 console.log({
                     status: 'success',
@@ -500,8 +514,8 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
         const connection= await pool.getConnection();
         await connection.beginTransaction();
         const [updateResult] = await pool.query(
-            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
-            [status, message2, transaction_id]
+            `UPDATE withdraw_requests SET status = ?, message = ?,utr_no=? WHERE transaction_id = ?`,
+            [status, message2, transaction_id,results?.dataContent?.UTRNumber]
         );
 
 
@@ -545,6 +559,381 @@ router.post('/update-status-user-withdraw-request',authenticateToken,async (req,
    
 
 });
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+router.post('/update-status-user-withdraw-request', authenticateToken, async (req, res) => {
+    console.log('Processing withdrawal status update request:', req.body);
+    const { transaction_id, status, message, mode } = req.body;
+
+    // Input validation
+    if (!transaction_id || !status || !message || !mode) {
+        console.log('Validation failed: Missing required fields');
+        return res.status(400).json({ status: "false", message: "Transaction ID, status, message, and mode are required." });
+    }
+
+    if (!['rejected', 'done'].includes(status)) {
+        console.log('Validation failed: Invalid status value:', status);
+        return res.status(400).json({ status: "false", message: "Invalid status value." });
+    }
+
+    if (!['manual', 'api',"rejected"].includes(mode)) {
+        console.log('Validation failed: Invalid mode value:', mode);
+        return res.status(400).json({ status: "false", message: "Invalid mode value." });
+    }
+
+    try {
+        // Fetch withdrawal details
+        const [withdrawalDetails] = await pool.query(
+            `SELECT member_id, amount, status as current_status FROM withdraw_requests WHERE transaction_id = ?`,
+            [transaction_id]
+        );
+
+        if (withdrawalDetails.length === 0) {
+            console.log('Withdrawal not found for transaction_id:', transaction_id);
+            return res.status(400).json({ status: "false", message: "Withdrawal details not found." });
+        }
+
+        const { member_id, amount, current_status } = withdrawalDetails[0];
+        
+        // Check if withdrawal is already processed
+        if (current_status === 'done' || current_status === 'rejected') {
+            console.log('Withdrawal already processed:', current_status);
+            return res.status(400).json({ status: "false", message: "Withdrawal already processed." });
+        }
+        
+        console.log(`Processing withdrawal for member_id: ${member_id}, amount: ${amount}`);
+
+        // CASE 1: Handle rejected withdrawals (regardless of mode)
+        if (status === "rejected") {
+            console.log('Handling REJECTION flow for transaction:', transaction_id);
+            return await handleRejectedWithdrawal(member_id, amount, transaction_id, res);
+        }
+        
+        // CASE 2: Handle approved withdrawals (status = done)
+        // Get bank details first (needed for both manual and API modes)
+        const [bankDetails] = await pool.query(
+            `SELECT u.email, b.FullName, b.IFSC_Code, b.Bank_Name, b.Account_number 
+             FROM usersdetails u
+             INNER JOIN user_bank_kyc_details b ON u.memberid = b.member_id
+             WHERE u.memberid = ?`,
+            [member_id]
+        );
+        
+        if (bankDetails.length === 0) {
+            console.log('Bank details not found for member_id:', member_id);
+            return res.status(400).json({ status: "false", message: "Bank details not found." });
+        }
+
+        const bankDetail = bankDetails[0];
+        console.log('Bank details retrieved successfully for member:', member_id);
+
+        // Process based on mode
+        if (mode === "api") {
+            console.log('Processing withdrawal via API for transaction:', transaction_id);
+            return await handleApiWithdrawal(transaction_id, member_id, amount, bankDetail, res);
+        } else if (mode === "manual") {
+            console.log('Processing withdrawal manually for transaction:', transaction_id);
+            return await handleManualWithdrawal(transaction_id, member_id, amount, bankDetail, res);
+        }
+    } catch (error) {
+        console.error("Error processing withdrawal request:", error);
+        return res.status(500).json({ status: "false", message: "Internal Server Error." });
+    }
+});
+/**
+ * Handles rejection of a withdrawal request
+ */
+async function handleRejectedWithdrawal(member_id, amount, transaction_id, res) {
+    const connection = await pool.getConnection();
+    const txn_id = generateTransactionId();
+    console.log(`Generating refund transaction ${txn_id} for rejected withdrawal ${transaction_id}`);
+
+    try {
+        await connection.beginTransaction();
+        console.log('Transaction started for rejection process');
+
+        // Log the transaction in the universal transaction table
+        await connection.query(
+            `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status, message) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal rejected, money refunded."]
+        );
+        console.log('Logged transaction in universal_transaction_table');
+        
+        // Update the user's wallet balance
+        await connection.query(
+            `UPDATE users_total_balance 
+             SET user_total_balance = user_total_balance + ? 
+             WHERE member_id = ?`,
+            [amount, member_id]
+        );
+        console.log(`Updated user wallet balance: credited ${amount} back to member ${member_id}`);
+
+        // Log the refund in the commission wallet
+        await connection.query(
+            `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [member_id, "Withdrawal Rejected", txn_id, txn_id, amount, 0.0, 0]
+        );
+        console.log('Logged refund in commission_wallet');
+
+        // Update the withdrawal request status
+        await connection.query(
+            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
+            ["rejected", "Withdrawal rejected, money refunded.", transaction_id]
+        );
+        console.log('Updated withdraw_requests status to rejected');
+
+        await connection.commit();
+        console.log('Transaction committed successfully for rejection process');
+        
+        return res.status(200).json({ 
+            status: "true", 
+            message: "Withdrawal request rejected successfully, funds refunded." 
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error in rejection process:", error);
+        return res.status(500).json({ status: "false", message: "Failed to process rejection." });
+    } finally {
+        connection.release();
+    }
+}
+
+/**
+ * Handles the API-based withdrawal process
+ */
+async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail, res) {
+    console.log('Preparing API payload for transaction:', transaction_id);
+    
+    // Prepare payload for API
+    const payload = {
+        "OrderId": transaction_id,
+        "BankName": bankDetail.Bank_Name,
+        "AccountNo": bankDetail.Account_number,
+        "Ifsc": bankDetail.IFSC_Code,
+        "AccountHolderName": bankDetail.FullName,
+        "AccountType": "Saving",
+        "Amount": amount,
+        "TxnMode": "IMPS",
+        "Remarks": `Unopay withdrawal for ${bankDetail.FullName}`,
+        "latitude": "28.6798",
+        "longitude": "77.0927"
+    };
+    
+    console.log('API Payload:', JSON.stringify(payload));
+    
+    try {
+        // Call the payment gateway API
+        // In production, replace this with: const result = await payoutTransfer(payload);
+        // For now, using mock response
+        const result = await payoutTransfer(payload);
+        
+        // Mock API response for testing
+        // const result = {
+        //     "statusCode": "TUP",
+        //     "statusMsg": "Transaction Pending",
+        //     "dataContent": {
+        //         "OrderId": transaction_id,
+        //         "bankrrnno": "lkf340930932093203",
+        //         "accountno": bankDetail.Account_number,
+        //         "amount": amount,
+        //         "status": "PENDING", // Can be SUCCESS, PENDING, FAILED
+        //         "Ifsccode": bankDetail.IFSC_Code,
+        //         "name": bankDetail.FullName,
+        //         "UTRNumber": "UTR" + Date.now().toString().substring(0, 10)
+        //     }
+        // };
+        
+        console.log('API Response:', JSON.stringify(result));
+        
+        // Check API response status
+        if (!result || !result.dataContent) {
+            console.log('Invalid API response received');
+            return res.status(400).json({ 
+                status: "false", 
+                message: "Invalid response from payment gateway" 
+            });
+        }
+        
+        const apiStatus = result.dataContent.status;
+        console.log('API transaction status:', apiStatus);
+        
+        // Handle based on API response
+        if (apiStatus === 'SUCCESS' || apiStatus === 'PENDING') {
+            console.log('API transfer successful or pending, updating database');
+            
+            // Update database with successful/pending transaction
+            const connection = await pool.getConnection();
+            
+            try {
+                await connection.beginTransaction();
+                
+                // Update withdrawal request status
+                await connection.query(
+                    `UPDATE withdraw_requests SET status = ?, message = ?, utr_no = ? WHERE transaction_id = ?`,
+                    ["done", "sent to bank", result.dataContent.UTRNumber, transaction_id]
+                );
+                console.log('Updated withdraw_requests with status: done');
+                
+                // Update daily report
+                const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
+                await connection.query(
+                    `INSERT INTO daily_AddFund_Withdraw_Report (Total_Bank_Withdraw, date_time)
+                    VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE
+                    Total_Bank_Withdraw = Total_Bank_Withdraw + VALUES(Total_Bank_Withdraw),
+                    updated_at = CURRENT_TIMESTAMP`,
+                    [amount, currentDateInKolkata]
+                );
+                console.log('Updated daily report with withdrawal amount');
+                
+                await connection.commit();
+                console.log('Database transaction committed successfully');
+                
+                // Send email notification
+                const emailData = {
+                    member_id,
+                    amount,
+                    email: bankDetail.email,
+                    Bank_Name: bankDetail.Bank_Name,
+                    Account_number: bankDetail.Account_number,
+                    utr_no: result.dataContent.UTRNumber,
+                    status: apiStatus
+                };
+                console.log('Sending withdrawal confirmation email to user', emailData);
+                
+                await sendWithdrawalEmail(emailData);
+                console.log('Withdrawal confirmation email sent to user');
+                
+                return res.status(200).json({ 
+                    status: "true", 
+                    message: `Withdrawal processed ${apiStatus === 'PENDING' ? 'and pending' : 'successfully'}`, 
+                    details: {
+                        transaction_id: transaction_id,
+                        utr_no: result.dataContent.UTRNumber,
+                        status: apiStatus
+                    }
+                });
+            } catch (error) {
+                await connection.rollback();
+                console.error("Database error during API withdrawal:", error);
+                return res.status(500).json({ status: "false", message: "Database operation failed." });
+            } finally {
+                connection.release();
+            }
+        } else {
+            // API transaction failed
+            console.log('API transfer failed, returning error without database changes');
+            return res.status(400).json({ 
+                status: "false", 
+                message: "Payment gateway transfer failed", 
+                details: result 
+            });
+        }
+    } catch (apiError) {
+        console.error("API call failed:", apiError);
+        return res.status(500).json({ 
+            status: "false", 
+            message: "Payment gateway error", 
+            error: apiError.message 
+        });
+    }
+}
+
+/**
+ * Handles manual withdrawal processing
+ */
+async function handleManualWithdrawal(transaction_id, member_id, amount, bankDetail, res) {
+    console.log('Processing manual withdrawal for transaction:', transaction_id);
+    
+    const connection = await pool.getConnection();
+    
+    try {
+        await connection.beginTransaction();
+        console.log('Database transaction started for manual withdrawal');
+        
+        // Update withdrawal request status
+        const [updateResult] = await connection.query(
+            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
+            ["done", "sent to bank", transaction_id]
+        );
+        
+        if (updateResult.affectedRows === 0) {
+            console.log('No rows updated for transaction_id:', transaction_id);
+            await connection.rollback();
+            return res.status(400).json({ status: "false", message: "Transaction not found or not updated." });
+        }
+        
+        console.log('Updated withdraw_requests with status: done');
+        
+        // Update daily report
+        const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
+        await connection.query(
+            `INSERT INTO daily_AddFund_Withdraw_Report (Total_Bank_Withdraw, date_time)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE
+            Total_Bank_Withdraw = Total_Bank_Withdraw + VALUES(Total_Bank_Withdraw),
+            updated_at = CURRENT_TIMESTAMP`,
+            [amount, currentDateInKolkata]
+        );
+        console.log('Updated daily report with withdrawal amount');
+        
+        await connection.commit();
+        console.log('Database transaction committed successfully');
+        
+        // Send email notification
+        const emailData = {
+            member_id,
+            amount,
+            email: bankDetail.email,
+            Bank_Name: bankDetail.Bank_Name,
+            Account_number: bankDetail.Account_number,
+            status: "sent to bank"
+        };
+        
+        await sendWithdrawalEmail(emailData);
+        console.log('Withdrawal confirmation email sent to user');
+        
+        return res.status(200).json({ 
+            status: "true", 
+            message: "Withdrawal processed manually and details sent successfully." 
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Database error during manual withdrawal:", error);
+        return res.status(500).json({ status: "false", message: "Database operation failed." });
+    } finally {
+        connection.release();
+    }
+}
+/////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
