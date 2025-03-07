@@ -151,7 +151,7 @@ router.get('/getAllUserAddFundRequest', authenticateToken, async (req, res) => {
 
     // Get paginated records with membership priority sorting
     const [rows] = await pool.query(
-      `SELECT uafr.*, ud.membership 
+      `SELECT uafr.*, ud.membership,ud.username 
        FROM user_add_fund_request uafr
        JOIN usersdetails ud ON uafr.member_id = ud.memberid
        ORDER BY 
