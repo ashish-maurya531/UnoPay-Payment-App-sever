@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+# Image folders
+routes/adminScreenshots/
+routes/adminQRS/
+routes/UnopayGallery/
+user_kyc_images/
+user_profile_images/
+
+
