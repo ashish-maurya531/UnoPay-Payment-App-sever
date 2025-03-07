@@ -55,7 +55,7 @@ router.post('/userAddFundRequest',authenticateToken,upload.single('screenshot'),
     return res.status(400).json({ status: "false", error: "Don't try to hack." });
   }
   //check amount to be min 100
-  if (amount < 100) {
+  if (amount < 50) {
     return res.status(400).json({ status: 'false', error: 'Minimum amount is 100.' });
   }
 
