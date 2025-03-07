@@ -8,6 +8,20 @@ const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
 const authenticateToken = require('../middleware/auth');
 const { payoutTransfer, checkPayoutStatus, getBalance}=require("../utills/cashKawach");
+const generateOrderId = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let randomString = '';
+    
+    // Generate a 4-character random string
+    for (let i = 0; i < 4; i++) {
+        randomString += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    
+    // Append timestamp (milliseconds)
+    const timestamp = Date.now().toString().slice(-10); // Get last 10 digits
+    
+    return randomString + timestamp;
+};
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
@@ -712,10 +726,11 @@ async function handleRejectedWithdrawal(member_id, amount, transaction_id, res) 
  */
 async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail, res) {
     console.log('Preparing API payload for transaction:', transaction_id);
+    const order_id = generateOrderId();
     
     // Prepare payload for API
     const payload = {
-        "OrderId": transaction_id,
+        "OrderId": order_id,
         "BankName": bankDetail.Bank_Name,
         "AccountNo": bankDetail.Account_number,
         "Ifsc": bankDetail.IFSC_Code,
@@ -778,8 +793,8 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
                 
                 // Update withdrawal request status
                 await connection.query(
-                    `UPDATE withdraw_requests SET status = ?, message = ?, utr_no = ? WHERE transaction_id = ?`,
-                    ["done", "sent to bank", result.dataContent.UTRNumber, transaction_id]
+                    `UPDATE withdraw_requests SET status = ?, message = ?, utr_no = ?,order_id=? WHERE transaction_id = ?`,
+                    ["done", "sent to bank", result.dataContent.UTRNumber, order_id,transaction_id]
                 );
                 console.log('Updated withdraw_requests with status: done');
                 
