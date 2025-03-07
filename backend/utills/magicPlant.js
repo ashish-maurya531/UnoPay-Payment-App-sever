@@ -63,11 +63,17 @@ const cascadeLevels = async () => {
                 console.log(`🚚 Moved ${movedMember} from ${currentLevel.level_name} to ${nextLevel.level_name}`);
 
                 const txnId = generateTransactionId();
-                const reward = moneyRewards[i];
+                const reward = moneyRewards[i]; 
 
                 // Fixed member_id reference to movedMember
                 const [directs] = await pool.query(
-                    `SELECT upline FROM member_hierarchy WHERE upline = ? AND level = 1`,
+                    `SELECT mh.member 
+                    FROM member_hierarchy mh
+                    JOIN usersdetails ud ON mh.member = ud.memberid
+                    WHERE mh.upline = ? 
+                    AND mh.level = 1 
+                    AND ud.membership IN ('PREMIUM', 'BASIC')`,
+            
                     [movedMember]
                 );
 

@@ -15,8 +15,7 @@ function generateOrderId() {
     return randomLetters + randomNumbers;
 }
 
-// const orderId = generateOrderId();
-// console.log(orderId); // Example output: jkd923932982332
+
 
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
@@ -1036,39 +1035,70 @@ router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => 
     
 });
 
-
-router.get('/all-withdraw-request',authenticateToken, async (req, res) => {
+router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
     try {
-        // Fetch all withdraw requests
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        // Optimized query with proper JOIN and column selection
         const [withdrawRequests] = await pool.query(`
-            SELECT * FROM withdraw_requests
-        `);
+            SELECT 
+                wr.*,
+                wr.membership,
+                kyc.bank_name,
+                kyc.account_number,
+                kyc.ifsc_code
+            FROM withdraw_requests wr
+            LEFT JOIN user_bank_kyc_details kyc 
+                ON wr.member_id = kyc.member_id
+            ORDER BY 
+                wr.date_time DESC,
+                CASE wr.membership
+                    WHEN 'PREMIUM' THEN 1
+                    WHEN 'BASIC' THEN 2
+                    ELSE 3
+                END
+            LIMIT ? OFFSET ?
+        `, [limit, offset]);
 
-        if (withdrawRequests.length > 0) {
-            // Fetch all KYC details
-            const [kycDetails] = await pool.query(`
-                SELECT * FROM user_bank_kyc_details
-            `);
+        // Get total count using a cheaper query
+        const [totalCount] = await pool.query('SELECT COUNT(*) AS total FROM withdraw_requests');
 
-            // Map each withdraw request with its corresponding KYC details
-            const data = withdrawRequests.map(request => {
-                const kycDetail = kycDetails.filter(kyc => kyc.member_id === request.member_id);
-                return {
-                    ...request,
-                    kyc_details: kycDetail || [], // Attach corresponding KYC details or an empty array
-                };
+        if (withdrawRequests.length === 0) {
+            return res.status(404).json({
+                status: "false",
+                message: "No withdraw requests found."
             });
-
-            return res.status(200).json({ status: "true", data });
-        } else {
-            return res.status(404).json({ status: "false", message: "No withdraw requests found." });
         }
+
+        // Format data to include KYC details directly
+        const data = withdrawRequests.map(request => ({
+            ...request,
+            kyc_details: {
+                membership: request.membership,
+                bank_name: request.bank_name,
+                account_number: request.account_number,
+                ifsc_code: request.ifsc_code
+            }
+        }));
+
+        res.status(200).json({
+            status: "true",
+            data,
+            pagination: {
+                currentPage: page,
+                pageSize: limit,
+                totalRecords: totalCount[0].total
+            }
+        });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ status: "false", message: "Internal Server Error." });
+        console.error('[Withdraw Request Error]:', error);
+        res.status(500).json({ 
+            status: "false", 
+            message: "Internal Server Error." 
+        });
     }
 });
-
-
-
 module.exports = router;
