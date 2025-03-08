@@ -192,7 +192,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       const commission_wallet = await getCommisionWalletBalance(member_id);
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
       const holdTotalCommission = await getHoldTotalCommission(member_id);
-      console.log(holdTotalCommission);
+    //   console.log(holdTotalCommission);
       const membership= memberExist[0].membership
       const [result] = await pool.query(`SELECT active_team,rank_no FROM ranktable WHERE member_id = ?`, [member_id]);
       // Check if user exists
@@ -200,7 +200,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       return res.status(200).json({
         status: "true", 
         flexi_wallet, 
-        commission_wallet,
+        commission_wallet:commission_wallet-holdTotalCommission,
         holdTotalCommission,
         "signup_bonus":649 ,
         "membership":membership,
