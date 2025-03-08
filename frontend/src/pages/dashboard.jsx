@@ -1,7 +1,7 @@
 
 
 import { useEffect } from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import UserList from '../components/Users/UserList.jsx';
 import BankDetails from '../components/Users/BankDetails.jsx';
@@ -28,31 +28,29 @@ import UserCommissionWalletTransactions from '../components/Admin/dailyAddFundWi
 import TeamList from '../components/Users/TeamList.jsx';
 import UserTree from '../components/Users/UserTree.jsx';
 
+import MainPage from '../pages/mainPage.jsx';
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
     // const adminId = localStorage.getItem('adminId');
-    var adminToken =null
+    var adminToken = null
    
-      adminToken = localStorage.getItem('adminToken');
+    adminToken = localStorage.getItem('adminToken');
+    if (!adminToken) {
+      adminToken = sessionStorage.getItem('adminToken');
       if (!adminToken) {
-        adminToken=sessionStorage.getItem('adminToken');
-        if (!adminToken) {
-          navigate('/login');
-  
+        navigate('/login');
       }
     }
-
   }, [navigate]);
-
-
-  
 
   return (
     <DashboardLayout>
       <Routes>
-      <Route path="/" element={<UserList />} />
+        {/* Make MainPage the default landing page */}
+        <Route path="/" element={<MainPage />} />
         <Route path="users" element={<UserList />} />
         <Route path="bank-details" element={<BankDetails />} />
         <Route path="generate-ids" element={<GenerateIds />} />
@@ -72,8 +70,6 @@ export default function Dashboard() {
         <Route path="daily-collection-report" element={<UserCommissionWalletTransactions />} />
         <Route path="team-list" element={<TeamList />} />
         <Route path="user-tree" element={<UserTree />} />
-      
-
       </Routes>
     </DashboardLayout>
   );

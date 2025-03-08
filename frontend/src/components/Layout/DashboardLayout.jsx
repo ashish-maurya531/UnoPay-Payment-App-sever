@@ -1,5 +1,5 @@
 import { Layout, Menu, Dropdown, Button, Space } from 'antd';
-import { UserOutlined, CreditCardOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, CreditCardOutlined, LogoutOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 const Src = import.meta.env.VITE_Src;
 
@@ -142,14 +142,24 @@ export default function DashboardLayout({ children }) {
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center justify-between bg-white px-6 shadow-md">
-        <div className="text-xl font-semibold text-orange-500">
-          UNO PAY Admin Dashboard
-        </div>
+      <div className="flex items-center justify-between space-x-4">
+  <h1 className="text-xl font-semibold text-orange-500">UNO PAY Admin Dashboard</h1>
+
+  <Button 
+    type="primary" 
+    icon={<DashboardOutlined />}
+    onClick={() => navigate('/dashboard')}
+  >
+    Dashboard
+  </Button>
+</div>
+
+       
         <Space size="middle">
           <Space size="small">
           <Dropdown menu={{ items: adminMenuItems }} placement="bottomLeft">
               <Button type="primary" icon={<UserOutlined />}>
-               Admin Qr
+               Admin
               </Button>
             </Dropdown>
             <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft">
