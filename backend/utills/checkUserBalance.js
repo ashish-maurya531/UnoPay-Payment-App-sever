@@ -127,15 +127,7 @@ async function getTodayCommissionWalletBalance(member_id) {
 
 async function getHoldTotalCommission(member_id) {
     try {
-        // Get current IST date boundaries
-        const istStart = moment().tz("Asia/Kolkata").startOf('day');
-        const istEnd = moment().tz("Asia/Kolkata").endOf('day');
-
-        // Convert to UTC format covering full IST day
-        const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
-        const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
-        // const utcStart = moment().tz("Asia/Kolkata").startOf('day');
-        // const utcEnd = moment().tz("Asia/Kolkata").endOf('day');
+        
 
         // Query to calculate the sum of amounts where the message contains the specified text
         const [rows] = await pool.query(
@@ -143,14 +135,10 @@ async function getHoldTotalCommission(member_id) {
                 COALESCE(SUM(amount), 0) AS holdTotalCommission
              FROM universal_transaction_table
              WHERE member_id = ?
-             AND message LIKE '%Commission not credited due to insufficient directs%'
-             AND DATE(created_at) BETWEEN DATE(?) AND DATE(?)`,
-            [
-                member_id,
-                utcStart.format('YYYY-MM-DD'),
-                utcEnd.format('YYYY-MM-DD')
-            ]
+             AND message LIKE '%Commission not credited due to insufficient directs%'`,
+            [member_id] // Parameters should be passed as a separate array
         );
+     
 
         // Return the sum of held commissions
         return Number(Number(rows[0]?.holdTotalCommission || 0).toFixed(10));

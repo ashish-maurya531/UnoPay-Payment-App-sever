@@ -201,6 +201,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
         status: "true", 
         flexi_wallet, 
         commission_wallet,
+        holdTotalCommission,
         "signup_bonus":649 ,
         "membership":membership,
         "today_income":todayIncome,
