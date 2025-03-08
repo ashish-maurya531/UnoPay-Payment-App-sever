@@ -114,7 +114,8 @@ async function getTodayCommissionWalletBalance(member_id) {
             ]
         );
 
-        return Number((rows[0].total_credit).toFixed(10))
+        return Number((Number(rows[0]?.total_credit || 0).toFixed(10)));
+
     
     } catch (error) {
         console.error('Date-only commission error:', error);
@@ -133,6 +134,8 @@ async function getHoldTotalCommission(member_id) {
         // Convert to UTC format covering full IST day
         const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
         const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
+        // const utcStart = moment().tz("Asia/Kolkata").startOf('day');
+        // const utcEnd = moment().tz("Asia/Kolkata").endOf('day');
 
         // Query to calculate the sum of amounts where the message contains the specified text
         const [rows] = await pool.query(
@@ -150,7 +153,8 @@ async function getHoldTotalCommission(member_id) {
         );
 
         // Return the sum of held commissions
-        return Number((rows[0].holdTotalCommission).toFixed(10));
+        return Number(Number(rows[0]?.holdTotalCommission || 0).toFixed(10));
+
     
     } catch (error) {
         console.error('Error calculating holdTotalCommission:', error);
