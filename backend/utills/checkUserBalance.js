@@ -114,7 +114,7 @@ async function getTodayCommissionWalletBalance(member_id) {
             ]
         );
 
-        return Number((rows[0].total_credit - rows[0].total_debit).toFixed(10))
+        return Number((rows[0].total_credit).toFixed(10))
     
     } catch (error) {
         console.error('Date-only commission error:', error);
@@ -122,6 +122,41 @@ async function getTodayCommissionWalletBalance(member_id) {
     }
 }
 
+
+
+async function getHoldTotalCommission(member_id) {
+    try {
+        // Get current IST date boundaries
+        const istStart = moment().tz("Asia/Kolkata").startOf('day');
+        const istEnd = moment().tz("Asia/Kolkata").endOf('day');
+
+        // Convert to UTC format covering full IST day
+        const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
+        const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
+
+        // Query to calculate the sum of amounts where the message contains the specified text
+        const [rows] = await pool.query(
+            `SELECT 
+                COALESCE(SUM(amount), 0) AS holdTotalCommission
+             FROM universal_transaction_table
+             WHERE member_id = ?
+             AND message LIKE '%Commission not credited due to insufficient directs%'
+             AND DATE(created_at) BETWEEN DATE(?) AND DATE(?)`,
+            [
+                member_id,
+                utcStart.format('YYYY-MM-DD'),
+                utcEnd.format('YYYY-MM-DD')
+            ]
+        );
+
+        // Return the sum of held commissions
+        return Number((rows[0].holdTotalCommission).toFixed(10));
+    
+    } catch (error) {
+        console.error('Error calculating holdTotalCommission:', error);
+        return 0; // Return 0 in case of any error
+    }
+}
 
 
 
@@ -468,7 +503,8 @@ module.exports = { getFlexiWalletTransactionList,
     getCommisionWalletBalance,
     getTodayCommissionWalletBalance,
     incomeTransactionsList,
-    TransactionsListForPassBook
+    TransactionsListForPassBook,
+    getHoldTotalCommission
 };
 
 

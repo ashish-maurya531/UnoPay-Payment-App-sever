@@ -9,7 +9,8 @@ const { getFlexiWalletTransactionList,
   getFlexiWalletBalance,
   getTodayCommissionWalletBalance,
   getCommisionWalletBalance,
-  TransactionsListForPassBook
+  TransactionsListForPassBook,
+  getHoldTotalCommission
 } = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const authenticateToken = require('../middleware/auth');
@@ -190,6 +191,8 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       const flexi_wallet = await getFlexiWalletBalance(member_id);
       const commission_wallet = await getCommisionWalletBalance(member_id);
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
+      const holdTotalCommission = await getHoldTotalCommission(member_id);
+      console.log(holdTotalCommission);
       const membership= memberExist[0].membership
       const [result] = await pool.query(`SELECT active_team,rank_no FROM ranktable WHERE member_id = ?`, [member_id]);
       // Check if user exists
