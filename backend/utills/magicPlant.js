@@ -126,7 +126,132 @@ const cascadeLevels = async () => {
         throw error;
     }
 };
+// async function processHeldTransactionsDirect() {
+//     // 1. Get all held transactions with commission errors
+//     const [heldTransactions] = await pool.query(
+//         `SELECT transaction_id, member_id, amount, message, subType 
+//          FROM universal_transaction_table 
+//          WHERE message LIKE '%Commission not credited due to insufficient directs%'`
+//     );
 
+//     console.log(`📨 Found ${heldTransactions.length} held transactions to process`);
+
+//     // 2. Process each transaction
+//     for (const txn of heldTransactions) {
+//         if (!txn.transaction_id || !txn.member_id || !txn.amount) {
+//             console.log('🚫 Invalid transaction record:', txn);
+//             continue;
+//         }
+
+//         const connection = await pool.getConnection();
+//         try {
+//             await connection.beginTransaction();
+
+//             // 3. Clean transaction message
+//             const cleanMessage = txn.message.replace(' | Commission not credited due to insufficient directs', '');
+
+//             // 4. Update original transaction
+//             await connection.query(
+//                 `UPDATE universal_transaction_table 
+//                  SET message = ?
+//                  WHERE transaction_id = ?`,
+//                 [cleanMessage, txn.transaction_id]
+//             );
+
+//             // 5. Prepare commission data
+//             const txnId = generateTransactionId();
+//             const level = txn.subType.replace('Moved to ', '');
+
+//             // 6. Insert directly to commission table
+//             await connection.query(
+//                 `INSERT INTO commission_wallet 
+//                  (member_id, commissionBy, transaction_id_for_member_id, 
+//                   transaction_id_of_commissionBy, credit, level) 
+//                  VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
+//                 [
+//                     txn.member_id,  // Use member_id from transaction
+//                     txnId,
+//                     txn.transaction_id,  // Original transaction ID
+//                     txn.amount,
+//                     `Moved to ${level}`
+//                 ]
+//             );
+
+//             await connection.commit();
+//             console.log(`✅ Commission credited to ${txn.member_id} for ${txn.transaction_id}`);
+//         } catch (error) {
+//             await connection.rollback();
+//             console.error(`🚨 Error processing ${txn.transaction_id}:`, error);
+//         } finally {
+//             connection.release();
+//         }
+//     }
+
+//     console.log('🎉 All held transactions processed');
+// }
+
+// Run the function
+// processHeldTransactionsDirect()
+
+// async function updateTransactionMessages(transactionIds) {
+//     if (!transactionIds || transactionIds.length === 0) {
+//         console.log('🚫 No transaction IDs provided');
+//         return;
+//     }
+
+//     try {
+//         const connection = await pool.getConnection();
+        
+//         for (const txnId of transactionIds) {
+//             // 1. Fetch the current message
+//             const [rows] = await connection.query(
+//                 `SELECT message FROM universal_transaction_table 
+//                  WHERE transaction_id = ?`,
+//                 [txnId]
+//             );
+
+//             if (rows.length === 0) {
+//                 console.log(`🚫 Transaction ${txnId} not found`);
+//                 continue;
+//             }
+
+//             const currentMessage = rows[0].message;
+
+//             // 2. Append the text if not already present
+//             const newMessage = currentMessage.includes('| Commission not credited due to insufficient directs')
+//                 ? currentMessage // If already present, keep as is
+//                 : `${currentMessage} | Commission not credited due to insufficient directs`;
+
+//             // 3. Update the message
+//             await connection.query(
+//                 `UPDATE universal_transaction_table 
+//                  SET message = ? 
+//                  WHERE transaction_id = ?`,
+//                 [newMessage, txnId]
+//             );
+
+//             console.log(`✅ Updated message for transaction ${txnId}`);
+//         }
+
+//         connection.release();
+//         console.log('🎉 All transactions updated successfully');
+//     } catch (error) {
+//         console.error('🚨 Error updating transaction messages:', error);
+//     }
+// }
+
+// // Example usage
+// const transactionIds = [
+//     "TXN1523277541", "TXN3116495402", "TXN3541135248", "TXN3184580536", 
+//     "TXN9901265942", "TXN0132315890", "TXN9485678617", "TXN3896815268", 
+//     "TXN2784971559", "TXN2429885198", "TXN7304963251", "TXN1387237285", 
+//     "TXN6668373880", "TXN2475098054", "TXN8305832524", "TXN7161704579", 
+//     "TXN7520811548", "TXN1574144150", "TXN1496175444", "TXN5619380969", 
+//     "TXN0702631533", "TXN7152093530", "TXN0067465533", "TXN7691260564", 
+//     "TXN8539420258", "TXN9524972275", "TXN5977006502", "TXN4023051205", 
+//     "TXN5769557116", "TXN0404949544", "TXN3389597595", "TXN6942592455"
+// ]
+// updateTransactionMessages(transactionIds)
 // Revised moneyPlantHoldTransactionsCheck with correct parent/child relationship
 const moneyPlantHoldTransactionsCheck = async (childMemberId) => {
     try {
