@@ -258,7 +258,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
     }
     //amount should be 250
-    if (amount <100) {
+    if (amount <10) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 250." });
     }
 
@@ -360,214 +360,6 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     
     }
 }); 
-
-
-
-router.post('/old-update-status-user-withdraw-request',authenticateToken,async (req, res) => {
-    const { transaction_id, status, message,mode} = req.body;
-
-    if (!transaction_id || !status || !message|| !mode) {
-        return res.status(400).json({ status: "false", message: "Transaction ID, status, and message are required." });
-    }
-
-    if (!['rejected', 'done'].includes(status)) {
-        return res.status(400).json({ status: "false", message: "Invalid status value." });
-    }
-    //check mode to be in manual , api 
-    if (!['manual', 'api'].includes(mode)) {
-        return res.status(400).json({ status: "false", message: "Invalid mode value." });
-    }
-
-    let message2 = status === "done" ? "sent to bank" : message;
-
-    try {
-        
-        // Handle additional logic for rejected status
-        if (status === "rejected") {
-            const [withdrawalDetails] = await pool.query(
-                `SELECT member_id, amount FROM withdraw_requests WHERE transaction_id = ?`,
-                [transaction_id]
-            );
-
-            if (withdrawalDetails.length === 0) {
-                return res.status(400).json({ status: "false", message: "Withdrawal details not found." });
-            }
-
-            const { member_id, amount } = withdrawalDetails[0];
-            const connection = await pool.getConnection();
-            const txn_id = generateTransactionId();
-
-            try {
-                await connection.beginTransaction();
-
-                // Log the transaction in the universal transaction table
-                await connection.query(
-                    `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status, message) 
-                     VALUES (?, ?, ?, ?, ?, ?)`,
-                    [txn_id, member_id, amount, "Withdrawal Rejected", "success", "Withdrawal rejected, money refunded."]
-                );
-                
-
-                // Update the user's wallet balance
-                await connection.query(
-                    `UPDATE users_total_balance 
-                     SET user_total_balance = user_total_balance + ? 
-                     WHERE member_id = ?`,
-                    [amount, member_id]
-                );
-
-                // Log the refund in the commission wallet
-                await connection.query(
-                    `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [member_id, "Withdrawal Rejected", txn_id, txn_id, amount, 0.0, 0]
-                );
-
-                await connection.commit();
-                return res.status(200).json({ status: "true", message: "Withdrawal request rejected successfully, funds refunded." });
-            } catch (error) {
-                await connection.rollback();
-                console.error(error);
-                return res.status(500).json({ status: "false", message: "Failed to process rejection." });
-            } finally {
-                connection.release();
-            }
-        }
-        
-        //get bank details from bank_kyc_details
-        const [withdrawalDetails] = await pool.query(
-            `SELECT member_id, amount FROM withdraw_requests WHERE transaction_id = ?`,
-            [transaction_id]
-        );
-        
-        if (withdrawalDetails.length === 0) {
-            return res.status(400).json({ status: "false", message: "Withdrawal details not found." });
-        }
-        
-        const { member_id, amount } = withdrawalDetails[0];
-        
-        const [bank_details] = await pool.query(
-            `SELECT u.email, b.FullName,b.IFSC_Code,b.Bank_Name, b.Account_number 
-             FROM usersdetails u
-             INNER JOIN user_bank_kyc_details b ON u.memberid = b.member_id
-             WHERE u.memberid = ?`,
-            [member_id]
-        );
-        
-        if (bank_details.length === 0) {
-            return res.status(400).json({ status: "false", message: "Bank details not found." });
-        }
-       
-        
-        if (mode==="api"){
-            const payload = {
-                "OrderId": transaction_id,
-                "BankName": bank_details[0].Bank_Name,
-                "AccountNo": bank_details[0].Account_number,
-                "Ifsc": bank_details[0].IFSC_Code,
-                "AccountHolderName": bank_details[0].FullName,
-                "AccountType": "Saving",
-                "Amount": amount,
-                "TxnMode": "IMPS",
-                "Remarks": `Unopay withdrawal for ${bank_details[0].FullName}`,
-                "latitude": "28.6798",
-                "longitude": "77.0927"
-            };
-            console.log("payload->>"+payload);
-            // const payload = 
-            //     {
-            //         "OrderId": "abce2701495663",
-            //         "BankName": "UNION BANK OF INDIA",
-            //         "AccountNo": "089422010000036",
-            //         "Ifsc": "UBIN0908941",
-            //         "AccountHolderName": "ASHISH",
-            //         "AccountType": "Saving",
-            //         "Amount": "100",
-            //         "TxnMode": "IMPS",
-            //         "Remarks": "okok",
-            //         "latitude": "34.9",
-            //         "longitude": "56.9"
-            //     }
-            
-
-
-            //run the payout api 
-            // const result = await payoutTransfer(payload);
-            const result ={
-                "statusCode": "TUP",
-                "statusMsg": "Transaction Pending",
-                "dataContent": {
-                  "OrderId":transaction_id,
-                  "bankrrnno": "lkf340930932093203",
-                  "accountno": "6713XXXXXXXX",
-                  "amount": "100",
-                  "status": "PENDING",
-                  "Ifsccode": "UBINXXXXXX",
-                  "name": "Test"
-                }
-              }
-            if (result?.dataContent.status === 'SUCCESS'|| result?.dataContent?.status === 'PENDING') {
-                console.log({
-                    status: 'success',
-                    message: 'Payout initiated',
-                    result: result.dataContent
-                });
-            } else {
-                
-                res.status(400).json({ status:false ,message: 'Payout failed', details: result });
-            }
-
-            
-
-        }
-        const connection= await pool.getConnection();
-        await connection.beginTransaction();
-        const [updateResult] = await pool.query(
-            `UPDATE withdraw_requests SET status = ?, message = ?,utr_no=? WHERE transaction_id = ?`,
-            [status, message2, transaction_id,results?.dataContent?.UTRNumber]
-        );
-
-
-        if (updateResult.affectedRows === 0) {
-            return res.status(400).json({ status: "false", message: "Transaction not found or not updated." });
-        }
-
-        
-
-    
-        const currentDateInKolkata = moment().tz('Asia/Kolkata').format('YYYY-MM-DD');
-        await pool.query(
-        `INSERT INTO daily_AddFund_Withdraw_Report (Total_Bank_Withdraw, date_time)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE
-        Total_Bank_Withdraw = Total_Bank_Withdraw + VALUES(Total_Bank_Withdraw),
-        updated_at = CURRENT_TIMESTAMP`,
-        [amount, currentDateInKolkata]
-        );
-        connection.release()
-
-        
-        // Combine both withdrawal details and bank details into one object
-        const emailData = {
-            member_id,
-            amount,
-            email: bank_details[0].email,
-            Bank_Name: bank_details[0].Bank_Name,
-            Account_number: bank_details[0].Account_number
-        };
-        
-        
-       
-        await sendWithdrawalEmail(emailData);
-        res.status(200).json({ status: "true", message: "Withdrawal Processed and details sent successfully." });
-        // Pass combined data to the sendWithdrawalEmail function
-    } catch (error) {
-        console.error("Error sending withdrawal email:", error);
-        res.status(500).json({ status: "false", message: "Internal Server Error." });
-    }
-   
-
-});
 
 
 
@@ -1038,7 +830,7 @@ router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => 
 router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = 100;
         const offset = (page - 1) * limit;
 
         // Optimized query with proper JOIN and column selection
@@ -1047,8 +839,11 @@ router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
                 wr.*,
                 wr.membership,
                 kyc.bank_name,
+                kyc.FullName,
                 kyc.account_number,
-                kyc.ifsc_code
+                kyc.ifsc_code,
+                kyc.Aadhar_Number
+
             FROM withdraw_requests wr
             LEFT JOIN user_bank_kyc_details kyc 
                 ON wr.member_id = kyc.member_id
@@ -1079,7 +874,9 @@ router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
                 membership: request.membership,
                 bank_name: request.bank_name,
                 account_number: request.account_number,
-                ifsc_code: request.ifsc_code
+                ifsc_code: request.ifsc_code,
+                Aadhar_Number: request.Aadhar_Number,
+                FullName: request.FullName
             }
         }));
 

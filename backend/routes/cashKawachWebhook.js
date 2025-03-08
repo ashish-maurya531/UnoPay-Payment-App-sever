@@ -142,7 +142,9 @@ router.post('/cashkavach',async (req, res) => {
 router.get('/balance', authenticateToken, async (req, res) => {
     try {
         const balance = await getBalance();
+        
         res.json({ success: true, balance: balance.dataContent });
+        // res.json({ success: true, balance: "100000" });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

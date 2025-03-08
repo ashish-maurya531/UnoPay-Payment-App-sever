@@ -34,7 +34,7 @@ const UserAddFundRequest = () => {
   const [membershipFilter, setMembershipFilter] = useState(null);
   const [currentPagination, setCurrentPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 100,
   });
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const { RangePicker } = DatePicker;
@@ -424,9 +424,8 @@ export default UserAddFundRequest;
 
 
 
-
-
-
+////////////////////////////////////
+// /v2
 
 
 
