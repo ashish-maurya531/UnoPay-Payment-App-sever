@@ -248,6 +248,7 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
 
 router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     const { member_id, amount } = req.body;
+    return res.status(200).json({status: 'false',message: "server is down"});
 
     if (!member_id || !amount) {
         return res.status(200).json({ status: "false", message: "Member ID and amount are required." });
