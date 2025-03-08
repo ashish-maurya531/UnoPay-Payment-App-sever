@@ -259,7 +259,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
     }
     //amount should be 250
-    if (amount <10) {
+    if (amount <250) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 250." });
     }
 

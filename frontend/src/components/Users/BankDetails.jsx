@@ -1271,7 +1271,7 @@ const KycManagement = () => {
                   ))}
 
                   {/* Approve/Reject Buttons */}
-                  {partStatus === "pending" && (
+                  {(partStatus === "pending" || partStatus==="approved")&&  (
                     <Space>
                       <Button
                         type="primary"

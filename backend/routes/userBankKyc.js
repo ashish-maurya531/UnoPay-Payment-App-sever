@@ -1018,9 +1018,9 @@ router.post('/admin/update-part-status', authenticateToken, async (req, res) => 
     const [currentStatusResult] = await pool.query(`SELECT status FROM ${tableMap[part]} WHERE member_id = ?`, [member_id]);
     const currentStatus = currentStatusResult[0]?.status;
 
-    if (currentStatus === 'approved' && status !== 'approved') {
-      return res.status(400).json({ status: 'false', message: 'Cannot modify an already approved part' });
-    }
+    // if (currentStatus === 'approved' && status !== 'approved') {
+    //   return res.status(400).json({ status: 'false', message: 'Cannot modify an already approved part' });
+    // }
     
     // Update status
     await pool.query(`
