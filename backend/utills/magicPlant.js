@@ -86,6 +86,12 @@ const cascadeLevels = async () => {
                         [txnId, movedMember, `Moved to ${nextLevel.level_name}`, reward, 
                         `Moved to ${nextLevel.level_name} | Commission not credited due to insufficient directs`]
                     );
+                    await pool.query(
+                        `INSERT INTO commission_wallet 
+                        (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, level) 
+                        VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
+                        [movedMember, txnId, txnId, reward, `Moved to ${nextLevel.level_name}`]
+                    );
                 } else {
                     console.log(`💸 Crediting commission for ${movedMember}`);
                     await pool.query(
@@ -190,15 +196,15 @@ const moneyPlantHoldTransactionsCheck = async (childMemberId) => {
                         [newMessage, txn.transaction_id]
                     );
 
-                    // Insert into commission wallet
-                    await connection.query(
-                        `INSERT INTO commission_wallet 
-                         (member_id, commissionBy, transaction_id_for_member_id, 
-                          transaction_id_of_commissionBy, credit, level) 
-                         VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
-                        [parent.member_id, txn.transaction_id, txn.transaction_id, 
-                         txn.amount, 'Commission Released']
-                    );
+                    // // Insert into commission wallet
+                    // await connection.query(
+                    //     `INSERT INTO commission_wallet 
+                    //      (member_id, commissionBy, transaction_id_for_member_id, 
+                    //       transaction_id_of_commissionBy, credit, level) 
+                    //      VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
+                    //     [parent.member_id, txn.transaction_id, txn.transaction_id, 
+                    //      txn.amount, 'Commission Released']
+                    // );
 
                     await connection.commit();
                     console.log(`✅ Released ${txn.amount} for ${parent.member_id} (TX: ${txn.transaction_id})`);
