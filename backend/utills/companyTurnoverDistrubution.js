@@ -905,7 +905,7 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
                 (member_id, commissionBy, transaction_id_for_member_id, 
                  transaction_id_of_commissionBy, credit, level) 
                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [memberId, 'Rank Income', txnId, txnId, amount, `|${GEMSTONE_COLUMNS[rankNumber-1]}|L${rankNumber}`]
+                [memberId, 'Rank Income', txnId, txnId, amount, `${type} income|${GEMSTONE_COLUMNS[rankNumber-1]}|L${rankNumber}`]
             );
         }
 
