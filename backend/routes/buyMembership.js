@@ -13,44 +13,94 @@ const {handleMagicPlant,moneyPlantHoldTransactionsCheck}=require('../utills/magi
 const authenticateToken = require('../middleware/auth');
 
 
-// handleMagicPlant("UP103841");
-// handleMagicPlant("UP109736");
-// handleMagicPlant("UP109756");
-// handleMagicPlant("UP109716");
-// handleMagicPlant("UP109776");
-// handleMagicPlant("UP109786");
-// handleMagicPlant("UP109396");
-// handleMagicPlant("a");
-// handleMagicPlant("b");
-// handleMagicPlant("c");
-// handleMagicPlant("d");
-// handleMagicPlant("e");
-// handleMagicPlant("f");
-// handleMagicPlant("g");
-// handleMagicPlant("h");
-// handleMagicPlant("i");
-// handleMagicPlant("j");
-// handleMagicPlant("k");
-// handleMagicPlant("l");
-// handleMagicPlant("m");
-// handleMagicPlant("n");
-// handleMagicPlant("o");
-// handleMagicPlant("p");
-// handleMagicPlant("q");
-// handleMagicPlant("r");
-// handleMagicPlant("s");
-// handleMagicPlant("t");
-// handleMagicPlant("u");
-// handleMagicPlant("v");
-// handleMagicPlant("w");
-// handleMagicPlant("x");
-// handleMagicPlant("y");
-// handleMagicPlant("z");
-// handleMagicPlant("aa");
-// handleMagicPlant("ab");
-// handleMagicPlant("ac");
-// handleMagicPlant("ad");
-// handleMagicPlant("ae");
+
+// handleMagicPlant("UP101577");//not
+// handleMagicPlant("UP108732");
+// handleMagicPlant("UP171179");
+// handleMagicPlant("UP134641");
+// handleMagicPlant("UP127901");
+// handleMagicPlant("UP151060");
+// handleMagicPlant("UP148902");
+// handleMagicPlant("UP169818");
+// handleMagicPlant("UP159245");
+// handleMagicPlant("UP126962");
+// handleMagicPlant("UP194556");
+// handleMagicPlant("UP122021");
+// handleMagicPlant("UP133878");
+// handleMagicPlant("UP156814");
+// handleMagicPlant("UP180238");
+// handleMagicPlant("UP155349");
+// handleMagicPlant("UP153982");
+// handleMagicPlant("UP167157");
+// handleMagicPlant("UP175720");
+// handleMagicPlant("UP192863");
+// handleMagicPlant("UP154106");
+// handleMagicPlant("UP134497");
+// handleMagicPlant("UP138533");
+// handleMagicPlant("UP111867");
+// handleMagicPlant("UP125837");
+// handleMagicPlant("UP190747");
+
+// moneyPlantHoldTransactionsCheck("UP101577");///not
+// moneyPlantHoldTransactionsCheck("UP108732");
+// moneyPlantHoldTransactionsCheck("UP171179");
+// moneyPlantHoldTransactionsCheck("UP134641");
+// moneyPlantHoldTransactionsCheck("UP127901");
+// moneyPlantHoldTransactionsCheck("UP151060");
+// moneyPlantHoldTransactionsCheck("UP148902");
+// moneyPlantHoldTransactionsCheck("UP169818");
+// moneyPlantHoldTransactionsCheck("UP159245");
+// moneyPlantHoldTransactionsCheck("UP126962");
+// moneyPlantHoldTransactionsCheck("UP194556");
+// moneyPlantHoldTransactionsCheck("UP122021");
+// moneyPlantHoldTransactionsCheck("UP133878");
+// moneyPlantHoldTransactionsCheck("UP156814");
+// moneyPlantHoldTransactionsCheck("UP180238");
+// moneyPlantHoldTransactionsCheck("UP155349");
+// moneyPlantHoldTransactionsCheck("UP153982");
+// moneyPlantHoldTransactionsCheck("UP167157");
+// moneyPlantHoldTransactionsCheck("UP175720");
+// moneyPlantHoldTransactionsCheck("UP192863");
+// moneyPlantHoldTransactionsCheck("UP154106");
+// moneyPlantHoldTransactionsCheck("UP134497");
+// moneyPlantHoldTransactionsCheck("UP138533");
+// moneyPlantHoldTransactionsCheck("UP111867");
+// moneyPlantHoldTransactionsCheck("UP125837");
+// moneyPlantHoldTransactionsCheck("UP190747");
+
+
+
+
+
+
+
+
+
+
+
+
+// handleMagicPlant("UP100070");
+// handleMagicPlant("2"); 
+// handleMagicPlant("3");
+// handleMagicPlant("4");
+// handleMagicPlant("5");
+// handleMagicPlant("6");
+// handleMagicPlant("7");
+// handleMagicPlant("8");
+// handleMagicPlant("9");
+// handleMagicPlant("10");
+// handleMagicPlant("11");
+// handleMagicPlant("12");
+// handleMagicPlant("13");
+// handleMagicPlant("14");
+// handleMagicPlant("15");
+// handleMagicPlant("16");
+// handleMagicPlant("17");
+// handleMagicPlant("18");
+// handleMagicPlant("19");
+// handleMagicPlant("20");
+// handleMagicPlant("21");
+
 
 
 
@@ -196,20 +246,30 @@ router.post('/buymembership', authenticateToken,async (req, res) => {
             await connection.commit();
 
             // Step 2: Send success response
-            res.status(200).json({ status: 'success', message: 'Membership purchased successfully.' });
+            // res.status(200).json({ status: 'success', message: 'Membership purchased successfully.' });
     
             // Step 3: Update rank and backtrack
             await updateRankAndBacktrack(member_id);
             console.log(`✅ Rank update completed for ${member_id}`);
     
-            // Step 4: Check if member already exists in magic_plant_levels
-            const [magicPlantMember] = await pool.query(
-                "SELECT COUNT(*) AS count FROM magic_plant_levels WHERE JSON_CONTAINS(member_list, ?)",
-                [JSON.stringify(member_id)]
+            // Step 4: Check if member exists as a member or as a child in magic_plant_levels
+              
+              const [magicPlantMember] = await pool.query(
+                `SELECT COUNT(*) AS count 
+                 FROM magic_plant_levels, 
+                      JSON_TABLE(member_list, '$[*]' COLUMNS(
+                          member VARCHAR(40) PATH '$.member',
+                          children JSON PATH '$.children'
+                      )) AS mt 
+                 WHERE mt.member = ? 
+                    OR JSON_CONTAINS(mt.children, JSON_QUOTE(?), '$')`, 
+                [member_id, member_id]
             );
-    
+            
+            
+
             if (magicPlantMember[0].count > 0) {
-                console.log(`⚠️ ${member_id} already exists in magic_plant_levels. Skipping handleMagicPlant.`);
+                console.log(`⚠️ ${member_id} already exists in magic_plant_levels (as a member or child). Skipping handleMagicPlant.`);
             } else {
                 // Step 5: If not found, add member to Magic Plant
                 console.log(`🚀 Adding ${member_id} to Magic Plant Levels`);
@@ -220,7 +280,8 @@ router.post('/buymembership', authenticateToken,async (req, res) => {
             // Step 6: Check and process held transactions for the member in Money Plant
             console.log(`🔍 Checking held transactions for ${member_id} in Money Plant`);
             await moneyPlantHoldTransactionsCheck(member_id);
-            console.log(`✅ Held transactions processed for ${member_id}`);
+            console.log(`✅ Hold transactions processed for ${member_id}`);
+            res.status(200).json({ status: 'success', message: 'Membership purchased successfully.' });
 
         }
         catch (error) {
