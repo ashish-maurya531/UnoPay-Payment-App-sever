@@ -74,8 +74,124 @@ const updateDailyWeeklyMonthlyTable = async (connection, memberId, updates) => {
     );
 };
 
+// // Daily Distribution
+// const distributeDailyRankIncome = async () => {
+//     let connection;
+//     try {
+//         connection = await pool.getConnection();
+//         await connection.beginTransaction();
+
+//         if (await checkPeriodClosingExists('day')) {
+//             await connection.rollback();
+//             return { success: false, message: 'Daily closing already completed' };
+//         }
+//         const incomeResult = await getMembershipTransactionsForToday();
+//         const dailyIncome = incomeResult.todayIncome;
+//         // const dailyIncome = 550;
+
+//         if (!dailyIncome || dailyIncome <= 0) {
+//             await connection.rollback();
+//             await createZeroAmountClosing('daily');
+//             return { success: true, message: 'Daily income was zero, closing recorded' };
+//         }
+
+//         const [members] = await connection.query(
+//             'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
+//         );
+
+//         const memberIds = members.map(member => member.member_id);
+//         // console.log("member ids->>>"+memberIds)
+//         if (!memberIds ||memberIds==""){
+//             await connection.query(
+//                 `INSERT INTO company_closing 
+//                 (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+//                 VALUES (?, NOW(), ?, ?, ?)`,
+//                 ['daily', dailyIncome, 0, "{}"]
+//             );
+//             await connection.commit();
+//             return { 
+//                 success: true, 
+//                 message: 'Daily distribution completed || to 0 members',
+//                 data: {
+//                     totalIncome: dailyIncome,
+//                     distributedAmount:0,
+//                     membersCount:0
+//                 }
+//             };
+//         }
+//         const [userDetails] = await connection.query(
+//             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
+//             [memberIds]
+//         );
+
+//         const nameMap = {};
+//         userDetails.forEach(user => {
+//             nameMap[user.member_id] = user.name;
+//         });
+//         console.log(nameMap);
+
+//         let distributedAmount = 0;
+//         const membersMap = {};
+
+//         for (const member of members) {
+//             const { member_id, rank_no } = member;
+            
+//             // Skip processing for member UP100010
+//             if (member_id === 'UP100010') {
+//                 continue;
+//             }
+
+//             let memberTotal = 0;
+//             const rankDetails = {
+//                 name: nameMap[member_id] || 'Unknown'
+//             };
+
+//             for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
+//                 const rate = DAILY_COMMISSION_RATES[currentRank] || 0;
+//                 const amount = parseFloat((dailyIncome * rate).toFixed(6));
+                
+//                 if (amount > 0) {
+//                     rankDetails[`rank${currentRank}`] = amount;
+//                     memberTotal += amount;
+//                 }
+//             }
+
+//             if (memberTotal > 0) {
+//                 await updateMemberBalance(connection, member_id, rankDetails, 'daily');
+//                 await updateDailyWeeklyMonthlyTable(connection, member_id, { daily: memberTotal });
+//                 distributedAmount += memberTotal;
+//                 membersMap[member_id] = rankDetails;
+//             }
+//         }
+
+//         await connection.query(
+//             `INSERT INTO company_closing 
+//             (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
+//             VALUES (?, NOW(), ?, ?, ?)`,
+//             ['daily', dailyIncome, distributedAmount, JSON.stringify(membersMap)]
+//         );
+
+//         await connection.commit();
+//         return { 
+//             success: true, 
+//             message: 'Daily distribution completed',
+//             data: {
+//                 totalIncome: dailyIncome,
+//                 distributedAmount,
+//                 membersCount: Object.keys(membersMap).length
+//             }
+//         };
+
+//     } catch (error) {
+//         if (connection) await connection.rollback();
+//         console.error('Daily distribution error:', error);
+//         return { success: false, message: 'Daily distribution failed' };
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// };
 // Daily Distribution
-const distributeDailyRankIncome = async () => {
+const distributeDailyRankIncome = async (custom_daily_amount_distribution) => {
     let connection;
     try {
         connection = await pool.getConnection();
@@ -85,9 +201,12 @@ const distributeDailyRankIncome = async () => {
             await connection.rollback();
             return { success: false, message: 'Daily closing already completed' };
         }
+
         const incomeResult = await getMembershipTransactionsForToday();
-        const dailyIncome = incomeResult.todayIncome;
-        // const dailyIncome = 550;
+        const dailyIncome = (custom_daily_amount_distribution && custom_daily_amount_distribution > 0) 
+            ? custom_daily_amount_distribution
+            : incomeResult.todayIncome;
+        // const dailyIncome = 1000;
 
         if (!dailyIncome || dailyIncome <= 0) {
             await connection.rollback();
@@ -95,13 +214,14 @@ const distributeDailyRankIncome = async () => {
             return { success: true, message: 'Daily income was zero, closing recorded' };
         }
 
+        // Get members with their rank_no and rank_array
         const [members] = await connection.query(
-            'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
+            'SELECT member_id, rank_no, rank_array FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
         );
 
+        // Get member names from usersdetails table
         const memberIds = members.map(member => member.member_id);
-        // console.log("member ids->>>"+memberIds)
-        if (!memberIds ||memberIds==""){
+        if (!memberIds || memberIds.length === 0) {
             await connection.query(
                 `INSERT INTO company_closing 
                 (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
@@ -111,54 +231,87 @@ const distributeDailyRankIncome = async () => {
             await connection.commit();
             return { 
                 success: true, 
-                message: 'Daily distribution completed || to 0 members',
+                message: 'No eligible members for Daily distribution',
                 data: {
                     totalIncome: dailyIncome,
-                    distributedAmount:0,
-                    membersCount:0
+                    distributedAmount: 0,
+                    membersCount: 0
                 }
             };
         }
+        
         const [userDetails] = await connection.query(
             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
             [memberIds]
         );
 
+        // Create name mapping object
         const nameMap = {};
         userDetails.forEach(user => {
             nameMap[user.member_id] = user.name;
         });
-        console.log(nameMap);
 
         let distributedAmount = 0;
         const membersMap = {};
 
         for (const member of members) {
-            const { member_id, rank_no } = member;
+            const { member_id, rank_no, rank_array } = member;
             
             // Skip processing for member UP100010
             if (member_id === 'UP100010') {
                 continue;
             }
 
-            let memberTotal = 0;
-            const rankDetails = {
-                name: nameMap[member_id] || 'Unknown'
-            };
+            // Parse the rank array if it's stored as a JSON string
+            let rankLevels = [];
+            try {
+                rankLevels = rank_array ? (typeof rank_array === 'string' ? JSON.parse(rank_array) : rank_array) : [];
+            } catch (e) {
+                console.error(`Error parsing rank array for ${member_id}:`, e);
+                rankLevels = [];
+            }
 
-            for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
+            // If no valid rank array, use old method with rank_no for backward compatibility
+            if (!rankLevels || !Array.isArray(rankLevels) || rankLevels.length === 0) {
+                rankLevels = Array.from({ length: rank_no }, (_, i) => i + 1);
+            }
+
+            const rankDetails = {
+                name: nameMap[member_id] || 'Unknown', // Add member name
+                levels: rankLevels.join(',') // Add achieved levels as comma-separated string
+            };
+            const gemstoneUpdates = {};
+
+            // Process only the ranks in the rank array
+            for (const currentRank of rankLevels) {
                 const rate = DAILY_COMMISSION_RATES[currentRank] || 0;
-                const amount = parseFloat((dailyIncome * rate).toFixed(6));
-                
-                if (amount > 0) {
-                    rankDetails[`rank${currentRank}`] = amount;
-                    memberTotal += amount;
+                const fullAmount = parseFloat((dailyIncome * rate).toFixed(6));
+                const gemstoneColumn = GEMSTONE_COLUMNS[currentRank - 1];
+                const limit = Infinity; // No limit for daily distribution
+
+                if (fullAmount > 0) {
+                    const [currentTotals] = await connection.query(
+                        `SELECT ${gemstoneColumn} 
+                        FROM daily_weekly_monthly_total 
+                        WHERE member_id = ?`,
+                        [member_id]
+                    );
+
+                    const currentAmount = currentTotals[0]?.[gemstoneColumn] || 0;
+                    const remainingLimit = Math.max(0, limit - currentAmount);
+                    const payableAmount = Math.min(fullAmount, remainingLimit);
+
+                    if (payableAmount > 0) {
+                        rankDetails[`rank${currentRank}`] = payableAmount;
+                        gemstoneUpdates[gemstoneColumn] = payableAmount;
+                    }
                 }
             }
 
-            if (memberTotal > 0) {
+            if (Object.keys(gemstoneUpdates).length > 0) {
+                const memberTotal = Object.values(gemstoneUpdates).reduce((sum, val) => sum + val, 0);
                 await updateMemberBalance(connection, member_id, rankDetails, 'daily');
-                await updateDailyWeeklyMonthlyTable(connection, member_id, { daily: memberTotal });
+                await updateDailyWeeklyMonthlyTable(connection, member_id, gemstoneUpdates);
                 distributedAmount += memberTotal;
                 membersMap[member_id] = rankDetails;
             }
@@ -190,6 +343,7 @@ const distributeDailyRankIncome = async () => {
         if (connection) connection.release();
     }
 };
+
 // Weekly Distribution Configuration
 const WEEKLY_COMMISSION_RATE = 0.02; // 2%
 const MIN_ACTIVE_DIRECTS = 50;
