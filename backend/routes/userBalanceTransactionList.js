@@ -10,7 +10,8 @@ const { getFlexiWalletTransactionList,
   getTodayCommissionWalletBalance,
   getCommisionWalletBalance,
   TransactionsListForPassBook,
-  getHoldTotalCommission
+  getHoldTotalCommission,
+  getOverallTotalIncome
 } = require('../utills/checkUserBalance');
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const authenticateToken = require('../middleware/auth');
@@ -190,6 +191,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     try {
       const flexi_wallet = await getFlexiWalletBalance(member_id);
       const commission_wallet = await getCommisionWalletBalance(member_id);
+      const overall_Total_Income = await getOverallTotalIncome(member_id)
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
       const holdTotalCommission = await getHoldTotalCommission(member_id);
     //   console.log(holdTotalCommission);
@@ -201,12 +203,13 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
         datetime: new Date(),
         status: "true", 
         flexi_wallet, 
-        withoutminuscommission:commission_wallet, 
-        commission_wallet:commission_wallet-holdTotalCommission,
+        commission_wallet:commission_wallet,
         holdTotalCommission,
+        commission_minus_hold:commission_wallet-holdTotalCommission,  
         "signup_bonus":649 ,
         "membership":membership,
         "today_income":todayIncome,
+        "total_income":overall_Total_Income,
         ...result[0]
       
       })
@@ -215,9 +218,11 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
         flexi_wallet, 
         commission_wallet:commission_wallet,
         holdTotalCommission,
+        commission_minus_hold:commission_wallet-holdTotalCommission,  
         "signup_bonus":649 ,
         "membership":membership,
         "today_income":todayIncome,
+        "total_income":overall_Total_Income,
         ...result[0]
       
       });

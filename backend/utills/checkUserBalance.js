@@ -41,6 +41,23 @@ async function getCommisionWalletBalance(member_id) {
     }
 }
 
+async function getOverallTotalIncome(member_id) {
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+              SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit
+              
+            FROM commission_wallet 
+            WHERE member_id = ?`, 
+            [member_id]);
+
+        // console.log(rows[0].total_credit- rows[0].total_debit);
+        return rows[0].total_credit-0;
+    } catch (error) {
+        console.error('Error getting user balance:', error);
+        return 0;
+    }
+}
 
 
 
@@ -514,7 +531,8 @@ module.exports = { getFlexiWalletTransactionList,
     getTodayCommissionWalletBalance,
     incomeTransactionsList,
     TransactionsListForPassBook,
-    getHoldTotalCommission
+    getHoldTotalCommission,
+    getOverallTotalIncome
 };
 
 
