@@ -1054,7 +1054,7 @@ const KycManagement = () => {
           member_id: selectedRecord.member_id,
           part: activeTab,
           status,
-          message: rejectionMessage || `${activeTab} ${status}`,
+          message: rejectionMessage || `done`,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

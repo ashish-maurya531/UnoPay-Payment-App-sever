@@ -87,12 +87,14 @@ async function getCommisionWalletBalance(member_id) {
 async function getTodayCommissionWalletBalance(member_id) {
     try {
         // Get current IST date boundaries
-        const istStart = moment().tz("Asia/Kolkata").startOf('day');
-        const istEnd = moment().tz("Asia/Kolkata").endOf('day');
+        // const istStart = moment().tz("Asia/Kolkata").startOf('day');
+        // const istEnd = moment().tz("Asia/Kolkata").endOf('day');
 
-        // Convert to UTC format covering full IST day
-        const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
-        const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
+        // // Convert to UTC format covering full IST day
+        // const utcStart = istStart.utc().subtract(5, 'hours').subtract(30, 'minutes');
+        // const utcEnd = istEnd.utc().add(5, 'hours').add(30, 'minutes');
+        const utcStart = moment().tz("Asia/Kolkata").startOf('day');
+        const utcEnd = moment().tz("Asia/Kolkata").endOf('day');
 
         const [rows] = await pool.query(
             `SELECT 
