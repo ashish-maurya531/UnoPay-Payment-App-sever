@@ -182,7 +182,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     }
   
     // Check if member_id is valid
-    const [memberExist] = await pool.query('SELECT memberid, status,membership FROM usersdetails WHERE memberid = ?', [member_id]);
+    const [memberExist] = await pool.query('SELECT memberid,username status,membership FROM usersdetails WHERE memberid = ?', [member_id]);
 
     if (memberExist.length === 0) {
       return res.status(404).json({ status: "false", message: "Member not found" });
@@ -200,6 +200,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
       // Check if user exists
      console.log({
         member_id: member_id,
+        username: memberExist[0].username,
         datetime: new Date(),
         status: "true", 
         flexi_wallet, 
