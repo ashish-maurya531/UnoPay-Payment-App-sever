@@ -240,8 +240,8 @@ iframe {
 /* ===== 02. Global Style ===== */
 
 h1 {
-	font-size: 40px;
-	line-height: 46px;
+	font-size: 76px;
+	line-height: 90px;
 	font-weight: 700;
 	font-family: "Poppins", sans-serif;
 }
@@ -1950,7 +1950,7 @@ footer ul li a:hover {
 }
 
 footer li a span {
-	font-size: 16px;
+	font-size: 24px;
 	font-weight: 600;
 	padding: 10px 0px 0px;
 	background: linear-gradient(100.57deg, #F7941E 12.93%, #00A79D 121.02%);
