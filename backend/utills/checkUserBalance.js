@@ -134,16 +134,32 @@ async function getHoldTotalCommission(member_id) {
         // Query to calculate the sum of amounts where the message contains the specified text
         const [rows] = await pool.query(
             `SELECT 
-                COALESCE(SUM(amount), 0) AS holdTotalCommission
-             FROM universal_transaction_table
+                COALESCE(SUM(credit), 0) AS holdTotalCommission
+             FROM commission_wallet
              WHERE member_id = ?
-             AND message LIKE '%Commission not credited due to insufficient directs%'`,
-            [member_id] // Parameters should be passed as a separate array
+             AND commissionBy=?`,
+            [member_id,"Magic Plant"] // Parameters should be passed as a separate array
         );
+        const [directs] = await pool.query(
+            `SELECT mh.member 
+            FROM member_hierarchy mh
+            JOIN usersdetails ud ON mh.member = ud.memberid
+            WHERE mh.upline = ? 
+            AND mh.level = 1 
+            AND ud.membership IN ('PREMIUM', 'BASIC')`,
+    
+            [member_id]
+        );
+        if (directs.length <2) {
+            return Number(Number(rows[0]?.holdTotalCommission || 0).toFixed(10));
+        }
+        else{
+            return 0;
+        }
      
 
         // Return the sum of held commissions
-        return Number(Number(rows[0]?.holdTotalCommission || 0).toFixed(10));
+        
 
     
     } catch (error) {
