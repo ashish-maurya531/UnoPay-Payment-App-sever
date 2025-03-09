@@ -415,8 +415,30 @@ router.post('/getmembershipStatus',authenticateToken, async (req, res) => {
     if (userRows.length === 0) {
       return res.status(404).json({ status:"false",message: 'User not registered' });
     }
+     //code to get activation date
+     const [activation_Date] = await pool.query(`SELECT created_at FROM universal_transaction_table WHERE member_id = ?  and type=? and subType=?`, [member_id, "Membership", "BASIC"]);
+     let activationDate = "";
+     let formattedActivationDate = "";
+     if (activation_Date && activation_Date.length > 0 && activation_Date[0].created_at) {
+       activationDate = new Date(activation_Date[0].created_at);
+ 
+       // Extract day, month, and year
+       const day = activationDate.getDate();
+       const month = activationDate.toLocaleString('default', { month: 'short' });
+       const year = activationDate.getFullYear().toString().slice(-2);
+ 
+       // Format the date to "12 Feb 25"
+       formattedActivationDate = `${day < 10 ? '0' : ''}${day} ${month} ${year}`;
+ 
+       activationDate = formattedActivationDate;
+ 
+     }
     const membership = userRows[0].membership;
-    res.json({ status:"true", membership });
+    res.json({ 
+      status:"true",
+       membership,
+       doa:activationDate
+       });
   } catch (error) {
     console.error('Error fetching membership:', error);
     res.status(500).json({ status:"false",message: 'Internal server error' });
