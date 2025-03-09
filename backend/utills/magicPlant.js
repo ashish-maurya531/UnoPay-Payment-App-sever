@@ -540,8 +540,8 @@ const cascadePromotion = async (conn, node, currentLevelIndex) => {
                 `INSERT INTO universal_transaction_table 
                 (transaction_id, member_id, type, subType, amount, status, message) 
                 VALUES (?, ?, 'Magic Plant', ?, ?, 'success', ?)`,
-                [txnId, node.member, `Moved to Level ${currentLevelIndex + 1}`, reward, 
-                `Moved to ${currentLevelIndex + 1} | Commission not credited due to insufficient directs`]
+                [txnId, node.member, `Moved to Level ${currentLevelIndex + 2}`, reward, 
+                `Moved to ${currentLevelIndex + 2} | Commission not credited due to insufficient directs`]
             );
     
             await conn.query(
@@ -549,7 +549,7 @@ const cascadePromotion = async (conn, node, currentLevelIndex) => {
                 (member_id, commissionBy, transaction_id_for_member_id, 
                 transaction_id_of_commissionBy, credit, level) 
                 VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
-                [node.member, txnId, txnId, reward, `Moved to Level ${currentLevelIndex + 1}`]
+                [node.member, txnId, txnId, reward, `Moved to Level ${currentLevelIndex + 2}`]
             );
             
                 console.log(`Updating total balance with ${reward}`);
@@ -566,7 +566,7 @@ const cascadePromotion = async (conn, node, currentLevelIndex) => {
                 `INSERT INTO universal_transaction_table 
                 (transaction_id, member_id, type, subType, amount, status, message) 
                 VALUES (?, ?, 'Magic Plant', ?, ?, 'success', ?)`,
-                [txnId, node.member, `Moved to Level ${currentLevelIndex + 1}`, reward, 
+                [txnId, node.member, `Moved to Level ${currentLevelIndex + 2}`, reward, 
                 `Moved to ${currentLevelIndex + 1}`]
             );
     
@@ -575,7 +575,7 @@ const cascadePromotion = async (conn, node, currentLevelIndex) => {
                 (member_id, commissionBy, transaction_id_for_member_id, 
                 transaction_id_of_commissionBy, credit, level) 
                 VALUES (?, 'Magic Plant', ?, ?, ?, ?)`,
-                [node.member, txnId, txnId, reward, `Moved to Level ${currentLevelIndex + 1}`]
+                [node.member, txnId, txnId, reward, `Moved to Level ${currentLevelIndex + 2}`]
             );
             console.log(`Updating total balance with ${reward}`);
             await conn.query(
