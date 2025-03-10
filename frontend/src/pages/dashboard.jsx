@@ -29,6 +29,7 @@ import TeamList from '../components/Users/TeamList.jsx';
 import UserTree from '../components/Users/UserTree.jsx';
 
 import MainPage from '../pages/mainPage.jsx';
+import EditUserDetails from '../components/Admin/EditUserDetails.jsx';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -70,6 +71,7 @@ export default function Dashboard() {
         <Route path="daily-collection-report" element={<UserCommissionWalletTransactions />} />
         <Route path="team-list" element={<TeamList />} />
         <Route path="user-tree" element={<UserTree />} />
+        <Route path="edit-user-details" element={<EditUserDetails/>} />
       </Routes>
     </DashboardLayout>
   );
