@@ -273,13 +273,18 @@ async function getCommissionRates(membership, service) {
 
 async function getUplineHierarchy(memberId) {
     try {
-        const [rows] = await pool.query(
-            `SELECT * FROM member_hierarchy 
-             WHERE member = ? 
-             ORDER BY level 
-             LIMIT 20`,
-            [memberId]
-        );
+        // const [rows] = await pool.query(
+        //     `SELECT * FROM member_hierarchy 
+        //      WHERE member = ? 
+        //      ORDER BY level 
+        //      `,
+        //     [memberId]
+        // );
+        const [rows]=await pool.query(`SELECT * FROM member_hierarchy 
+            WHERE member = ? 
+            AND level <= 20 
+            ORDER BY level
+            `)
         return rows;
     } catch (error) {
         console.error('[ERROR] Hierarchy query failed:', error.message);
@@ -405,7 +410,7 @@ async function commisionPayout_2(txn_id_of_commissionBy, membership, service, me
                     transaction_id_of_commissionBy: txn_id_of_commissionBy,
                     credit: commission,
                     debit: 0,
-                    level: level-1//added -1
+                    level: level// previous - level-1
                 };
 
                 const table = (super_upline === "UP100010" || status === 'inactive') 
