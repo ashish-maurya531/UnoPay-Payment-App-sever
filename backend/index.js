@@ -32,7 +32,7 @@ const UnoPayGallery = require('./routes/unoPayGallery');
 const dailyAddFundandWithdrawReport = require('./routes/dailyAddFundandWithdrawReport');
 const cashKawachWebhook = require('./routes/cashKawachWebhook');
 const userProfileImage = require('./routes/userProfileImage');
-
+const EditDetails = require('./routes/editDetails');
 // Middleware
 const authenticateToken = require('./middleware/auth');
 
@@ -67,6 +67,7 @@ app.use('/api/auth', authenticateToken, UnoPayGallery);
 app.use('/api/auth', authenticateToken, dailyAddFundandWithdrawReport);
 app.use('/api/webhook', cashKawachWebhook);
 app.use('/api/auth', authenticateToken, userProfileImage);
+app.use('/api/auth',EditDetails);
 
 
 // Error handling middleware

@@ -95,6 +95,11 @@ export default function DashboardLayout({ children }) {
   
   const adminMenuItems = [
     {
+      key: 'EditUserDetails',
+      label: 'Edit User Details',
+      onClick: () => navigate('/dashboard/edit-user-details'),
+    },
+    {
       key: 'AdminQrList',
       label: 'Admin Payment QR List',
       onClick: () => navigate('/dashboard/qr-list'),
