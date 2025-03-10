@@ -7,15 +7,15 @@ const moment = require('moment-timezone');
 async function getFlexiWalletBalance(member_id) {
     try {
         const [rows] = await pool.query(`
-            SELECT 
-              SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit,
-              SUM(CASE WHEN message = 'Debited Successfully' THEN debit ELSE 0 END) AS total_debit
-            FROM flexi_wallet 
-            WHERE member_id = ?`, 
-            [member_id]);
+            SELECT total_balance 
+                FROM flexi_wallet
+                WHERE member_id = ?
+                ORDER BY date_time DESC
+                LIMIT 1;`,[member_id]);
 
         // console.log(rows[0].total_credit- rows[0].total_debit);
-        return rows[0].total_credit - rows[0].total_debit;
+        console.log(rows[0].total_balance)
+        return rows[0].total_balance;
     } catch (error) {
         console.error('Error getting user balance:', error);
         return 0;
@@ -25,16 +25,24 @@ async function getFlexiWalletBalance(member_id) {
 // function to get user credit and debit total from databse flexi wallet
 async function getCommisionWalletBalance(member_id) {
     try {
+        // const [rows] = await pool.query(`
+        //     SELECT 
+        //       SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit,
+        //       SUM(CASE WHEN message = 'Debited Successfully' THEN debit ELSE 0 END) AS total_debit
+        //     FROM commission_wallet 
+        //     WHERE member_id = ?`, 
+        //     [member_id]);
+
         const [rows] = await pool.query(`
-            SELECT 
-              SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit,
-              SUM(CASE WHEN message = 'Debited Successfully' THEN debit ELSE 0 END) AS total_debit
-            FROM commission_wallet 
-            WHERE member_id = ?`, 
-            [member_id]);
+            SELECT total_balance 
+                FROM commission_wallet
+                WHERE member_id = ?
+                ORDER BY date_time DESC
+                LIMIT 1;`,[member_id]);
 
         // console.log(rows[0].total_credit- rows[0].total_debit);
-        return rows[0].total_credit - rows[0].total_debit;
+        console.log(rows[0].total_balance)
+        return rows[0].total_balance;
     } catch (error) {
         console.error('Error getting user balance:', error);
         return 0;
@@ -403,7 +411,7 @@ async function TransactionsListForPassBook(member_id) {
             FROM commission_wallet cw
             LEFT JOIN usersdetails ud ON cw.commissionBy = ud.memberid
             WHERE cw.member_id = ? AND cw.message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
-        console.log(commissionWalletRows2);
+        // console.log(commissionWalletRows2);
         
         // Fetch commission wallet data
 
@@ -423,7 +431,7 @@ async function TransactionsListForPassBook(member_id) {
                 WHERE member_id = ?
                 AND message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
                 
-                console.log(commissionWalletRows);
+                // console.log(commissionWalletRows);
         // Fetch flexi wallet data
         const [flexiWalletRows] = await pool.query(`
             SELECT 

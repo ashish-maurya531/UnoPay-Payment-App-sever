@@ -191,11 +191,11 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     try {
       const flexi_wallet = await getFlexiWalletBalance(member_id);
       const commission_wallet = await getCommisionWalletBalance(member_id);
-      const overall_Total_Income = await getOverallTotalIncome(member_id)
+      const overall_Total_Income = await getOverallTotalIncome(member_id);
       const todayIncome=await getTodayCommissionWalletBalance(member_id);
       const holdTotalCommission = await getHoldTotalCommission(member_id);
     //   console.log(holdTotalCommission);
-      const membership= memberExist[0].membership
+      const membership= memberExist[0].membership;
       const [result] = await pool.query(`SELECT active_team,rank_no FROM ranktable WHERE member_id = ?`, [member_id]);
       // Check if user exists
      console.log({

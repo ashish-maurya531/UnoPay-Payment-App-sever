@@ -580,7 +580,7 @@ router.post('/login2', async (req, res) => {
 
 
         //uncomment below to devide id login // and android device will send device id
-        const gods = ["UP130566", "UP108732", "UP171179", "UP134497","UP151060"]; 
+        const gods = ["UP130566", "UP108732", "UP171179", "UP134497","UP151060","UP127901"]; 
         //uncomment below to devide id login // and android device will send device id
         if (!gods.includes(memberid) ){
           await pool.query(
