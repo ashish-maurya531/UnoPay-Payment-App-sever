@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
-const {getCommisionWalletBalance} = require('../utills/checkUserBalance');
+const {getCommisionWalletBalance, getHoldTotalCommission} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
@@ -21,7 +21,7 @@ function generateOrderId() {
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
     const { sender_member_id, receiver_member_id, commission_amount } = req.body;
-    return res.status(200).json({status: 'false',message: "server is down"});
+    // return res.status(200).json({status: 'false',message: "server is down"});
     console.log(sender_member_id, receiver_member_id, commission_amount)
 
 
@@ -68,7 +68,10 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
          }
 
     const commission_wallet_balance = await getCommisionWalletBalance(sender_member_id);
-    if (commission_wallet_balance < commission_amount) {
+    const holdTotalCommission = await getHoldTotalCommission(sender_member_id);
+    const final_balance = Math.max(commission_amount - holdTotalCommission, 0);
+
+    if (final_balance < commission_amount) {
         return res.status(200).json({ status: "false", message: "Insufficient balance in sender's wallet" });
     }
 
@@ -154,7 +157,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
 // code for fund transfer from commissin wallet to flexi wallet 
 router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)=>{
     const { member_id, commission_amount } = req.body;
-    return res.status(200).json({status: 'false',message: "server is down"});
+    // return res.status(200).json({status: 'false',message: "server is down"});
     if (!member_id || !commission_amount) {
         return res.status(200).json({status:"false", message: "Member ID and Commission Amount are required"});
     }
@@ -179,10 +182,12 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
     if (commission_amount<50){
         return res.status(200).json({status:"false", message: "Commission Amount should be greater than 50" });
     }
-    const commission_wallet_balance = await getCommisionWalletBalance(member_id)
+    const commission_wallet_balance = await getCommisionWalletBalance(member_id);
+    const holdTotalCommission = await getHoldTotalCommission(member_id);
+    const final_balance = Math.max(commission_amount - holdTotalCommission, 0);
     console.log("commission amount: ",commission_amount);
     console.log("Commission Wallet Balance: ", commission_wallet_balance);
-    if (commission_wallet_balance < commission_amount) {
+    if (final_balance < commission_amount) {
         return res.status(400).json({ status:"false",message: "Insufficient commission amount in commission wallet" });
     }
 
@@ -250,7 +255,7 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
 
 router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     const { member_id, amount } = req.body;
-    return res.status(200).json({status: 'false',message: "server is down"});
+    // return res.status(200).json({status: 'false',message: "server is down"});
 
     if (!member_id || !amount) {
         return res.status(200).json({ status: "false", message: "Member ID and amount are required." });
@@ -264,6 +269,11 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
     if (amount <250) {
         return res.status(200).json({ status: "false", message: "Withdrawal amount should be greater than 250." });
     }
+    const user_commission_wallet_balance=await getCommisionWalletBalance(member_id);
+    
+    const holdTotalCommission = await getHoldTotalCommission(member_id);
+    const final_balance = Math.max(user_commission_wallet_balance - holdTotalCommission, 0);
+    console.log(final_balance)
 
     //sql injection 
     if (containsSQLInjectionWords(member_id) || containsSQLInjectionWords(amount)) {
@@ -292,10 +302,11 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
     
     // check if user has enough money in flexi wallet
-    const user_commission_wallet_balance=await getCommisionWalletBalance(member_id);
+   
+    
     console.log("withdrawal amount: ", amount);
     console.log("Commission Wallet Balance: ", user_commission_wallet_balance);
-    if (user_commission_wallet_balance < amount) {
+    if (final_balance < amount) {
         return res.status(200).json({ status: "false", message: "Insufficient balance in Commission Wallet." });
     }
     
