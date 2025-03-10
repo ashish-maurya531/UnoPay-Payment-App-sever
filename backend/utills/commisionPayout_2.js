@@ -280,11 +280,12 @@ async function getUplineHierarchy(memberId) {
         //      `,
         //     [memberId]
         // );
-        const [rows]=await pool.query(`SELECT * FROM member_hierarchy 
+        const [rows]=await pool.query
+        (`SELECT * FROM member_hierarchy 
             WHERE member = ? 
             AND level <= 20 
             ORDER BY level
-            `)
+            `,[memberId])
         return rows;
     } catch (error) {
         console.error('[ERROR] Hierarchy query failed:', error.message);

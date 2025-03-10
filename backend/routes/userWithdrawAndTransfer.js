@@ -21,8 +21,9 @@ function generateOrderId() {
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
     const { sender_member_id, receiver_member_id, commission_amount } = req.body;
-    // return res.status(200).json({status: 'false',message: "server is down"});
+
     console.log(sender_member_id, receiver_member_id, commission_amount)
+    // return res.status(200).json({status: 'false',message: "server is down"});
 
 
     if (!sender_member_id || !receiver_member_id || !commission_amount) {
@@ -69,7 +70,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
 
     const commission_wallet_balance = await getCommisionWalletBalance(sender_member_id);
     const holdTotalCommission = await getHoldTotalCommission(sender_member_id);
-    const final_balance = Math.max(commission_amount - holdTotalCommission, 0);
+    const final_balance = Math.max(commission_wallet_balance - holdTotalCommission, 0);
 
     if (final_balance < commission_amount) {
         return res.status(200).json({ status: "false", message: "Insufficient balance in sender's wallet" });
@@ -157,6 +158,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
 // code for fund transfer from commissin wallet to flexi wallet 
 router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)=>{
     const { member_id, commission_amount } = req.body;
+    console.log(member_id, commission_amount)
     // return res.status(200).json({status: 'false',message: "server is down"});
     if (!member_id || !commission_amount) {
         return res.status(200).json({status:"false", message: "Member ID and Commission Amount are required"});
@@ -184,7 +186,7 @@ router.post("/commissin-wallet-to-flexi-wallet",authenticateToken,async(req,res)
     }
     const commission_wallet_balance = await getCommisionWalletBalance(member_id);
     const holdTotalCommission = await getHoldTotalCommission(member_id);
-    const final_balance = Math.max(commission_amount - holdTotalCommission, 0);
+    const final_balance = Math.max(commission_wallet_balance - holdTotalCommission, 0);
     console.log("commission amount: ",commission_amount);
     console.log("Commission Wallet Balance: ", commission_wallet_balance);
     if (final_balance < commission_amount) {

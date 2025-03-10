@@ -388,37 +388,42 @@ async function TransactionsListForPassBook(member_id) {
             return { message: 'User not found' };
         }
         // Fetch commission wallet data
-        // const [commissionWalletRows] = await pool.query(`
-        //     SELECT 
-        //         cw.member_id,
-        //         cw.commissionBy,
-        //         CONCAT(cw.commissionBy, '-', COALESCE(ud.username, '')) AS commissionBy,
-        //         cw.transaction_id_for_member_id,
-        //         cw.transaction_id_of_commissionBy,
-        //         cw.credit,
-        //         cw.debit,
-        //         cw.message,
-        //         cw.date_time,
-        //         cw.level
-        //     FROM commission_wallet cw
-        //     LEFT JOIN usersdetails ud ON cw.commissionBy = ud.memberid
-        //     WHERE cw.member_id = ?`, 
-        //     [member_id]
-        // );
+        const [commissionWalletRows2] = await pool.query(`
+            SELECT 
+                cw.member_id,
+                cw.commissionBy,
+                CONCAT(cw.commissionBy, '-', COALESCE(ud.username, '')) AS commissionBy,
+                cw.transaction_id_for_member_id,
+                cw.transaction_id_of_commissionBy,
+                cw.credit,
+                cw.debit,
+                cw.message,
+                cw.date_time,
+                cw.level
+            FROM commission_wallet cw
+            LEFT JOIN usersdetails ud ON cw.commissionBy = ud.memberid
+            WHERE cw.member_id = ? AND cw.message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
+        console.log(commissionWalletRows2);
+        
         // Fetch commission wallet data
+
         const [commissionWalletRows] = await pool.query(`
             SELECT 
                 member_id,
                 transaction_id_for_member_id,
                 transaction_id_of_commissionBy,
+                commissionBy,
                 credit,
                 debit,
                 total_balance,
-                date_time
-            FROM commission_wallet
-            WHERE member_id = ?
-            AND message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
-
+                date_time,
+                message,
+                level
+                FROM commission_wallet
+                WHERE member_id = ?
+                AND message IN ('Credited Successfully', 'Debited Successfully')`, [member_id]);
+                
+                console.log(commissionWalletRows);
         // Fetch flexi wallet data
         const [flexiWalletRows] = await pool.query(`
             SELECT 
@@ -474,7 +479,8 @@ async function TransactionsListForPassBook(member_id) {
                     wallet_type: 'commission_wallet',
                     type: transaction.type,
                     subType: transaction.subType,
-                    recharge_to: transaction.recharge_to,
+                    recharge_to: (transaction.recharge_to || "") +"-"+(/^UP\d+$/.test(walletRow.commissionBy) ? walletRow.commissionBy : " ")+(walletRow.level >= 1 && walletRow.level <= 20 ? ` - L${walletRow.level}` : " "),
+
                     amount: transaction.amount,
                     message: transaction.message
                 });

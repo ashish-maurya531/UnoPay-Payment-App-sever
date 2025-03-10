@@ -21,16 +21,16 @@ const PREMIUM_PACKAGE = {
 };
 
 async function getCommissionList(memberId) {
-  // const [rows] = await pool.query(
-  //   `SELECT * FROM member_hierarchy WHERE member = ? ORDER BY level`,
-  //   [memberId]
-  // );
+  const [rows] = await pool.query(
+    `SELECT * FROM member_hierarchy WHERE member = ? ORDER BY level`,
+    [memberId]
+  );
 
-  const [rows]=await pool.query(`SELECT * FROM member_hierarchy 
-    WHERE member = ? 
-    AND level <= 20 
-    ORDER BY level
-    `)
+  // const [rows]=await pool.query(`SELECT * FROM member_hierarchy 
+  //   WHERE member = ? 
+  //   AND level <= 20 
+  //   ORDER BY level
+  //   `,[memberId]);
   return rows;
 }
 
