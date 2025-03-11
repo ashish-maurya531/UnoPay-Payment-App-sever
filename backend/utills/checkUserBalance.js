@@ -53,16 +53,30 @@ async function getCommisionWalletBalance(member_id) {
 
 async function getOverallTotalIncome(member_id) {
     try {
+        // const [rows] = await pool.query(`
+        //     SELECT 
+        //       SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit
+              
+        //     FROM commission_wallet 
+        //     WHERE member_id = ?`, 
+        //     [member_id]);
         const [rows] = await pool.query(`
             SELECT 
-              SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit
-              
+              SUM(CASE 
+                    WHEN message = 'Credited Successfully' 
+                    THEN credit 
+                    ELSE 0 
+                  END) AS total_credit
             FROM commission_wallet 
-            WHERE member_id = ?`, 
-            [member_id]);
+            WHERE member_id = ?
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')`, 
+            [member_id]
+          );
+          
 
         // console.log(rows[0].total_credit- rows[0].total_debit);
-        return rows[0].total_credit-0;
+        return (rows[0].total_credit ?? 0) - 0;
+
     } catch (error) {
         console.error('Error getting user balance:', error);
         return 0;
@@ -71,43 +85,6 @@ async function getOverallTotalIncome(member_id) {
 
 
 
-
-// async function getTodayCommissionWalletBalance(member_id) {
-//     try {
-//         // Get today's start & end in Asia/Kolkata timezone
-//         const kolkataStart = moment().tz("Asia/Kolkata").startOf('day');
-//         const kolkataEnd = moment().tz("Asia/Kolkata").endOf('day');
-
-//         // Convert to UTC for database comparison
-//         const utcStart = kolkataStart.utc().format('YYYY-MM-DD HH:mm:ss');
-//         const utcEnd = kolkataEnd.utc().format('YYYY-MM-DD HH:mm:ss');
-//         const [rows2] = await pool.query(
-//             `SELECT 
-//                 *
-//              FROM commission_wallet 
-//              WHERE member_id = ?
-//              `,
-//             [member_id, utcStart, utcEnd]
-//         );
-
-//         const [rows] = await pool.query(
-//             `SELECT 
-//                 SUM(CASE WHEN message = 'Credited Successfully' THEN credit ELSE 0 END) AS total_credit,
-//                 SUM(CASE WHEN message = 'Debited Successfully' THEN debit ELSE 0 END) AS total_debit
-//              FROM commission_wallet 
-//              WHERE member_id = ?
-//              AND date_time BETWEEN ? AND ?`,
-//             [member_id, utcStart, utcEnd]
-//         );
-//         console.log(rows2);
-
-//         const balance = (rows[0].total_credit || 0) - (rows[0].total_debit || 0);
-//         return balance;
-//     } catch (error) {
-//         console.error('Error getting daily commission balance:', error);
-//         return 0;
-//     }
-// }
 
 
 
