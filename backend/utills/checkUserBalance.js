@@ -14,8 +14,8 @@ async function getFlexiWalletBalance(member_id) {
                 LIMIT 1;`,[member_id]);
 
         // console.log(rows[0].total_credit- rows[0].total_debit);
-        console.log(rows[0].total_balance)
-        return rows[0].total_balance;
+        // console.log(rows[0].total_balance)
+        return rows[0]?.total_balance ?? 0;
     } catch (error) {
         console.error('Error getting user balance:', error);
         return 0;
