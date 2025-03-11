@@ -789,9 +789,78 @@ async function handleManualWithdrawal(transaction_id, member_id, amount, bankDet
 
 
 
-router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => {
+// router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => {
+//     const { member_id } = req.body;
+//     console.log("get user withdraw request api hit ")
+
+//     if (!member_id) {
+//         return res.status(200).json({ status: "false", message: "Member ID is required." });
+//     }
+    
+//     if (containsSQLInjectionWords(member_id)) {
+//         return res.status(200).json({ status: "false", message: "Invalid input. SQL injection is not allowed." });
+//     }
+
+//     try {
+//         const [withdrawRows] = await pool.query(
+//             `SELECT * FROM withdraw_requests WHERE member_id = ?`,
+//             [member_id]
+//         );
+    
+//         const [transactionRows] = await pool.query(
+//             `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer') AND member_id = ?`, 
+//             [member_id]
+//         );
+    
+//         const formatTransactionData = (transaction) => {
+//             let formattedTransaction = {
+//                 type: transaction.type,
+//                 amount: transaction.amount,
+//                 date_time: transaction.created_at, 
+//             };
+    
+//             if (transaction.type === "Money Transfer") {
+//                 const receiverMatch = transaction.message.match(/Money Transferred to (\S+)/);
+//                 if (receiverMatch) {
+//                     formattedTransaction.receiver = receiverMatch[1];
+//                 }
+//             }
+    
+//             return formattedTransaction;
+//         };
+    
+//         const withdrawData = withdrawRows.map((row) => ({
+//             type: "Bank Transfer",
+//             amount: row.amount,
+//             status: row.status,
+//             date_time: row.date_time, 
+//         }));
+    
+//         const transactionData = transactionRows.map(formatTransactionData);
+    
+//         const combinedData = [...withdrawData, ...transactionData];
+    
+//         if (combinedData.length > 0) {
+//             return res.status(200).json({ success: "true", data: combinedData });
+//         } else {
+//             return res.status(200).json({
+//                 success: "true",
+//                 message: "No Transaction Data Found",
+//             });
+//         }
+    
+//     } catch (error) {
+//         console.error("Error fetching data:", error);
+//         return res.status(500).json({ success: "false", message: "Internal Server Error" });
+//     }
+    
+// });
+const formatReceiverName = (name) => {
+    return name.replace(/\s+/g, '\n'); // Replaces every space with a newline
+};
+router.post('/get-user-withdraw-request', authenticateToken, async (req, res) => {
     const { member_id } = req.body;
-    console.log("get user withdraw request api hit ")
+    console.log("get user withdraw request api hit ");
 
     if (!member_id) {
         return res.status(200).json({ status: "false", message: "Member ID is required." });
@@ -811,35 +880,46 @@ router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => 
             `SELECT * FROM universal_transaction_table WHERE type IN ('Money Transfer', 'Self Transfer') AND member_id = ?`, 
             [member_id]
         );
-    
-        const formatTransactionData = (transaction) => {
+
+        // Function to get member name from usersdetails table
+        const getMemberName = async (memberId) => {
+            if (!memberId) return null;
+            const [rows] = await pool.query(`SELECT username FROM usersdetails WHERE memberid = ?`, [memberId]);
+            return rows.length > 0 ? rows[0].username : null;
+        };
+
+        const formatTransactionData = async (transaction) => {
             let formattedTransaction = {
                 type: transaction.type,
                 amount: transaction.amount,
                 date_time: transaction.created_at, 
             };
-    
+
             if (transaction.type === "Money Transfer") {
                 const receiverMatch = transaction.message.match(/Money Transferred to (\S+)/);
                 if (receiverMatch) {
-                    formattedTransaction.receiver = receiverMatch[1];
+                    const receiverId = receiverMatch[1];
+                    const receiverName = await getMemberName(receiverId);
+                    formattedTransaction.receiver = receiverName 
+                    ? `${receiverId}  \n${formatReceiverName(receiverName)}` 
+                    : receiverId;
                 }
             }
-    
+
             return formattedTransaction;
         };
-    
+
         const withdrawData = withdrawRows.map((row) => ({
             type: "Bank Transfer",
             amount: row.amount,
             status: row.status,
             date_time: row.date_time, 
         }));
-    
-        const transactionData = transactionRows.map(formatTransactionData);
-    
+
+        const transactionData = await Promise.all(transactionRows.map(formatTransactionData));
+
         const combinedData = [...withdrawData, ...transactionData];
-    
+
         if (combinedData.length > 0) {
             return res.status(200).json({ success: "true", data: combinedData });
         } else {
@@ -853,8 +933,8 @@ router.post('/get-user-withdraw-request',authenticateToken, async (req, res) => 
         console.error("Error fetching data:", error);
         return res.status(500).json({ success: "false", message: "Internal Server Error" });
     }
-    
 });
+
 
 router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
     try {
