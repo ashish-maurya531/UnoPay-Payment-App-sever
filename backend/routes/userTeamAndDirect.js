@@ -86,7 +86,7 @@ router.post("/getTeamList", authenticateToken, async (req, res) => {
 
         // List of all member IDs from rows
         const memberList = rows.map(row => row.member);
-        console.log(memberList);
+        // console.log(memberList);
 
         // Query to fetch member details from usersdetails
         const [rows2] = await pool.query(
