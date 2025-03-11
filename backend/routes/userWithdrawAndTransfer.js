@@ -33,6 +33,9 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
     if (containsSQLInjectionWords(sender_member_id) || containsSQLInjectionWords(receiver_member_id) || containsSQLInjectionWords(commission_amount)) {
         return res.status(200).json({ status: "false", message: "Don't try to hack" });
     }
+    if (sender_member_id===receiver_member_id) {
+        return res.status(200).json({ status: "false", message: "Sender and Receiver Member ID cannot be same" });
+    }
 
     const [senderUser] = await pool.query('SELECT memberid, membership,status FROM usersdetails WHERE memberid =?', [sender_member_id]);
     const [receiverUser] = await pool.query('SELECT memberid,membership, status FROM usersdetails WHERE memberid =?', [receiver_member_id]);
