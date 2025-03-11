@@ -100,6 +100,11 @@ export default function DashboardLayout({ children }) {
       onClick: () => navigate('/dashboard/edit-user-details'),
     },
     {
+      key: 'AddRemoveFundCommission',
+      label: 'Add/Remove Fund/ Commission',
+      onClick: () => navigate('/dashboard/add-remove-fund-commission'),
+    },
+    {
       key: 'AdminQrList',
       label: 'Admin Payment QR List',
       onClick: () => navigate('/dashboard/qr-list'),
