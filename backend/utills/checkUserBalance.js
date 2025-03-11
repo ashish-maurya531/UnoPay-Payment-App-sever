@@ -517,21 +517,36 @@ async function TransactionsListForPassBook(member_id) {
                     subType,
                     recharge_to,
                     created_at,
-                    message
+                    message,
+                    -- Extract receiver_id for Money Transfer
+                    CASE 
+                        WHEN message LIKE 'Money Transferred to UP%' 
+                        THEN CONCAT('to UP', SUBSTRING_INDEX(SUBSTRING_INDEX(message, 'Money Transferred to UP', -1), ' ', 1))
+                        ELSE NULL 
+                    END AS receiver_id,
+                    -- Extract sender_id for Money Received
+                    CASE 
+                        WHEN message LIKE 'Money Received from UP%' 
+                        THEN CONCAT('from UP', SUBSTRING_INDEX(SUBSTRING_INDEX(message, 'Money Received from UP', -1), ' ', 1))
+                        ELSE NULL 
+                    END AS sender_id
                 FROM universal_transaction_table
-                WHERE transaction_id = ?`, [walletRow.transaction_id]);
-
+                WHERE transaction_id = ?`, 
+                [walletRow.transaction_id]
+            );
+        
             if (transactionRows.length > 0) {
                 const transaction = normalizeObject(transactionRows[0]);
-
+        
                 return normalizeObject({
                     ...walletRow,
                     wallet_type: 'flexi_wallet',
                     type: transaction.type,
                     subType: transaction.subType,
-                    recharge_to: transaction.recharge_to,
+                    recharge_to: `${[transaction.recharge_to+ transaction.receiver_id]}`+` ${(transaction.sender_id ??transaction.receiver_id) || ""}`, 
                     amount: transaction.amount,
                     message: transaction.message
+                    
                 });
             } else {
                 return normalizeObject({
@@ -542,10 +557,10 @@ async function TransactionsListForPassBook(member_id) {
                     recharge_to: "",
                     amount: "",
                     message: ""
+                    
                 });
             }
         }));
-
         // Combine both responses
         const combinedResponse = [...commissionResponse, ...flexiResponse];
 
