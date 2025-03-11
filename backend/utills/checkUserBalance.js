@@ -41,8 +41,10 @@ async function getCommisionWalletBalance(member_id) {
                 LIMIT 1;`,[member_id]);
 
         // console.log(rows[0].total_credit- rows[0].total_debit);
-        console.log(rows[0].total_balance)
-        return rows[0].total_balance;
+        const totalBalance = rows[0]?.total_balance || 0;
+
+        console.log(totalBalance);
+        return totalBalance;
     } catch (error) {
         console.error('Error getting user balance:', error);
         return 0;
@@ -121,25 +123,48 @@ async function getTodayCommissionWalletBalance(member_id) {
         const utcStart = moment().tz("Asia/Kolkata").startOf('day');
         const utcEnd = moment().tz("Asia/Kolkata").endOf('day');
 
+        // const [rows] = await pool.query(
+        //     `SELECT 
+        //         COALESCE(SUM(
+        //             CASE WHEN message = 'Credited Successfully' 
+        //             THEN credit END
+        //         ), 0) AS total_credit,
+        //         COALESCE(SUM(
+        //             CASE WHEN message = 'Debited Successfully' 
+        //             THEN debit END
+        //         ), 0) AS total_debit
+        //      FROM commission_wallet
+        //      WHERE member_id = ?
+        //      AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)`,
+        //     [
+        //         member_id,
+        //         utcStart.format('YYYY-MM-DD'),
+        //         utcEnd.format('YYYY-MM-DD')
+        //     ]
+        // );
         const [rows] = await pool.query(
-            `SELECT 
-                COALESCE(SUM(
-                    CASE WHEN message = 'Credited Successfully' 
-                    THEN credit END
-                ), 0) AS total_credit,
-                COALESCE(SUM(
-                    CASE WHEN message = 'Debited Successfully' 
-                    THEN debit END
-                ), 0) AS total_debit
-             FROM commission_wallet
-             WHERE member_id = ?
-             AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)`,
+            `SELECT
+              COALESCE(SUM(
+                CASE WHEN message = 'Credited Successfully'
+                  THEN credit
+                END
+              ), 0) AS total_credit,
+              COALESCE(SUM(
+                CASE WHEN message = 'Debited Successfully'
+                  THEN debit
+                END
+              ), 0) AS total_debit
+            FROM commission_wallet
+            WHERE member_id = ?
+              AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')`,
             [
-                member_id,
-                utcStart.format('YYYY-MM-DD'),
-                utcEnd.format('YYYY-MM-DD')
+              member_id,
+              utcStart.format('YYYY-MM-DD'),
+              utcEnd.format('YYYY-MM-DD')
             ]
-        );
+          );
+          
 
         return Number((Number(rows[0]?.total_credit || 0).toFixed(10)));
 
