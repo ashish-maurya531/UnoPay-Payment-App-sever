@@ -2,7 +2,7 @@ const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
-const {getCommisionWalletBalance, getHoldTotalCommission} = require('../utills/checkUserBalance');
+const {getCommisionWalletBalance, getFlexiWalletBalance,getHoldTotalCommission} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
 const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
@@ -20,7 +20,7 @@ function generateOrderId() {
 
 // Code for transferring from sender's commission wallet to receiver's flexi wallet
 router.post("/person-to-person-transfer", authenticateToken,async (req, res) => {
-    // const { sender_member_id, receiver_member_id, commission_amount } = req.body;
+    const { sender_member_id, receiver_member_id, commission_amount } = req.body;
 
     console.log(sender_member_id, receiver_member_id, commission_amount)
     // return res.status(200).json({status: 'false',message: "server is down"});
@@ -68,22 +68,32 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
          return res.status(200).json({ status: "false", message: "KYC Not done"});
          }
 
-    const commission_wallet_balance = await getCommisionWalletBalance(sender_member_id);
-    const holdTotalCommission = await getHoldTotalCommission(sender_member_id);
-    const final_balance = Math.max(commission_wallet_balance - holdTotalCommission, 0);
+    const flexi_wallet_balance = await getFlexiWalletBalance(sender_member_id);
+    // const holdTotalCommission = await getHoldTotalCommission(sender_member_id);
+    // const final_balance = Math.max(commission_wallet_balance - holdTotalCommission, 0);
 
-    if (final_balance < commission_amount) {
-        return res.status(200).json({ status: "false", message: "Insufficient balance in sender's wallet" });
+    if (flexi_wallet_balance < commission_amount) {
+        return res.status(200).json({ status: "false", message: "Insufficient balance in sender's fund wallet" });
     }
 
-    const txn_id_for_sender = generateTransactionId();
-    const txn_id_for_receiver = generateTransactionId();
+    const txn_id_for_sender = await generateTransactionId();
+    const txn_id_for_receiver = await generateTransactionId();
+    console.log("Sending transaction id: ", txn_id_for_sender);
+    console.log("Receiving transaction id: ", txn_id_for_receiver);
 
 
 
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
+        const [row0] = await connection.query(
+            `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [txn_id_for_receiver, receiver_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Received from ${sender_member_id} successfully`]
+        );
+        if (row0.affectedRows > 0) {
+            console.log("Sender Money Transfer Transaction added in universal transaction table2");
+        }
 
         const [row1] = await connection.query(
             `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
@@ -94,24 +104,15 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
             console.log("Sender Money Transfer Transaction added in universal transaction table");
         }
 
-        const [row0] = await connection.query(
-            `INSERT INTO universal_transaction_table (transaction_id, member_id, type, subType, amount, status, message)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [txn_id_for_receiver, receiver_member_id, "Money Transfer", "P2P Transfer", commission_amount, "success", `Money Received from ${sender_member_id} successfully`]
-        );
-        if (row0.affectedRows > 0) {
-            console.log("Sender Money Transfer Transaction added in universal transaction table2");
-        }
 
-        const [row2] = await connection.query(
-            `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [sender_member_id, "Money Transfer", txn_id_for_sender, txn_id_for_sender, 0.0000000000, commission_amount, 0]
-        );
-        if (row2.affectedRows > 0) {
-            console.log("Sender Commission Wallet transaction added");
-        }
-
+        // const [row2] = await connection.query(
+        //     `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level)
+        //     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        //     [sender_member_id, "Money Transfer", txn_id_for_sender, txn_id_for_sender, 0.0000000000, commission_amount, 0]
+        // );
+        // if (row2.affectedRows > 0) {
+        //     console.log("Sender Commission Wallet transaction added");
+        // }
         const [row3] = await connection.query(
             `INSERT INTO flexi_wallet (member_id, transaction_id, credit, debit)
             VALUES (?, ?, ?, ?)`,
@@ -120,6 +121,15 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         if (row3.affectedRows > 0) {
             console.log("Receiver Flexi Wallet transaction added");
         }
+        const [row2] = await connection.query(
+            `INSERT INTO flexi_wallet (member_id, transaction_id, credit, debit)
+            VALUES (?, ?, ?, ?)`,
+            [sender_member_id, txn_id_for_sender, 0.00,commission_amount]
+        );
+        if (row2.affectedRows > 0) {
+            console.log("Sender Flexi Wallet transaction added");
+        }
+
 
         // Update sender's total money
         const [row4] = await connection.query(
