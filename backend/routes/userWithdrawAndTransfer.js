@@ -919,6 +919,7 @@ router.post('/get-user-withdraw-request', authenticateToken, async (req, res) =>
         const transactionData = await Promise.all(transactionRows.map(formatTransactionData));
 
         const combinedData = [...withdrawData, ...transactionData];
+        // combinedData.sort((a, b) => new Date(b.date_time) - new Date(a.date_time));
 
         if (combinedData.length > 0) {
             return res.status(200).json({ success: "true", data: combinedData });
