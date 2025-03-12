@@ -176,7 +176,7 @@ const ManageFunds = () => {
           <Col>
             <Statistic 
               title="Membership" 
-              value={memberWallets.membership} 
+              value={memberWallets?.membership} 
             />
           </Col>
         </Row>
