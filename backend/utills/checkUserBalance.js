@@ -62,22 +62,45 @@ async function getOverallTotalIncome(member_id) {
         //     FROM commission_wallet 
         //     WHERE member_id = ?`, 
         //     [member_id]);
+        // const [rows] = await pool.query(`
+        //     SELECT 
+        //       SUM(CASE 
+        //             WHEN message = 'Credited Successfully' 
+        //             THEN credit 
+        //             ELSE 0 
+        //           END) AS total_credit
+        //     FROM commission_wallet 
+        //     WHERE member_id = ?
+        //       AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')`, 
+        //     [member_id]
+        //   );
+        //   //crest dr of admin 
+
+        // // console.log(rows[0].total_credit- rows[0].total_debit);
+        // return (parseFloat(rows[0]?.total_credit) || 0) - 0;
+
         const [rows] = await pool.query(`
             SELECT 
               SUM(CASE 
                     WHEN message = 'Credited Successfully' 
                     THEN credit 
                     ELSE 0 
-                  END) AS total_credit
+                  END) AS total_credit,
+              SUM(CASE 
+                    WHEN commissionBy = 'admin' 
+                    THEN debit 
+                    ELSE 0 
+                  END) AS total_debit
             FROM commission_wallet 
             WHERE member_id = ?
-              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')`, 
-            [member_id]
-          );
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')
+          `, [member_id]);
           
-
-        // console.log(rows[0].total_credit- rows[0].total_debit);
-        return (parseFloat(rows[0]?.total_credit) || 0) - 0;
+          const totalCredit = parseFloat(rows[0]?.total_credit) || 0;
+          const totalDebit = parseFloat(rows[0]?.total_debit) || 0;
+          
+          return totalCredit - totalDebit;
+          
 
 
     } catch (error) {
@@ -103,25 +126,7 @@ async function getTodayCommissionWalletBalance(member_id) {
         const utcStart = moment().tz("Asia/Kolkata").startOf('day');
         const utcEnd = moment().tz("Asia/Kolkata").endOf('day');
 
-        // const [rows] = await pool.query(
-        //     `SELECT 
-        //         COALESCE(SUM(
-        //             CASE WHEN message = 'Credited Successfully' 
-        //             THEN credit END
-        //         ), 0) AS total_credit,
-        //         COALESCE(SUM(
-        //             CASE WHEN message = 'Debited Successfully' 
-        //             THEN debit END
-        //         ), 0) AS total_debit
-        //      FROM commission_wallet
-        //      WHERE member_id = ?
-        //      AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)`,
-        //     [
-        //         member_id,
-        //         utcStart.format('YYYY-MM-DD'),
-        //         utcEnd.format('YYYY-MM-DD')
-        //     ]
-        // );
+       
         const [rows] = await pool.query(
             `SELECT
               COALESCE(SUM(
@@ -137,7 +142,7 @@ async function getTodayCommissionWalletBalance(member_id) {
             FROM commission_wallet
             WHERE member_id = ?
               AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)
-              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')`,
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected',"admin")`,
             [
               member_id,
               utcStart.format('YYYY-MM-DD'),
