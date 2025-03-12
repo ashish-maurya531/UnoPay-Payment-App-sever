@@ -242,7 +242,7 @@ const ManageFunds = () => {
               <Col xs={24} sm={12} md={8}>
                 <Card size="small">
                   <Statistic 
-                    title="Total Income" 
+                    title="Today Income" 
                     value={memberWallets.today_income}  
                     suffix="INR"
                     precision={6}
