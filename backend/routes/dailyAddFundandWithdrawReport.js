@@ -44,11 +44,13 @@ router.get('/getDataExceptToday', async (req, res) => {
     try {
       const [rows] = await pool.query(
         `SELECT Total_Add_Fund, Total_Bank_Withdraw, Company_Money, 
-         DATE(CONVERT_TZ(date_time, '+00:00', '+05:30')) AS date
+               DATE(CONVERT_TZ(date_time, '+00:00', '+05:30')) AS date
          FROM daily_AddFund_Withdraw_Report
-         WHERE DATE(CONVERT_TZ(date_time, '+00:00', '+05:30')) != ?`, 
+         WHERE DATE(CONVERT_TZ(date_time, '+00:00', '+05:30')) != ?
+         ORDER BY date DESC`, 
         [today]
       );
+      
   
       if (rows.length > 0) {
         rows.forEach(row => {
