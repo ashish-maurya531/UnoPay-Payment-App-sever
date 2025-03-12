@@ -72,7 +72,7 @@ async function commisionPayout(txn_id_of_commissionBy, type, memberId) {
       } else {
         packageConfig = BASIC_PACKAGE;
       }
-
+      
       // Calculate commission
       const commissionRate = packageConfig.percentages[i] / 100;
       const commission = packageConfig.baseAmount * commissionRate;
