@@ -93,7 +93,7 @@ async function getOverallTotalIncome(member_id) {
                   END) AS total_debit
             FROM commission_wallet 
             WHERE member_id = ?
-              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected')
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected','Withdrawal Failed')
           `, [member_id]);
           
           const totalCredit = parseFloat(rows[0]?.total_credit) || 0;
@@ -142,7 +142,7 @@ async function getTodayCommissionWalletBalance(member_id) {
             FROM commission_wallet
             WHERE member_id = ?
               AND DATE(date_time) BETWEEN DATE(?) AND DATE(?)
-              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected',"admin")`,
+              AND commissionBy NOT IN ('Withdrawal Request', 'Withdrawal Rejected','Withdrawal Failed',"admin")`,
             [
               member_id,
               utcStart.format('YYYY-MM-DD'),

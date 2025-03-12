@@ -408,12 +408,12 @@ router.post('/update-status-user-withdraw-request', authenticateToken, async (re
         return res.status(400).json({ status: "false", message: "Transaction ID, status, message, and mode are required." });
     }
 
-    if (!['rejected', 'done'].includes(status)) {
+    if (!['rejected', 'done',"failed"].includes(status)) {
         console.log('Validation failed: Invalid status value:', status);
         return res.status(400).json({ status: "false", message: "Invalid status value." });
     }
 
-    if (!['manual', 'api',"rejected"].includes(mode)) {
+    if (!['manual', 'api',"rejected","failed"].includes(mode)) {
         console.log('Validation failed: Invalid mode value:', mode);
         return res.status(400).json({ status: "false", message: "Invalid mode value." });
     }
@@ -444,6 +444,11 @@ router.post('/update-status-user-withdraw-request', authenticateToken, async (re
         if (status === "rejected") {
             console.log('Handling REJECTION flow for transaction:', transaction_id);
             return await handleRejectedWithdrawal(member_id, amount, transaction_id, res);
+        }
+        //if failed 
+        if (status === "failed") {
+            console.log('Handling FAILED flow for transaction:', transaction_id);
+            return await handleFailedWithdrawal(member_id, amount, transaction_id, res);
         }
         
         // CASE 2: Handle approved withdrawals (status = done)
@@ -480,6 +485,85 @@ router.post('/update-status-user-withdraw-request', authenticateToken, async (re
 /**
  * Handles rejection of a withdrawal request
  */
+
+async function handleFailedWithdrawal(member_id, amount, transaction_id, res) {
+    const connection = await pool.getConnection();
+    const txn_id = generateTransactionId();
+    console.log(`Generating refund transaction ${txn_id} for failed withdrawal ${transaction_id}`);
+
+    try {
+        await connection.beginTransaction();
+        console.log('Transaction started for failed process');
+
+        // Log the transaction in the universal transaction table
+        const [row1]=await connection.query(
+            `INSERT INTO universal_transaction_table (transaction_id, member_id, amount, type, status, message) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [txn_id, member_id, amount, "Withdrawal Failed", "success", "Withdrawal Failed, money refunded."]
+        );
+        if(row1.affectedRows===0){
+            console.error('Failed to log transaction in universal transaction table');
+            connection.rollback();
+            return res.status(200).json({ status: "false", message: "Failed to log transaction in universal transaction table." });
+        }
+
+        console.log('Logged transaction in universal_transaction_table');
+        
+        // Update the user's wallet balance
+        const [row2]=await connection.query(
+            `UPDATE users_total_balance 
+             SET user_total_balance = user_total_balance + ? 
+             WHERE member_id = ?`,
+            [amount, member_id]
+        );
+        if(row2.affectedRows===0){
+            console.error('Failed to update user wallet balance');
+            connection.rollback();
+            return res.status(200).json({ status: "false", message: "Failed to update user wallet balance." });
+        }
+        console.log(`Updated user wallet balance: credited ${amount} back to member ${member_id}`);
+
+        // Log the refund in the commission wallet
+        const [row3]=await connection.query(
+            `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [member_id, "Withdrawal Failed", txn_id, txn_id, amount, 0.0000000000, 0]
+        );
+        if(row3.affectedRows===0){
+            console.error('Failed to log refund in commission_wallet');
+            connection.rollback();
+            return res.status(200).json({ status: "false", message: "Failed to log refund in commission_wallet." });
+        }
+        console.log('Logged refund in commission_wallet');
+
+        // Update the withdrawal request status
+        const [row4]=await connection.query(
+            `UPDATE withdraw_requests SET status = ?, message = ? WHERE transaction_id = ?`,
+            ["failed", "Withdrawal Failed, money refunded.", transaction_id]
+        );
+        if(row4.affectedRows===0){
+            console.error('Failed to update withdraw_requests status');
+            connection.rollback();
+            return res.status(200).json({ status: "false", message: "Failed to update withdraw_requests status." });
+        }
+        console.log('Updated withdraw_requests status to Failed');
+
+        await connection.commit();
+        console.log('Transaction committed successfully for rejection process');
+        
+        return res.status(200).json({ 
+            status: "true", 
+            message: "Withdrawal request was failed, funds refunded successfully." 
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error in rejection process:", error);
+        return res.status(500).json({ status: "false", message: "Failed to process rejection." });
+    } finally {
+        connection.release();
+    }
+}
+
 async function handleRejectedWithdrawal(member_id, amount, transaction_id, res) {
     const connection = await pool.getConnection();
     const txn_id = generateTransactionId();
@@ -510,7 +594,7 @@ async function handleRejectedWithdrawal(member_id, amount, transaction_id, res) 
         await connection.query(
             `INSERT INTO commission_wallet (member_id, commissionBy, transaction_id_for_member_id, transaction_id_of_commissionBy, credit, debit, level) 
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [member_id, "Withdrawal Rejected", txn_id, txn_id, amount, 0.0, 0]
+            [member_id, "Withdrawal Rejected", txn_id, txn_id, amount, 0.0000000000, 0]
         );
         console.log('Logged refund in commission_wallet');
 
@@ -592,7 +676,7 @@ async function handleApiWithdrawal(transaction_id, member_id, amount, bankDetail
         //     "statusCode": "TUP",
         //     "statusMsg": "Transaction Pending",
         //     "dataContent": {
-        //         "OrderId": transaction_id,
+        //         "OrderId": order_id,
         //         "bankrrnno": "lkf340930932093203",
         //         "accountno": bankDetail.Account_number,
         //         "amount": amount,
