@@ -33,6 +33,7 @@ const dailyAddFundandWithdrawReport = require('./routes/dailyAddFundandWithdrawR
 const cashKawachWebhook = require('./routes/cashKawachWebhook');
 const userProfileImage = require('./routes/userProfileImage');
 const EditDetails = require('./routes/editDetails');
+const AddRemoveFundCommission = require('./routes/AddRemoveFundCommission');
 // Middleware
 const authenticateToken = require('./middleware/auth');
 
@@ -68,6 +69,7 @@ app.use('/api/auth', authenticateToken, dailyAddFundandWithdrawReport);
 app.use('/api/webhook', cashKawachWebhook);
 app.use('/api/auth', authenticateToken, userProfileImage);
 app.use('/api/auth',EditDetails);
+app.use('/api/auth', AddRemoveFundCommission);
 
 
 // Error handling middleware
