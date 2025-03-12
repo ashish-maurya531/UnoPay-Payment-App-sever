@@ -155,7 +155,7 @@ router.post("/person-to-person-transfer", authenticateToken,async (req, res) => 
         }
 
         await connection.commit();
-        res.status(200).json({ status: "true", message: "Commission wallet transfer to receiver's flexi wallet successful" });
+        res.status(200).json({ status: "true", message: "Fund wallet transfer to receiver's Fund wallet successful" });
     } catch (error) {
         await connection.rollback();
         console.error(error);
