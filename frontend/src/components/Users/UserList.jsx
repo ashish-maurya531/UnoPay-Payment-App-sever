@@ -95,16 +95,7 @@ export default function UserList() {
       render: (_, __, index) =>
         (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
-    {
-      title: 'Sponser ID',
-      dataIndex: 'sponser_id',
-      key: 'sponserId',
-    },
-    {
-      title: 'Sponsor Name',
-      dataIndex: 'sponsor_name',
-      key: 'sponsorname',
-    },
+   
     {
       title: 'Member ID',
       dataIndex: 'memberId',
@@ -145,6 +136,16 @@ export default function UserList() {
       title: 'Membership',
       dataIndex: 'membership',
       key: 'membership',
+    },
+    {
+      title: 'Sponser ID',
+      dataIndex: 'sponser_id',
+      key: 'sponserId',
+    },
+    {
+      title: 'Sponsor Name',
+      dataIndex: 'sponsor_name',
+      key: 'sponsorname',
     },
     {
       title: 'Status',
