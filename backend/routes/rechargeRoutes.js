@@ -553,7 +553,10 @@ async function handleRechargeTransaction(serviceType, req, res) {
             });
         }
 
-        const { circlecode, operatorcode, number, amount, member_id } = value;
+        let { circlecode, operatorcode, number, amount, member_id } = value;
+        if (operatorcode==="VI"){
+            operatorcode = "V";
+        }
         const serviceConfig = SERVICE_TYPES[serviceType];
 
         console.log(`[${transactionId}] Starting ${serviceConfig.name} recharge for ${member_id}, Amount: ${amount}`);
