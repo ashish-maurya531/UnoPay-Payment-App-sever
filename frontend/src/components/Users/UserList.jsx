@@ -56,6 +56,8 @@ export default function UserList() {
         tpin: user.tpin,
         createdAt: user.created_at,
         membership: user.membership,
+        sponser_id: user.sponser_id,
+        sponsor_name: user.sponsor_name,
         status: user.status || 'inactive',
       }));
 
@@ -92,6 +94,16 @@ export default function UserList() {
       key: 'sno',
       render: (_, __, index) =>
         (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
+    },
+    {
+      title: 'Sponser ID',
+      dataIndex: 'sponser_id',
+      key: 'sponserId',
+    },
+    {
+      title: 'Sponsor Name',
+      dataIndex: 'sponsor_name',
+      key: 'sponsorname',
     },
     {
       title: 'Member ID',

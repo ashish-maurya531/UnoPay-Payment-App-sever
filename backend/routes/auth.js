@@ -748,6 +748,34 @@ router.post('/checktpin', authenticateToken,async(req,res)=>{
 
 
 //to get all users details
+// router.get('/users', authenticateToken, async (req, res) => {
+//   try {
+//     const query = `
+//       SELECT 
+//         ud.sno,
+//         ud.memberid,
+//         ud.username,
+//         ud.email,
+//         ud.phoneno,
+//         sd.password,
+//         sd.tpin,
+//         ud.created_at,
+//         ud.membership,
+//         ud.status
+//       FROM 
+//         usersdetails ud
+//       JOIN 
+//         security_details_of_user sd ON ud.memberid = sd.member_id
+//     `;
+    
+//     const [rows] = await pool.query(query);
+//     res.json(rows);
+//   } catch (error) {
+//     console.error('Error fetching users:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
 router.get('/users', authenticateToken, async (req, res) => {
   try {
     const query = `
@@ -761,13 +789,19 @@ router.get('/users', authenticateToken, async (req, res) => {
         sd.tpin,
         ud.created_at,
         ud.membership,
-        ud.status
+        ud.status,
+        m.sponser_id,                      -- Get sponsor ID
+        su.username AS sponsor_name        -- Get sponsor name
       FROM 
         usersdetails ud
       JOIN 
         security_details_of_user sd ON ud.memberid = sd.member_id
+      JOIN 
+        member m ON ud.memberid = m.member_id  -- Join member table to get sponsor ID
+      LEFT JOIN 
+        usersdetails su ON m.sponser_id = su.memberid  -- Get sponsor name from usersdetails
     `;
-    
+
     const [rows] = await pool.query(query);
     res.json(rows);
   } catch (error) {
