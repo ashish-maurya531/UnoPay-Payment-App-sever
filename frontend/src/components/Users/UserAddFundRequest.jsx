@@ -34,7 +34,8 @@ const UserAddFundRequest = () => {
   const [membershipFilter, setMembershipFilter] = useState(null);
   const [currentPagination, setCurrentPagination] = useState({
     current: 1,
-    pageSize: 100,
+    pageSize: 500,
+    total: 0,
   });
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const { RangePicker } = DatePicker;
@@ -88,10 +89,17 @@ const UserAddFundRequest = () => {
 
     // Date range filter
     if (dateRange && dateRange.length === 2) {
-      const [startDate, endDate] = dateRange.map(d => d.startOf('day'));
+      // Convert local dates to UTC boundaries
+      const startDate = moment.utc(
+        dateRange[0].clone().startOf('day').format()
+      );
+      const endDate = moment.utc(
+        dateRange[1].clone().endOf('day').format()
+      );
+      
       filtered = filtered.filter(record => {
-        const recordDate = moment(record.time_date).startOf('day');
-        return recordDate.isBetween(startDate, endDate, null, '[]');
+        const itemDate = moment.utc(record.time_date);
+        return itemDate.isBetween(startDate, endDate, null, '[]');
       });
     }
 
@@ -254,12 +262,18 @@ const UserAddFundRequest = () => {
               </Select>
             </Col>
             <Col span={6}>
-              <RangePicker
-                style={{ width: '100%' }}
-                onChange={setDateRange}
-                format="YYYY-MM-DD"
-              />
-            </Col>
+  <RangePicker
+    style={{ width: '100%' }}
+    onChange={setDateRange}
+    format="YYYY-MM-DD"
+    allowClear={true}
+    ranges={{
+      'Today': [moment(), moment()],
+      'This Week': [moment().startOf('week'), moment().endOf('week')],
+      'This Month': [moment().startOf('month'), moment().endOf('month')]
+    }}
+  />
+</Col>
             <Col span={6}>
               <div style={{ padding: '8px', background: '#f0f2f5', borderRadius: '4px' }}>
                 <Space>
@@ -304,8 +318,10 @@ const UserAddFundRequest = () => {
         loading={loading}
         pagination={{
           ...currentPagination,
+          showSizeChanger: true,
           total: filteredData.length,
-          showTotal: (total) => `Total ${total} items`,
+          pageSizeOptions: ['10','50','100','200'],
+          
         }}
         onChange={handleTableChange}
         rowClassName={(record) => 

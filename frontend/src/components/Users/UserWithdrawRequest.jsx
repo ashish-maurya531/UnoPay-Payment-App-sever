@@ -47,14 +47,14 @@ const WithdrawRequests = () => {
   
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 100,
+    pageSize: 500,
     total: 0,
   });
   
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending'); // Changed from 'all' to 'pending'
   const [membershipFilter, setMembershipFilter] = useState('all');
 
   const rowStyles = `
@@ -148,16 +148,21 @@ const WithdrawRequests = () => {
       result = result.filter(item => item.membership === membershipFilter);
     }
 
-    // Apply date range filter
-    if (dateRange) {
-      const start = moment(dateRange[0]).startOf('day');
-      const end = moment(dateRange[1]).endOf('day');
+    // Apply date range filter with proper timezone conversion
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      // Convert local dates to UTC boundaries
+      const startDate = moment.utc(
+        dateRange[0].clone().startOf('day').format()
+      );
+      const endDate = moment.utc(
+        dateRange[1].clone().endOf('day').format()
+      );
+      
       result = result.filter(item => {
-        const itemDate = moment(item.date_time);
-        return itemDate.isBetween(start, end, null, '[]');
+        const itemDate = moment.utc(item.date_time);
+        return itemDate.isBetween(startDate, endDate, null, '[]');
       });
     }
-
     // Apply search filter
     if (searchText) {
       const searchLower = searchText.toLowerCase();
@@ -174,7 +179,14 @@ const WithdrawRequests = () => {
       current: 1,
       total: result.length,
     }));
-  }, [statusFilter, membershipFilter, dateRange, searchText]);
+  }, [data, statusFilter, membershipFilter, dateRange, searchText]);
+
+  // Update date range handler
+  const handleDateRangeChange = (dates) => {
+    setDateRange(dates);
+  };
+
+
   // Handle status updates (Approve or Reject)
   const handleStatusUpdate = async (status, mode = 'manual') => {
     setTransferInProgress(true);
@@ -448,6 +460,7 @@ const WithdrawRequests = () => {
                 value={statusFilter}
                 onChange={setStatusFilter}
                 style={{ width: '100%' }}
+                defaultValue="pending" // Added defaultValue
               >
                 <Select.Option value="all">All</Select.Option>
                 <Select.Option value="done">Done</Select.Option>
@@ -456,12 +469,18 @@ const WithdrawRequests = () => {
               </Select>
             </Col>
             <Col span={6}>
-              <RangePicker
-                style={{ width: '100%' }}
-                onChange={setDateRange}
-                format="YYYY-MM-DD"
-              />
-            </Col>
+        <RangePicker
+          style={{ width: '100%' }}
+          onChange={handleDateRangeChange}
+          format="DD/MM/YYYY"
+          allowClear={true}
+          ranges={{
+            'Today': [moment().startOf('day'), moment().endOf('day')],
+            'This Week': [moment().startOf('week'), moment().endOf('week')],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+          }}
+        />
+      </Col>
             <Col span={6}>
               <Select
                 placeholder="Filter by Membership"
@@ -504,7 +523,7 @@ const WithdrawRequests = () => {
         pagination={{
           ...pagination,
           showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50'],
+          pageSizeOptions: ['10','50','100','200'],
         }}
         onChange={handleTableChange}
         rowKey="transaction_id"

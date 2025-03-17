@@ -17,7 +17,7 @@ export default function UserList() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPagination, setCurrentPagination] = useState({
     current: 1,
-    pageSize: 12,
+    pageSize: 1000,
   });
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 

@@ -141,7 +141,7 @@ router.get('/getAllUserAddFundRequest', authenticateToken, async (req, res) => {
   try {
     // Get page number from query params, default to page 1
     const page = parseInt(req.query.page) || 1;
-    const limit = 100; // Number of records per page
+    const limit = 500; // Number of records per page
     const offset = (page - 1) * limit;
 
     // Get total count of records for pagination metadata

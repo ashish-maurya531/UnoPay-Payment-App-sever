@@ -1024,7 +1024,7 @@ router.post('/get-user-withdraw-request', authenticateToken, async (req, res) =>
 router.get('/all-withdraw-request', authenticateToken, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 100;
+        const limit = 500;
         const offset = (page - 1) * limit;
 
         // Optimized query with proper JOIN and column selection
