@@ -9,16 +9,29 @@ const BASIC_PACKAGE = {
   percentages: [40, 8, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 };
 
+// const PREMIUM_PACKAGE = {
+//   baseAmount: 1100,
+//   percentages: [
+//         50,9.0909090909090,4.545454545454545,2.272727272727273,0.9090909090909091,
+//         0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
+//         0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
+//         0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
+//         0.9090909090909091,0.9090909090909091,0.9090909090909091
+//     ]
+// };
 const PREMIUM_PACKAGE = {
   baseAmount: 1100,
-  percentages: [
-        50,9.0909090909090,4.545454545454545,2.272727272727273,0.9090909090909091,
-        0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
-        0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
-        0.9090909090909091,0.9090909090909091,0.9090909090909091,0.9090909090909091,
-        0.9090909090909091,0.9090909090909091,0.9090909090909091
-    ]
+  amounts: [
+    520.00,  // Fixed amount for the 1st value
+    110.00,  // Fixed amount for the 2nd value
+    50.00,   // Calculated from percentage
+    25.00,   // Calculated from percentage
+    10.00, 10.00, 10.00, 10.00, 10.00, 10.00,
+    10.00, 10.00, 10.00, 10.00, 10.00, 10.00,
+    10.00, 10.00, 10.00, 10.00
+  ]
 };
+
 
 async function getCommissionList(memberId) {
   const [rows] = await pool.query(
@@ -66,16 +79,35 @@ async function commisionPayout(txn_id_of_commissionBy, type, memberId) {
       const { status, membership } = upline;
 
       // Determine commission parameters
+      // let packageConfig;
+      // if (type === 'PREMIUM' && membership === 'PREMIUM') {
+      //   packageConfig = PREMIUM_PACKAGE;
+      // } else {
+      //   packageConfig = BASIC_PACKAGE;
+      // }
+      
+      // // Calculate commission
+      // const commissionRate = packageConfig.percentages[i] / 100;
+      // const commission = packageConfig.baseAmount * commissionRate;
       let packageConfig;
       if (type === 'PREMIUM' && membership === 'PREMIUM') {
         packageConfig = PREMIUM_PACKAGE;
       } else {
         packageConfig = BASIC_PACKAGE;
       }
-      
+
       // Calculate commission
-      const commissionRate = packageConfig.percentages[i] / 100;
-      const commission = packageConfig.baseAmount * commissionRate;
+      let commission;
+
+      if (type === 'PREMIUM' && membership === 'PREMIUM') {
+        // Use the hardcoded amounts for PREMIUM_PACKAGE
+        commission = packageConfig.amounts[i];  // Directly access the amounts array
+      } else {
+        // Calculate using percentages for BASIC_PACKAGE
+        const commissionRate = packageConfig.percentages[i] / 100;
+        commission = packageConfig.baseAmount * commissionRate;
+      }
+
 
       // Determine commission destination
       const isSpecialCase = super_upline === "UP100010" || status === 'inactive' || membership === 'FREE';
