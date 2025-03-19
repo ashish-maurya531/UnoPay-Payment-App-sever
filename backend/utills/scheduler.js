@@ -8,10 +8,10 @@ let jobs = {}; // Stores active scheduler jobs
  * Initializes and schedules jobs only for PM2 instance 0
  */
 function initializeSchedulers() {
-    if (process.env.NODE_APP_INSTANCE !== '0') {
-        console.log(`⚠️ Schedulers disabled for instance ${process.env.NODE_APP_INSTANCE}`);
-        return;
-    }
+    // if (process.env.NODE_APP_INSTANCE !== '0') {
+    //     console.log(`⚠️ Schedulers disabled for instance ${process.env.NODE_APP_INSTANCE}`);
+    //     return;
+    // }
 
     console.log('✅ Schedulers enabled for instance 0');
 

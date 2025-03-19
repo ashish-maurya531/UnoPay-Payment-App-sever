@@ -43,21 +43,6 @@ router.post('/get-active-team-no',authenticateToken, async (req, res) => {
 });
 
 
-// router.get('/getAllUsersRank', authenticateToken, async (req, res) => {
-//   try {
-//     const [result] = await pool.query('SELECT * FROM ranktable');
-//     // Parse active_directs_list and active_team_list
-//     const parsedResult = result.map((row) => ({
-//       ...row,
-//       active_directs_list: row.active_directs_list ? JSON.parse(row.active_directs_list) : [],
-//       active_team_list: row.active_team_list ? JSON.parse(row.active_team_list) : [],
-//     }));
-//     res.status(200).json(parsedResult);
-//   } catch (error) {
-//     console.error('Error fetching all users:', error);
-//     res.status(500).json({ error: 'Failed to fetch data' });
-//   }
-// });
 
 // Route to get data by member_id
 router.post('/getUserRank',authenticateToken, async (req, res) => {
@@ -82,5 +67,59 @@ router.post('/getUserRank',authenticateToken, async (req, res) => {
     res.status(200).json({ error: 'Failed to fetch data' });
   }
 });
+
+
+
+//get eligibile users list with names 
+
+// router.post('/getEligibleUsers', authenticateToken, async (req, res) => {
+//   try {
+//     // Fetching rank_array and member_id from ranktable
+//     const [rankResults] = await pool.query(`
+//       SELECT rt.rank_array, rt.rank_no,rt.member_id, ud.username
+//       FROM ranktable rt
+//       JOIN usersdetails ud ON rt.member_id = ud.memberid
+//       WHERE rt.rank_no != 0 AND rt.rank_array IS NOT NULL
+
+//     `);
+//     console.log(rankResults);
+
+//     // Reference array for rank mapping
+//     const rankLabels = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND', 'CROWN DIAMOND'];
+
+//     // Initialize the response object with all rank labels as keys
+//     const response = rankLabels.reduce((acc, rank) => {
+//       acc[rank] = {};  // Initialize empty object for each rank
+//       return acc;
+//     }, {});
+
+//     // Map the database results to the response format
+//     rankResults.forEach((row) => {
+//       const { rank_array, member_id, username } = row;
+
+//       // Parse the rank_array into an array
+//       const ranks = JSON.parse(rank_array);  // Assuming it's stored as JSON string
+
+//       ranks.forEach((rankIndex) => {
+//         if (rankIndex >= 1 && rankIndex <= rankLabels.length) {
+//           const rankName = rankLabels[rankIndex - 1];  // Map the index to label
+          
+//           // Add member details to the appropriate rank
+//           response[rankName] = {
+//             member_id: member_id,
+//             name: username
+//           };
+//         }
+//       });
+//     });
+
+//     res.json(response);
+//   } catch (error) {
+//     console.error('Error fetching eligible users:', error);
+//     res.status(500).json({ error: 'Failed to fetch data' });
+//   }
+// });
+
+
 
 module.exports = router;

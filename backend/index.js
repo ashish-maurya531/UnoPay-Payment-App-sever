@@ -4,7 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const http = require('http');
-const { setupWebSocket } = require('./config/websocket');
+// const { setupWebSocket } = require('./config/websocket');
 const { connectToDatabase } = require('./config/database');
 const app = express();
 dotenv.config();
@@ -78,32 +78,32 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 // Create HTTP server
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
 // Setup WebSocket server
-setupWebSocket(server);
+// setupWebSocket(server);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.post("/send-notification", (req, res) => {
-  const { title, body } = req.body;
+// app.post("/send-notification", (req, res) => {
+//   const { title, body } = req.body;
 
-  if (!title || !body) {
-    return res.status(400).json({ error: "Title and body are required" });
-  }
+//   if (!title || !body) {
+//     return res.status(400).json({ error: "Title and body are required" });
+//   }
 
-  const message = JSON.stringify({ title, body });
+//   const message = JSON.stringify({ title, body });
 
-  if (global.broadcastMessage) {
-    global.broadcastMessage(message);
-    res.json({ success: true, message: "Notification sent" });
-  } else {
-    res.status(500).json({ error: "WebSocket broadcast function not available" });
-  }
-});
-server.listen(PORT, '0.0.0.0', () => {
+//   if (global.broadcastMessage) {
+//     global.broadcastMessage(message);
+//     res.json({ success: true, message: "Notification sent" });
+//   } else {
+//     res.status(500).json({ error: "WebSocket broadcast function not available" });
+//   }
+// });
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`WebSocket server is active on ws://localhost:${PORT}`);
+  // console.log(`WebSocket server is active on ws://localhost:${PORT}`);
 });
 
 
