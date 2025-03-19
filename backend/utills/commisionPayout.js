@@ -22,8 +22,8 @@ const BASIC_PACKAGE = {
 const PREMIUM_PACKAGE = {
   baseAmount: 1100,
   amounts: [
-    520.00,  // Fixed amount for the 1st value
-    110.00,  // Fixed amount for the 2nd value
+    540.00,  // Fixed amount for the 1st value
+    100.00,  // Fixed amount for the 2nd value
     50.00,   // Calculated from percentage
     25.00,   // Calculated from percentage
     10.00, 10.00, 10.00, 10.00, 10.00, 10.00,
