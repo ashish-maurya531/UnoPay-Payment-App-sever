@@ -128,6 +128,9 @@ const getMembershipTransactionsForMonth = async (req, res) => {
     }
 };
 // getMembershipTransactionsForMonth()
+// getMembershipTransactionsForToday()
+// getMembershipTransactionsForWeek()
+
 
 module.exports = {
     getMembershipTransactionsForToday,
