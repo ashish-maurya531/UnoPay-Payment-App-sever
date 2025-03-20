@@ -956,15 +956,15 @@ const checkPreviousPeriodClosing = async (type) => {
         
         switch(type) {
             case 'daily':
-                periodStart = now.subtract(1, 'day').startOf('day').format('YYYY-MM-DD');
+                periodStart = now.startOf('day').format('YYYY-MM-DD');
                 console.log('Checking daily closing for:', periodStart);
                 break;
             case 'weekly':
-                periodStart = now.subtract(1, 'week').startOf('week').format('YYYY-MM-DD');
+                periodStart = now.startOf('week').format('YYYY-MM-DD');
                 console.log('Checking weekly closing for:', periodStart);
                 break;
             case 'monthly':
-                periodStart = now.subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
+                periodStart = now.startOf('month').format('YYYY-MM-DD');
                 console.log('Checking monthly closing for:', periodStart);
                 break;
             default:
@@ -1004,7 +1004,7 @@ const checkDaily = async () => {
         return { success: false, message: 'Daily check failed' };
     }
 };
-
+// checkDaily()
 const checkWeekly = async () => {
     try {
         console.log('🔍 Checking previous weekly closing...');

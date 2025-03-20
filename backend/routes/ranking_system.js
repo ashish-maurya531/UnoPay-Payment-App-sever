@@ -7,7 +7,17 @@ const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 // Route to get data for all users
 router.get('/getAllUsersRank',authenticateToken, async (req, res) => {
   try {
-    const [result] = await pool.query('SELECT * FROM ranktable');
+    const [result] = await pool.query(`
+      SELECT 
+        rt.*,                   -- Select all columns from ranktable
+        ud.username             -- Select username from usersdetails
+      FROM 
+        ranktable rt
+      JOIN 
+        usersdetails ud 
+        ON rt.member_id = ud.memberid
+    `);
+    
     // console.log(result);
     res.status(200).json(result);
   } catch (error) {
@@ -72,53 +82,65 @@ router.post('/getUserRank',authenticateToken, async (req, res) => {
 
 //get eligibile users list with names 
 
-// router.post('/getEligibleUsers', authenticateToken, async (req, res) => {
-//   try {
-//     // Fetching rank_array and member_id from ranktable
-//     const [rankResults] = await pool.query(`
-//       SELECT rt.rank_array, rt.rank_no,rt.member_id, ud.username
-//       FROM ranktable rt
-//       JOIN usersdetails ud ON rt.member_id = ud.memberid
-//       WHERE rt.rank_no != 0 AND rt.rank_array IS NOT NULL
+router.post('/getEligibleUsers', authenticateToken, async (req, res) => {
+  try {
+    // Fetch only users with non-empty rank_array
+    const [rankResults] = await pool.query(`
+      SELECT rt.rank_array, rt.member_id, ud.username
+      FROM ranktable rt
+      JOIN usersdetails ud ON rt.member_id = ud.memberid
+      WHERE rt.rank_array IS NOT NULL AND JSON_LENGTH(rt.rank_array) > 0
+    `);
 
-//     `);
-//     console.log(rankResults);
+    // Reference array for rank mapping
+    const rankLabels = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND', 'CROWN DIAMOND'];
 
-//     // Reference array for rank mapping
-//     const rankLabels = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND', 'CROWN DIAMOND'];
+    // Initialize the response object with all rank labels as empty arrays
+    const response = rankLabels.reduce((acc, rank) => {
+      acc[rank] = [];  // Store multiple users as an array
+      return acc;
+    }, {});
 
-//     // Initialize the response object with all rank labels as keys
-//     const response = rankLabels.reduce((acc, rank) => {
-//       acc[rank] = {};  // Initialize empty object for each rank
-//       return acc;
-//     }, {});
+    // Map the filtered database results to the response format
+    rankResults.forEach((row) => {
+      const { rank_array, member_id, username } = row;
 
-//     // Map the database results to the response format
-//     rankResults.forEach((row) => {
-//       const { rank_array, member_id, username } = row;
+      if (Array.isArray(rank_array) && rank_array.length > 0) {
+        rank_array.forEach((rankIndex) => {
+          if (rankIndex >= 1 && rankIndex <= rankLabels.length) {
+            const rankName = rankLabels[rankIndex - 1];  // Map the index to label
 
-//       // Parse the rank_array into an array
-//       const ranks = JSON.parse(rank_array);  // Assuming it's stored as JSON string
+            // Push each user into the rank array (instead of replacing)
+            response[rankName].push({
+              member_id: member_id,
+              username: username
+            });
+          }
+        });
+      }
+    });
 
-//       ranks.forEach((rankIndex) => {
-//         if (rankIndex >= 1 && rankIndex <= rankLabels.length) {
-//           const rankName = rankLabels[rankIndex - 1];  // Map the index to label
-          
-//           // Add member details to the appropriate rank
-//           response[rankName] = {
-//             member_id: member_id,
-//             name: username
-//           };
-//         }
-//       });
-//     });
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching eligible users:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
 
-//     res.json(response);
-//   } catch (error) {
-//     console.error('Error fetching eligible users:', error);
-//     res.status(500).json({ error: 'Failed to fetch data' });
-//   }
-// });
+//get users list have done 50 directs 
+router.post('/have50Directs',authenticateToken,async (req,res)=>{
+  try{
+    const [result]=await pool.query(`select r.member_id , r.active_directs, u.username from ranktable r join usersdetails u on r.member_id=u.memberid 
+  where r.active_directs>=50`);
+  res.status(200).json(result);
+  }
+  catch(error){
+    console.error('Error fetching users with 50 directs:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+}
+);
+
 
 
 

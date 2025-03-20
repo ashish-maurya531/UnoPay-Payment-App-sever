@@ -342,7 +342,7 @@ const recreateRankTable = async () => {
                 FROM member_hierarchy mh
                 LEFT JOIN usersdetails u ON mh.member = u.memberid
                 LEFT JOIN ranktable r ON mh.member = r.member_id
-                WHERE mh.super_upline = ? AND mh.level <= 7
+                WHERE mh.super_upline = ?
                 ORDER BY mh.level`,
                 [id]
             );
@@ -551,7 +551,7 @@ const updateRankAndBacktrack = async (memberId) => {
             FROM member_hierarchy mh
             LEFT JOIN usersdetails u ON mh.member = u.memberid
             LEFT JOIN ranktable r ON mh.member = r.member_id
-            WHERE mh.super_upline = ? AND mh.level <= 7
+            WHERE mh.super_upline = ?
             ORDER BY mh.level`,
             [id]
         );
