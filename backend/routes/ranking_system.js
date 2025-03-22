@@ -120,7 +120,7 @@ router.post('/getEligibleUsers', authenticateToken, async (req, res) => {
       }
     });
 
-    res.json(response);
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error fetching eligible users:', error);
     res.status(500).json({ error: 'Failed to fetch data' });

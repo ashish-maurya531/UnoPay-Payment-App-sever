@@ -1559,7 +1559,253 @@ async function universalOtpEmailSender(member_id, type) {
     }
 }
 
+
+
+
+
+//////////////////////////////////////////////////////
+const FormData = require('form-data');
+const fetch = require('node-fetch');
+
+// SMS Configuration
+const SMS_API_URL = 'https://sms.jaipursmshub.in/api_v2/message/send';
+const BALANCE_API_URL = 'https://sms.jaipursmshub.in/api_v2/user/balance';
+const SMS_SENDER_ID = 'UNOTGS';
+
+// Helper function to get SMS template
+const getSmsTemplate = (type, otp, amount) => {
+  const templates = {
+    registration: {
+      message: `UNOTAG: Your OTP for registration is ${otp} (valid for 5 mins). Do not share it. UNOTAG`,
+      templateId: '1707174057154747792'
+    },
+    password_reset: {
+      message: `UnoPay: OTP for password reset: ${otp} (valid for 5 mins). Do not share it. Ignore if you didn't request this. UNOTAG`,
+      templateId: '1707174056160835771'
+    },
+    device_change: {
+      message: `UnoPay: New device login detected. OTP: ${otp} (valid for 5 mins). Logging in will sign you out of the previous device. UNOTAG`,
+      templateId: '1707174056162006531'
+    },
+    withdrawal: {
+      message: `UNOTAG: Your Rs.${amount} withdrawal request is received. Ensure account details are correct. UNOTAG`,
+      templateId: '1707174065706492683'
+    },
+    tpin_reset: {
+      message: `UNOTAG: OTP for TPIN reset: ${otp} (valid for 5 mins). Do not share it. Ignore if you didn't request this. UNOTAG`,
+      templateId: '1707174065704828520'
+    }
+  };
+
+  return templates[type] || null;
+};
+
+// Check SMS balance
+const checkSmsBalance = async () => {
+  try {
+    const response = await fetch(BALANCE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SMS_API_TOKEN}`
+      }
+    });
+    
+    const data = await response.json();
+    console.log('SMS Balance Check:', data);
+
+    if (data.success && data.data.sms_credit > 0) {
+      return { success: true, balance: data.data.sms_credit };
+    }
+    return { 
+      success: false, 
+      message: data.success ? 'Insufficient SMS balance' : data.error 
+    };
+  } catch (error) {
+    console.error('SMS Balance Check Error:', error);
+    return { success: false, message: 'Failed to check SMS balance' };
+  }
+};
+
+// Send SMS
+const sendSms = async (mobile, message, templateId) => {
+  const form = new FormData();
+  form.append('sender_id', SMS_SENDER_ID);
+  form.append('mobile_no', mobile);
+  form.append('message', message);
+  form.append('dlt_template_id', templateId);
+
+  try {
+    const response = await fetch(SMS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SMS_API_TOKEN}`,
+        ...form.getHeaders()
+      },
+      body: form
+    });
+
+    const data = await response.json();
+    console.log('SMS Send Response:', data);
+
+    if (data.success) {
+      return { 
+        success: true, 
+        campaignId: data.data.campaign_id,
+        creditsUsed: data.data.total_credit
+      };
+    }
+    return { success: false, error: data.error };
+  } catch (error) {
+    console.error('SMS Send Error:', error);
+    return { success: false, message: 'Failed to send SMS' };
+  }
+};
+
+// Universal SMS OTP Sender
+const universalSmsSender = async (memberId, type, amount) => {
+  try {
+    // Check SMS balance first
+    const balanceCheck = await checkSmsBalance();
+    if (!balanceCheck.success) {
+      return balanceCheck;
+    }
+
+    // Get user's phone number
+    const [user] = await pool.query(
+      'SELECT phoneno FROM usersdetails WHERE memberid = ?', 
+      [memberId]
+    );
+    
+    if (!user.length) return { success: false, message: 'User not found' };
+    const phone = user[0].phoneno;
+
+    // Generate OTP (except for withdrawal)
+    let otp;
+      if (type !== "withdrawal") {
+          otp = generateOtp();
+          console.log(`${type.toUpperCase()} OTP for ${phone}:`, otp);
+          await insertOTP(memberId, otp);
+      }
+  
+
+    // Get SMS template
+    const template = getSmsTemplate(type, otp, amount);
+    if (!template) return { success: false, message: 'Invalid SMS type' };
+
+    // Send SMS
+    const smsResult = await sendSms(phone, template.message, template.templateId);
+    
+    // Handle campaign error
+    if (smsResult.error === 'This campaign Already Submitted.') {
+      console.log('Regenerating OTP due to campaign error...');
+      const newOtp = generateOtp();
+      if (type !== "withdrawal") {
+      await insertOTP(memberId, newOtp);}
+      const newTemplate = getSmsTemplate(type, newOtp, amount);
+      return await sendSms(phone, newTemplate.message, newTemplate.templateId);
+    }
+    console.log(smsResult)
+
+    return smsResult;
+  } catch (error) {
+    console.error('Universal SMS Sender Error:', error);
+    return { success: false, message: 'Failed to process SMS request' };
+  }
+};
+
+// Registration SMS OTP
+const sendRegisterSmsOtp = async (phone) => {
+  try {
+    // Validate phone number
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      return { success: false, message: 'Invalid phone number' };
+    }
+
+    // Check existing user
+    const [existing] = await pool.query(
+      'SELECT memberid FROM usersdetails WHERE phoneno = ?', 
+      [phone]
+    );
+    if (existing.length) {
+      return { success: false, message: 'Phone already registered' };
+    }
+
+    // Generate and store OTP
+    const otp = generateOtp();
+    console.log('REGISTER OTP:', otp);
+    await insertOtpForRegister(phone, otp); // Modify your existing function to accept phone
+
+    // Send SMS
+    const template = getSmsTemplate('registration', otp);
+    return await sendSms(phone, template.message, template.templateId);
+  } catch (error) {
+    console.error('Registration SMS Error:', error);
+    return { success: false, message: 'Failed to send registration OTP' };
+  }
+};
+
+// New Routes
+// router.post("/send-register-sms-otp", async (req, res) => {
+//   const { phone } = req.body;
+  
+//   if (!phone) return res.status(400).json({ success: false, message: "Phone required" });
+//   if (containsSQLInjectionWords(phone)) {
+//     return res.status(400).json({ success: false, message: "Invalid input" });
+//   }
+
+//   try {
+//     const result = await sendRegisterSmsOtp(phone);
+//     res.status(result.success ? 200 : 400).json(result);
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+
+// router.post("/send-sms-otp", async (req, res) => {
+//   const { member_id, type, amount } = req.body;
+//   const validTypes = ['password_reset', 'device_change', 'withdrawal', 'tpin_reset'];
+
+//   if (!member_id || !type || !validTypes.includes(type)) {
+//     return res.status(400).json({ success: false, message: "Invalid request" });
+//   }
+
+//   try {
+//     const result = await universalSmsSender(member_id, type, amount);
+//     res.status(result.success ? 200 : 400).json(result);
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+
+// // Helper to check SMS delivery status
+// router.get("/sms-status/:campaignId", async (req, res) => {
+//   try {
+//     const response = await fetch(
+//       `https://sms.jaipursmshub.in/api_v2/message/report_details/${req.params.campaignId}`,
+//       {
+//         headers: {
+//           'Authorization': `Bearer ${process.env.SMS_API_TOKEN}`
+//         }
+//       }
+//     );
+    
+//     const data = await response.json();
+//     res.status(data.success ? 200 : 400).json(data);
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Failed to check status" });
+//   }
+// });
+// universalSmsSender("UP100070","withdrawal",101);
 /////////////////////////////////////////////
-module.exports = { sendOtpEmail,verifyOtp ,sendWelcomeEmail,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender,deleteOtpForRegister,sendWithdrawalEmail};
+module.exports = { sendOtpEmail, verifyOtp, 
+    sendWelcomeEmail, 
+    sendOtpRegister, verifyOtpForRegister, 
+    universalOtpEmailSender, 
+    deleteOtpForRegister, 
+    sendWithdrawalEmail ,
+    universalSmsSender,
+    sendRegisterSmsOtp
+};
 
    

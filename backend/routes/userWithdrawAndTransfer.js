@@ -4,7 +4,8 @@ const router = express.Router();
 const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 const {getCommisionWalletBalance, getFlexiWalletBalance,getHoldTotalCommission} = require('../utills/checkUserBalance');
 const generateTransactionId = require('../utills/generateTxnId');
-const {sendWithdrawalEmail} = require('../utills/sendOtpMail');
+const {sendWithdrawalEmail,universalSmsSender} = require('../utills/sendOtpMail');
+
 const moment = require('moment-timezone');
 const authenticateToken = require('../middleware/auth');
 const { payoutTransfer, checkPayoutStatus, getBalance}=require("../utills/cashKawach");
@@ -377,7 +378,8 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
 
         await connection.commit();
-        return res.status(200).json({ status: "true", message: "Withdraw request created successfully." });
+        res.status(200).json({ status: "true", message: "Withdraw request created successfully." });
+        await universalSmsSender(member_id,"withdrawal",amount);
 
     } catch (error) {
         await connection.rollback();
@@ -834,6 +836,7 @@ async function handleManualWithdrawal(transaction_id, member_id, amount, bankDet
         };
         
         await sendWithdrawalEmail(emailData);
+       
         console.log('Withdrawal confirmation email sent to user');
         
         return res.status(200).json({ 

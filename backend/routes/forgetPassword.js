@@ -1,8 +1,16 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const router = express.Router();
-const {sendOtpEmail,verifyOtp,sendOtpRegister,verifyOtpForRegister,universalOtpEmailSender} = require('../utills/sendOtpMail');
-const containsSQLInjectionWords=require('../utills/sqlinjectioncheck');
+const {sendOtpEmail,
+    verifyOtp,
+    sendOtpRegister,
+    verifyOtpForRegister,
+    universalOtpEmailSender,
+    universalSmsSender,
+    sendRegisterSmsOtp,
+
+} = require('../utills/sendOtpMail');
+const containsSQLInjectionWords=require('../utills/sqlInjectionCheck');
 
 const authenticateToken = require('../middleware/auth');
 
@@ -12,6 +20,7 @@ const authenticateToken = require('../middleware/auth');
 /////////////////////////////////////////////////
 //new send otp with its type
 // Route to send OTP
+//old
 router.post("/send-otp2", async (req, res) => {
     const { identifier, type } = req.body;
     console.log(identifier, type);
@@ -55,6 +64,49 @@ router.post("/send-otp2", async (req, res) => {
     }
 });
 
+////new sender by sms 
+router.post("/send-otp-by-sms", async (req, res) => {
+    const { identifier, type } = req.body;
+    console.log(identifier, type);
+
+    // Check if identifier or type is missing
+    if (!identifier || !type) {
+        return res.status(200).json({ success: false, message: "Fields are required" });
+    }
+
+    // Check for SQL injection attempt
+    if (containsSQLInjectionWords(identifier)) {
+        return res.status(200).json({ success: false, message: "Don't try to hack." });
+    }
+   
+    const validTypes = ['password_reset', 'tpin_reset','device_change',"kyc"];
+    if (!validTypes.includes(type)) {
+        return res.status(200).json({ success: false, message: "Invalid type." });
+    }
+
+
+    // Check for user existence
+    const [userRows] = await pool.query(
+        'SELECT memberid, phoneno, email FROM usersdetails WHERE memberid = ? OR email = ? OR phoneno = ?',
+        [identifier, identifier, identifier]
+    );
+
+    if (userRows.length === 0) {
+        return res.status(200).json({ status: "false", message: `User  not registered` });
+    }
+
+    // Extract member_id
+    const member_id = userRows[0].memberid;
+
+    try {
+        console.log(type+" for "+member_id)
+        const result = await universalSmsSender(member_id, type);
+        res.status(200).json({ success: true, message: "OTP sent successfully", result });
+    } catch (error) {
+        console.error("Error sending OTP:", error);
+        res.status(500).json({ success: false, message: "Failed to send OTP", error });
+    }
+});
 
 
 /////////////////////////////////////////////////
@@ -129,6 +181,46 @@ router.post("/send-register-otp", async (req, res) => {
         res.status(500).json({ success: false, message: "An error occurred while sending OTP", error });
     }
 });
+
+
+router.post("/send-register-otp-by-sms", async (req, res) => {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+        return res.status(200).json({ success: false, message: "Identifier (phone no) is required" });
+    }
+
+    if (containsSQLInjectionWords(identifier)) {
+        return res.status(200).json({ success: false, message: "Invalid input detected." });
+    }
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(identifier)) {
+      return  res.status(400).json({ success: false, message: "Invalid phone number" });
+    }
+    // check if email is already registered
+    console.log(identifier);
+    const [userRows] = await pool.query(
+        'SELECT phoneno FROM usersdetails WHERE phoneno =?',
+        [identifier]
+    );
+    console.log(userRows)
+    if (userRows.length > 0) {
+        return res.status(200).json({ success: false, message: "Phone no is already registered" });
+    }
+
+    try {
+        const result = await sendRegisterSmsOtp(identifier);
+        if (result.success) {
+            res.status(200).json({ success: true, message: "OTP sent successfully", result });
+        } else {
+            res.status(500).json({ success: false, message: "Failed to send OTP", error: result.error });
+        }
+    } catch (error) {
+        console.error("Error sending registration OTP:", error);
+        res.status(500).json({ success: false, message: "An error occurred while sending OTP", error });
+    }
+});
+
 
 // Route to verify OTP for registration
 router.post("/verify-register-otp", async (req, res) => {
