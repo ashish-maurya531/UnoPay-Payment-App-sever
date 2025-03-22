@@ -110,6 +110,11 @@ export default function DashboardLayout({ children }) {
       onClick: () => navigate('/dashboard/qr-list'),
     },
     {
+      key: 'Manage Meeting',
+      label: 'Manage Meeting',
+      onClick: () => navigate('/dashboard/manage-meeting'),
+    },
+    {
       key: 'generateIds',
       label: 'Generate User IDs',
       onClick: () => navigate('/dashboard/generate-ids'),
