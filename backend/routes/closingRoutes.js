@@ -6,6 +6,8 @@ const {
     checkMonthly 
 } = require('../utills/companyTurnoverDistrubution.js');
 const { 
+    getMembershipTransactionsForToday, 
+    getMembershipTransactionsForWeek, 
     getMembershipTransactionsForMonth 
 } = require('../utills/companyTurnover');
 const { pool } = require('../config/database');
@@ -50,6 +52,34 @@ router.post('/check-distribute/weekly',authenticateToken,async (req, res) => {
 ///////////////////////////////////////////////////////////////////
 
 //route to get the company turnover for month 
+
+router.post('/closing-route-get-today-data', async (req, res) => {
+    try {
+        const result = await getMembershipTransactionsForToday(req, res);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error('Error in closing-route-get-today-data:', err);
+        return res.status(500).json({
+            message: "Error fetching today's transactions",
+            error: err.message,
+        });
+    }
+});
+
+// Route to fetch weekly transactions
+router.post('/closing-route-get-week-data', async (req, res) => {
+    try {
+        const result = await getMembershipTransactionsForWeek(req, res);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error('Error in closing-route-get-week-data:', err);
+        return res.status(500).json({
+            message: "Error fetching weekly transactions",
+            error: err.message,
+        });
+    }
+});
+
 router.post('/closing-route-get-month-data', async (req, res) => {
     try {
         const result = await getMembershipTransactionsForMonth(req, res);

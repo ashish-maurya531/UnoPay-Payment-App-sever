@@ -6,13 +6,24 @@ const containsSQLInjectionWords= require('../utills/sqlInjectionCheck');
 
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
-const {sendWelcomeEmail,universalOtpEmailSender,verifyOtp, verifyOtpForRegister,deleteOtpForRegister} = require('../utills/sendOtpMail');
+const {sendWelcomeEmail,
+  universalOtpEmailSender,
+  verifyOtp, 
+  verifyOtpForRegister,
+  deleteOtpForRegister,
+  universalSmsSender,
+  
+
+} = require('../utills/sendOtpMail');
 const moment = require('moment-timezone');
 const bcrypt = require('bcryptjs');
 
+const {checkGoogleVersion} = require('../utills/googleVersionChecker');
 
 
 const jwt = require('jsonwebtoken');
+
+
 
 
 ///////////////////////
@@ -217,17 +228,45 @@ if (isUsed.length > 0) {
   console.log("Phone number or email already used.");
   return res.status(200).json({ status: "false", error: errorMessage });
 }
+////////////////////
+const version = await checkGoogleVersion();
+let isEmailValid =0
+if (version) {
+    console.log('App Version:', version);
 
-//first verify the otp 
-const isEmailValid = await verifyOtpForRegister(email, emailOtp);
+    // Compare the versions
+    if (version.localeCompare("1.0.16", undefined, { numeric: true }) > 0) {
+        console.log("App is updated, verifying OTP with phone number");
+        isEmailValid = await verifyOtpForRegister(phoneno, emailOtp);  
+        console.log(`Phone verification: ${isEmailValid}`);
+    } else {
+        console.log("App is outdated, verifying OTP with email");
+        isEmailValid = await verifyOtpForRegister(email, emailOtp);  
+        console.log(`Email verification: ${isEmailValid}`);
+    }
+} else {
+    console.log('Failed to fetch version, defaulting to email verification');
+    isEmailValid = await verifyOtpForRegister(email, emailOtp); 
+    console.log(`Email verification: ${isEmailValid}`);
+}
+/////////////////
 
+// const isEmailValid = await verifyOtpForRegister(email, emailOtp);
+
+let isDeleted=0
   if (isEmailValid.message === "Invalid OTP") {
     console.log("otp invalid Try again ")
     return res.status(200).json({ status: "false", message: "Invalid OTP. Try again" });
   }
+  
   else if (isEmailValid.message === "OTP expired") {
     console.log("otp expired ,Send new otp ")
-    const isDeleted = await deleteOtpForRegister(email)
+    if (version.localeCompare("1.0.16", undefined, { numeric: true }) > 0) {
+     isDeleted = await deleteOtpForRegister(phoneno)
+    }
+    else{
+      isDeleted = await deleteOtpForRegister(email)
+    }
     if (isDeleted.message === "OTP deleted successfully") {
       console.log("otp deleted 1")
     }
@@ -238,7 +277,12 @@ const isEmailValid = await verifyOtpForRegister(email, emailOtp);
   }
   else if (isEmailValid.message === "OTP verified successfully") {
     console.log("otp verified successfully")
-    const isDeleted = await deleteOtpForRegister(email)
+    if (version.localeCompare("1.0.16", undefined, { numeric: true }) > 0) {
+      isDeleted = await deleteOtpForRegister(phoneno)
+     }
+     else{
+       isDeleted = await deleteOtpForRegister(email)
+     }
     if (isDeleted.message === "OTP deleted successfully") {
       console.log("otp deleted 2")
     }
@@ -580,7 +624,7 @@ router.post('/login2', async (req, res) => {
 
 
         //uncomment below to devide id login // and android device will send device id
-        const gods = ["UP130566", "UP108732", "UP171179", "UP134497","UP151060","UP127901"]; 
+        const gods = ["UP130566", "UP108732", "UP171179", "UP134497","UP151060","UP127901","UP10007"]; 
         //uncomment below to devide id login // and android device will send device id
         if (!gods.includes(memberid) ){
           await pool.query(
@@ -649,7 +693,9 @@ router.post('/login2', async (req, res) => {
       // If device_id does not match, verify OTP
       if (deviceIdRows[0].device_id !== device_id) {
         if (!otp) {
-          const otpResponse = await universalOtpEmailSender(memberid, 'device_change');
+          // const otpResponse = await universalOtpEmailSender(memberid, 'device_change');
+          const otpResponse = await universalSmsSender(memberid,"device_change");
+       
           if (otpResponse.success) {
             return res.status(200).json({
               status: "false",

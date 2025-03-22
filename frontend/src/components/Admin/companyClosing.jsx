@@ -557,6 +557,9 @@ export default function DistributionAndClosing() {
   const [closingData, setClosingData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [eligibleUsersDataSource, setEligibleUsersDataSource] = useState([]);
+  const [summaryRow, setSummaryRow] = useState(null);
+  const [dailySummaryRow, setdailySummaryRow] = useState(null);
+
   const [eligible50DirectsDataSource, setEligible50DirectsDataSource] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
@@ -565,12 +568,27 @@ export default function DistributionAndClosing() {
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
   const [customMonthlyAmount, setCustomMonthlyAmount] = useState('');
   const [monthlyData, setMonthlyData] = useState({});
+  const [currentPagination, setCurrentPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  const DAILY_COMMISSION_RATES = {
+    1: 0.015,   
+    2: 0.016,   
+    3: 0.0165, 
+    4: 0.0175,  
+    5: 0.02,    
+    6: 0.01,   
+    7: 0.01     
+  };
+  
 
   useEffect(() => {
     fetchClosingData();
     fetchMonthlyData();
     fetchEligibleUsersData();
     fetchEligible50DirectsData();
+    fetchDailyTurnover();
   }, []);
 
   useEffect(() => {
@@ -638,9 +656,9 @@ export default function DistributionAndClosing() {
     // Convert map to array
     const transformedData = Object.values(membersMap);
   
-    // Add a summary row at the end
-    transformedData.push({
-      sno: 'Total', // Label row as 'Total'
+    // Create summary row separately
+    const summaryRow = {
+      sno: 'Total',
       member_id: '--',
       OPAL: rankCounts.OPAL,
       TOPAZ: rankCounts.TOPAZ,
@@ -649,11 +667,97 @@ export default function DistributionAndClosing() {
       DIAMOND: rankCounts.DIAMOND,
       BLUE_DIAMOND: rankCounts.BLUE_DIAMOND,
       CROWN_DIAMOND: rankCounts.CROWN_DIAMOND,
-      total_ranks: '--' // No total count for this row
-    });
+      total_ranks: '--'
+    };
   
-    return transformedData;
+    return { data: transformedData, summaryRow };
   };
+  
+  ///////////////
+
+
+  const mockApiResponse = {
+    OPAL: [
+      { member_id: "UP100001", username: "Alice" },
+      { member_id: "UP100002", username: "Bob" },
+      { member_id: "UP100003", username: "Charlie" },
+  
+      { member_id: "UP100008", username: "Hannah" },
+      { member_id: "UP100009", username: "Ivy" },
+      { member_id: "UP100010", username: "Jack" }
+    ],
+    TOPAZ: [
+      { member_id: "UP200001", username: "Liam" },
+      { member_id: "UP200002", username: "Noah" },
+      { member_id: "UP200003", username: "Oliver" },
+      { member_id: "UP200004", username: "Emma" },
+      { member_id: "UP200005", username: "Ava" },
+      { member_id: "UP200006", username: "Sophia" },
+      { member_id: "UP200007", username: "Mia" },
+      { member_id: "UP200008", username: "Lucas" },
+      { member_id: "UP200009", username: "Amelia" },
+      { member_id: "UP200010", username: "Harper" }
+    ],
+    JASPER: [
+      { member_id: "UP300001", username: "James" },
+      { member_id: "UP300002", username: "Benjamin" },
+      { member_id: "UP300003", username: "Elijah" },
+      { member_id: "UP300004", username: "Charlotte" },
+     
+      { member_id: "UP300008", username: "Layla" },
+      { member_id: "UP300009", username: "Zoe" },
+      { member_id: "UP300010", username: "Leo" }
+    ],
+    ALEXANDER: [
+      { member_id: "UP400001", username: "Scarlett" },
+      { member_id: "UP400002", username: "Nathan" },
+      { member_id: "UP400003", username: "Lily" },
+      { member_id: "UP400004", username: "Ryan" },
+      { member_id: "UP400005", username: "Zach" },
+      { member_id: "UP400006", username: "Daniel" },
+      { member_id: "UP400007", username: "Hannah" },
+      { member_id: "UP400008", username: "Chloe" },
+      { member_id: "UP400009", username: "Sophia" },
+      { member_id: "UP400010", username: "Ethan" }
+    ],
+    DIAMOND: [
+      { member_id: "UP500001", username: "Isabella" },
+      { member_id: "UP500002", username: "Mason" },
+      { member_id: "UP500003", username: "Logan" },
+      { member_id: "UP500004", username: "William" },
+      { member_id: "UP500005", username: "Dylan" },
+      { member_id: "UP500006", username: "Gabriel" },
+      { member_id: "UP500007", username: "Olivia" },
+      { member_id: "UP500008", username: "Victoria" },
+      { member_id: "UP500009", username: "Jack" },
+      { member_id: "UP500010", username: "Samantha" }
+    ],
+    BLUE_DIAMOND: [
+      { member_id: "UP600001", username: "Logan" },
+      { member_id: "UP600002", username: "Ryan" },
+      { member_id: "UP600003", username: "Madison" },
+ 
+      { member_id: "UP600007", username: "Oliver" },
+      { member_id: "UP600008", username: "Savannah" },
+      { member_id: "UP600009", username: "Tyler" },
+      { member_id: "UP600010", username: "Brooklyn" }
+    ],
+    "CROWN DIAMOND": [
+      { member_id: "UP700001", username: "Julian" },
+      { member_id: "UP700002", username: "Landon" },
+    
+      { member_id: "UP700005", username: "Adrian" },
+      { member_id: "UP700006", username: "Xavier" },
+      { member_id: "UP700007", username: "Naomi" },
+      { member_id: "UP700008", username: "Ruby" },
+      { member_id: "UP700009", username: "Jaxon" },
+      { member_id: "UP700010", username: "Delilah" }
+    ]
+  };
+  
+ 
+  
+  ////////////////
   
   
   const fetchEligibleUsersData = async () => {
@@ -666,8 +770,13 @@ export default function DistributionAndClosing() {
       console.log(response2.data); // Debugging API Response
   
       // Transform response before setting state
-      const formattedData = transformAchieversData(response2.data);
-      setEligibleUsersDataSource(formattedData);
+      // const { data, summaryRow } = transformAchieversData(response2.data);
+      const { data, summaryRow } = transformAchieversData(mockApiResponse);
+
+  
+      setEligibleUsersDataSource(data); // Set only paginated data
+      setSummaryRow(summaryRow);        // Store the total row separately
+  
     } catch (error) {
       notification.error({ message: 'Error', description: 'Failed to fetch achievers users details.' });
     } finally {
@@ -681,7 +790,66 @@ export default function DistributionAndClosing() {
       const response2= await axios.post(`${Src}/api/auth/have50Directs`,{
         headers: { Authorization: `Bearer ${token}` },
       });
-      setEligible50DirectsDataSource(response2.data.data);
+      console.log(response2.data);
+      // setEligible50DirectsDataSource(response2.data);
+      setEligible50DirectsDataSource([
+        { "member_id": "UP100001", "active_directs": 100, "username": "Alice" },
+        { "member_id": "UP100002", "active_directs": 150, "username": "Bob" },
+        { "member_id": "UP100003", "active_directs": 200, "username": "Charlie" },
+        { "member_id": "UP100004", "active_directs": 250, "username": "David" },
+        { "member_id": "UP100005", "active_directs": 300, "username": "Eve" },
+        { "member_id": "UP100006", "active_directs": 350, "username": "Frank" },
+        { "member_id": "UP100007", "active_directs": 400, "username": "Grace" },
+        { "member_id": "UP100008", "active_directs": 450, "username": "Hannah" },
+        { "member_id": "UP100009", "active_directs": 500, "username": "Ivy" },
+        { "member_id": "UP100010", "active_directs": 550, "username": "Jack" },
+    
+        { "member_id": "UP100011", "active_directs": 600, "username": "Liam" },
+        { "member_id": "UP100012", "active_directs": 650, "username": "Noah" },
+        { "member_id": "UP100013", "active_directs": 700, "username": "Oliver" },
+        { "member_id": "UP100014", "active_directs": 750, "username": "Emma" },
+        { "member_id": "UP100015", "active_directs": 800, "username": "Ava" },
+        { "member_id": "UP100016", "active_directs": 850, "username": "Sophia" },
+        { "member_id": "UP100017", "active_directs": 900, "username": "Mia" },
+        { "member_id": "UP100018", "active_directs": 950, "username": "Lucas" },
+        { "member_id": "UP100019", "active_directs": 1000, "username": "Amelia" },
+        { "member_id": "UP100020", "active_directs": 1050, "username": "Harper" },
+    
+        { "member_id": "UP100021", "active_directs": 1100, "username": "James" },
+        { "member_id": "UP100022", "active_directs": 1150, "username": "Benjamin" },
+        { "member_id": "UP100023", "active_directs": 1200, "username": "Elijah" },
+        { "member_id": "UP100024", "active_directs": 1250, "username": "Charlotte" },
+        { "member_id": "UP100025", "active_directs": 1300, "username": "Mila" },
+        { "member_id": "UP100026", "active_directs": 1350, "username": "Aria" },
+        { "member_id": "UP100027", "active_directs": 1400, "username": "Aiden" },
+        { "member_id": "UP100028", "active_directs": 1450, "username": "Layla" },
+        { "member_id": "UP100029", "active_directs": 1500, "username": "Zoe" },
+        { "member_id": "UP100030", "active_directs": 1550, "username": "Leo" },
+    
+        { "member_id": "UP100031", "active_directs": 1600, "username": "Scarlett" },
+        { "member_id": "UP100032", "active_directs": 1650, "username": "Nathan" },
+        { "member_id": "UP100033", "active_directs": 1700, "username": "Lily" },
+        { "member_id": "UP100034", "active_directs": 1750, "username": "Ryan" },
+        { "member_id": "UP100035", "active_directs": 1800, "username": "Zach" },
+        { "member_id": "UP100036", "active_directs": 1850, "username": "Daniel" },
+        { "member_id": "UP100037", "active_directs": 1900, "username": "Hannah" },
+        { "member_id": "UP100038", "active_directs": 1950, "username": "Chloe" },
+        { "member_id": "UP100039", "active_directs": 2000, "username": "Sophia" },
+        { "member_id": "UP100040", "active_directs": 2050, "username": "Ethan" },
+    
+        { "member_id": "UP100041", "active_directs": 2100, "username": "Isabella" },
+        { "member_id": "UP100042", "active_directs": 2150, "username": "Mason" },
+        { "member_id": "UP100043", "active_directs": 2200, "username": "Logan" },
+        { "member_id": "UP100044", "active_directs": 2250, "username": "William" },
+        { "member_id": "UP100045", "active_directs": 2300, "username": "Dylan" },
+        { "member_id": "UP100046", "active_directs": 2350, "username": "Gabriel" },
+        { "member_id": "UP100047", "active_directs": 2400, "username": "Olivia" },
+        { "member_id": "UP100048", "active_directs": 2450, "username": "Victoria" },
+        { "member_id": "UP100049", "active_directs": 2500, "username": "Jack" },
+        { "member_id": "UP100050", "active_directs": 2550, "username": "Samantha" }
+    ]
+    );
+
     }
     catch(error){
       notification.error({ message: 'Error', description: 'Failed to fetch achivers users details.' });
@@ -689,6 +857,50 @@ export default function DistributionAndClosing() {
       setLoading(false);
     }
 
+  };
+
+  const fetchDailyTurnover = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch daily turnover from the API
+      const { data } = await axios.post(`${Src}/api/auth/closing-route-get-today-data`);
+
+      console.log("API Response:", data);
+
+      // const turnover = parseFloat(data.todayIncome || 0);
+      const turnover = 6160  // Mock turnover value
+      
+     // Calculate the distribution for each rank using the fixed commission rates
+     const distribution = Object.keys(DAILY_COMMISSION_RATES).reduce((acc, rank) => {
+      acc[rank] = (turnover * DAILY_COMMISSION_RATES[rank]).toFixed(2);
+      return acc;
+    }, {});
+
+    // Create summary row
+    // Calculate the total distribution amount by summing all rank commissions
+      const totalDistributed = Object.values(distribution)
+      .reduce((sum, value) => sum + parseFloat(value), 0)
+      .toFixed(2);
+
+      const summary2 = {
+      Total: `${turnover.toFixed(2)}`,              // Total turnover
+      to_distribute: `${totalDistributed}`,          // Sum of all distributed amounts
+      ...distribution
+      };
+
+      setdailySummaryRow(summary2);
+      console.log("Summary Row:", summary2);
+
+    } catch (error) {
+      console.error('Error fetching turnover:', error);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to fetch daily turnover.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMonthlyData = async () => {
@@ -913,7 +1125,7 @@ export default function DistributionAndClosing() {
             ...stats,
           }))}
           rowKey="year"
-          pagination={{ pageSize: 8 }}
+          pagination={{ pageSize: 10 }}
         />
       )
     }
@@ -946,13 +1158,88 @@ export default function DistributionAndClosing() {
   };
 
   /////////////
-  const achiversColumns = [
+  // Columns with consistent width
+const achiversColumns = [
+  {
+    title: 'S.No',
+    dataIndex: 'sno',
+    key: 'sno',
+    width: 80,                          // Set fixed width
+    align: 'center'                      // Center align
+  },
+  {
+    title: 'Member ID',
+    dataIndex: 'member_id',
+    key: 'member_id',
+    width: 150,                         // Set fixed width
+    align: 'center'
+  },
+  {
+    title: 'OPAL',
+    dataIndex: 'OPAL',
+    key: 'OPAL',
+    width: 150,                         // Set fixed width
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'TOPAZ',
+    dataIndex: 'TOPAZ',
+    key: 'TOPAZ',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'JASPER',
+    dataIndex: 'JASPER',
+    key: 'JASPER',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'ALEXANDER',
+    dataIndex: 'ALEXANDER',
+    key: 'ALEXANDER',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'DIAMOND',
+    dataIndex: 'DIAMOND',
+    key: 'DIAMOND',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'BLUE_DIAMOND',
+    dataIndex: 'BLUE_DIAMOND',
+    key: 'BLUE_DIAMOND',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  },
+  {
+    title: 'CROWN_DIAMOND',
+    dataIndex: 'CROWN_DIAMOND',
+    key: 'CROWN_DIAMOND',
+    width: 150,
+    align: 'center',
+    render: (text) => text || '--'
+  }
+];
+  const direct500Columns = [
     {
       title: 'S.No',
       dataIndex: 'sno',
       key: 'sno',
-      // render: (_, __, index) => 
-      //   (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
+      render: (_, __, index) => {
+        const { current, pageSize } = currentPagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: 'Member ID',
@@ -960,49 +1247,87 @@ export default function DistributionAndClosing() {
       key: 'member_id',
     },
     {
+      title: 'Username',
+      dataIndex: 'username',
+      key: 'username',
+    }
+  ];
+
+
+
+   // Ant Design table columns
+   const dailyBreakdown = [
+    {
+      title: 'Today Turnover',
+      dataIndex: 'Total',
+      key: 'total',
+      width: 180,
+      align: 'center'
+    },
+    {
+      title: 'To Distribute',
+      dataIndex: 'to_distribute',
+      key: 'to_distribute',
+      width: 180,
+      align: 'center'
+    },
+    {
       title: 'OPAL',
-      dataIndex: 'OPAL',
+      dataIndex: '1',
       key: 'OPAL',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'TOPAZ',
-      dataIndex: 'TOPAZ',
+      dataIndex: '2',
       key: 'TOPAZ',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'JASPER',
-      dataIndex: 'JASPER',
+      dataIndex: '3',
       key: 'JASPER',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'ALEXANDER',
-      dataIndex: 'ALEXANDER',
+      dataIndex: '4',
       key: 'ALEXANDER',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'DIAMOND',
-      dataIndex: 'DIAMOND',
+      dataIndex: '5',
       key: 'DIAMOND',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'BLUE_DIAMOND',
-      dataIndex: 'BLUE_DIAMOND',
+      dataIndex: '6',
       key: 'BLUE_DIAMOND',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     },
     {
       title: 'CROWN_DIAMOND',
-      dataIndex: 'CROWN_DIAMOND',
+      dataIndex: '7',
       key: 'CROWN_DIAMOND',
+      width: 150,
+      align: 'center',
       render: (text) => text || '--'
     }
   ];
-  
 
   /////////
 
@@ -1059,18 +1384,50 @@ export default function DistributionAndClosing() {
         <Card title="Rank Achivers">
             <Table
               columns={achiversColumns}
-              dataSource={Array.isArray(eligibleUsersDataSource) ? eligibleUsersDataSource : []}
-              rowKey="member_id"
+              dataSource={summaryRow? [summaryRow] : []}
+              pagination={false}
+              rowKey="sno"
+              // showHeader={false}
+              footer={null}
+              bordered={true}
+              style={{
+                marginTop: '1px',                 // Ensure no gap between tables
+                borderTop: 'none',                  // Remove border between table and summary
+                fontWeight: 'bold',
+                               // Highlight the summary row
+              }}
             />
+            <Table
+              columns={achiversColumns}
+              dataSource={eligibleUsersDataSource}
+              pagination={{ pageSize: 10 }}
+              rowKey="member_id"
+              bordered={true}
+              showHeader={false}                // Add border for visual consistency
+              style={{ marginBottom: '16px' }}    // Add spacing between tables
+            />
+  
+
+
+         
+
+
 
         </Card>
 
         <Card title="Daily Closing">
-            {/* <Table
-              columns={achiversColumns}
-              dataSource={Array.isArray(eligibleUsersDataSource) ? eligibleUsersDataSource : []}
-              rowKey="member_id"
-            /> */}
+        <Table
+        columns={dailyBreakdown}
+        dataSource={dailySummaryRow ? [dailySummaryRow] : []}
+        pagination={false}
+        rowKey="Total"
+        bordered={true}
+        style={{
+          marginTop: '10px',
+          fontWeight: 'bold'
+        }}
+      />
+  
                <Button
               type="primary"
               onClick={() => handleManualClosing('daily')}
@@ -1083,8 +1440,20 @@ export default function DistributionAndClosing() {
          <Card
             title="Manual Monthly Closing"
             // bordered={false}
+            
            
           >
+            <Table
+            columns={dailyBreakdown}
+            dataSource={dailySummaryRow ? [dailySummaryRow] : []}
+            pagination={false}
+            rowKey="Total"
+            bordered={true}
+            style={{
+              marginTop: '10px',
+              fontWeight: 'bold'
+            }}
+          />
             <Row gutter={16}>
               <Col span={8}>
                 <Text strong>Total Amount: </Text>
@@ -1122,12 +1491,20 @@ export default function DistributionAndClosing() {
           </Card>
 
           <Card title="Weekly Closing">
-            {/* <Table
-              columns={achiversColumns}
-              dataSource={Array.isArray(eligibleUsersDataSource) ? eligibleUsersDataSource : []}
-              rowKey="member_id"
-            /> */}
-              <Button
+            <h1>50 Directs Achivers</h1>
+            <Table
+              columns={direct500Columns}
+              dataSource={Array.isArray(eligible50DirectsDataSource) ? eligible50DirectsDataSource : []}
+              pagination={{
+                current: currentPagination.current,
+                pageSize: currentPagination.pageSize,
+                onChange: (page, pageSize) => {
+                  setCurrentPagination({ current: page, pageSize });
+                }
+              }}
+            />
+
+            <Button
               type="primary"
               onClick={() => handleManualClosing('weekly')}
               className="mt-2"
@@ -1135,16 +1512,16 @@ export default function DistributionAndClosing() {
               Run weekly Closing
             </Button>
           </Card>
-      
-          
-         
-           
-           
-          
-         
+
+
+
+
+
+
+
         </Col>
         <Col span={24}>
-          
+
         </Col>
       </Row>
     </div>

@@ -20,6 +20,7 @@
     "google-play-scraper": "^10.0.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
+    "latest": "^0.2.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.47",
     "multer": "^1.4.5-lts.1",
