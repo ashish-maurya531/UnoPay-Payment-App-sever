@@ -78,6 +78,7 @@ export default function DistributionAndClosing() {
   const [summaryRow, setSummaryRow] = useState(null);
   const [dailySummaryRow, setdailySummaryRow] = useState(null);
   const [monthlySummaryRow, setmonthlySummaryRow] = useState(null);
+  const [dynamicMonthly, setDynamicMonthly] = useState(null)
 
 
 
@@ -106,6 +107,24 @@ export default function DistributionAndClosing() {
     6: 0.01,
     7: 0.01
   };
+  const MONTHLY_COMMISSION_RATES = {
+    1: 0.015,
+    2: 0.016,
+    3: 0.0165,
+    4: 0.0175,
+    5: 0.02,
+    6: 0.01
+};
+
+// 2. Define rank to index mapping for monthly (similar to daily)
+const monthlyRankToIndex = {
+    'OPAL': '1',
+    'TOPAZ': '2',
+    'JASPER': '3',
+    'ALEXANDER': '4',
+    'DIAMOND': '5',
+    'BLUE_DIAMOND': '6'
+};
 
   //  const MONTHLY_COMMISSION_RATES = {
   //     1: 0.015,
@@ -116,29 +135,31 @@ export default function DistributionAndClosing() {
   //     6: 0.01
   // };
 
-
   useEffect(() => {
+    // In fetchData function
     const fetchData = async () => {
       try {
-        setLoading(true); // Show loading state while fetching data
+        setLoading(true);
+        await fetchClosingData();
+        
+        // Get eligible users data directly from function
+        const eligibleUsers = await fetchEligibleUsersData();
+        await fetchMonthlyData(eligibleUsers);
 
-        // Fetch data sequentially if one depends on the other
-        await fetchClosingData(); // Fetch closing data first
-        await fetchMonthlyData(); // Then fetch monthly data
-        await fetchEligibleUsersData(); // Then eligible users data
-        await fetchEligible50DirectsData(); // Then 50 directs data
-        await fetchDailyTurnover(); // Then daily turnover data
-        await fetchWeeklyTurnover(); // Finally, fetch weekly turnover data
+        // Pass fresh data to dependent functions
+        await fetchDailyTurnover(eligibleUsers);
 
+        const eligible50=await fetchEligible50DirectsData();
+        await fetchWeeklyTurnover(eligible50);
       } catch (error) {
-        console.error("Error during data fetch:", error);
+        // console.error("Error during data fetch:", error);
       } finally {
-        setLoading(false); // Hide loading state after fetching is complete
+        setLoading(false);
       }
     };
 
-    fetchData(); // Call the fetch function
-  }, []); // Empty dependency array ensures it runs once on component mount
+    fetchData();
+  }, [token]); // Add token as dependency to refetch when token changes // Empty dependency array ensures it runs once on component mount
 
 
   useEffect(() => {
@@ -207,7 +228,7 @@ export default function DistributionAndClosing() {
     const transformedData = Object.values(membersMap);
 
     // Create summary row separately
-    const summaryRow = {
+    const summaryRow3 = {
       sno: 'Total',
       member_id: '--',
       OPAL: rankCounts.OPAL,
@@ -220,7 +241,7 @@ export default function DistributionAndClosing() {
       total_ranks: '--'
     };
 
-    return { data: transformedData, summaryRow };
+    return { data: transformedData, summaryRow3 };
   };
 
   ///////////////
@@ -228,28 +249,23 @@ export default function DistributionAndClosing() {
 
 
 
-
   const fetchEligibleUsersData = async () => {
     try {
-      setLoading(true);
-      const response2 = await axios.post(`${Src}/api/auth/getEligibleUsers`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response2 = await axios.post(
+        `${Src}/api/auth/getEligibleUsers`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      // console.log(response2.data); // Debugging API Response
+      const { data, summaryRow3 } = transformAchieversData(response2.data);
+      setEligibleUsersDataSource(data);
+      setSummaryRow(summaryRow3);
 
-      // Transform response before setting state
-      const { data, summaryRow } = transformAchieversData(response2.data);
-      // const { data, summaryRow } = transformAchieversData(mockApiResponse);
-
-
-      setEligibleUsersDataSource(data); // Set only paginated data
-      setSummaryRow(summaryRow);        // Store the total row separately
-
+      // Return the data for immediate use
+      return data;
     } catch (error) {
       notification.error({ message: 'Error', description: 'Failed to fetch achievers users details.' });
-    } finally {
-      setLoading(false);
+      return []; // Return empty array on error
     }
   };
 
@@ -272,6 +288,7 @@ export default function DistributionAndClosing() {
       // Set the state with the fetched data
       setEligible50DirectsDataSource(response.data);
       // console.log("Eligible 50 Directs Data:", eligible50DirectsDataSource);
+      return response.data;
 
     } catch (error) {
       // Handle error
@@ -287,53 +304,78 @@ export default function DistributionAndClosing() {
     }
   };
 
+  const fetchDailyTurnover = async (eligibleUsers) => {
 
-  const fetchDailyTurnover = async () => {
     try {
       setLoading(true);
+      // console.log("->>>>>>>>>>>>"+eligibleUsersDataSource)
+      // console.log("->>>>>>>>>"+summaryRow)
 
       // Fetch daily turnover from the API
       const { data } = await axios.post(`${Src}/api/auth/closing-route-get-today-data`);
-
-      // console.log("API Response:", data);
-
       const turnover = parseFloat(data.todayIncome || 0);
-      // const turnover = 6160  // Mock turnover value
+      // const turnover = 3575; // Fixed turnover amount
 
-      // Calculate the distribution for each rank using the fixed commission rates
-      const distribution = Object.keys(DAILY_COMMISSION_RATES).reduce((acc, rank) => {
-        acc[rank] = (turnover * DAILY_COMMISSION_RATES[rank]).toFixed(2);
-        return acc;
-      }, {});
+      // Map RANKS array indices to their corresponding commission rates
+      const rankToIndex = {
+        'OPAL': '1',
+        'TOPAZ': '2',
+        'JASPER': '3',
+        'ALEXANDER': '4',
+        'DIAMOND': '5',
+        'BLUE_DIAMOND': '6',
+        'CROWN_DIAMOND': '7'
+      };
 
-      // Create summary row
-      // Calculate the total distribution amount by summing all rank commissions
+      // Calculate the total number of people in each rank
+      const rankCounts = {
+        OPAL: 0,
+        TOPAZ: 0,
+        JASPER: 0,
+        ALEXANDER: 0,
+        DIAMOND: 0,
+        BLUE_DIAMOND: 0,
+        CROWN_DIAMOND: 0,
+      };
+
+      // Count people in each rank
+      eligibleUsers.forEach((member) => {
+        Object.keys(rankCounts).forEach((rank) => {
+          if (member[rank] !== '--') rankCounts[rank]++;
+        });
+      });
+      // console.log("Rank Counts:", rankCounts);
+
+      // Calculate distribution for each rank
+      const distribution = {};
+      Object.entries(rankCounts).forEach(([rank, count]) => {
+        const index = rankToIndex[rank];
+        const rate = DAILY_COMMISSION_RATES[index];
+        distribution[index] = ((turnover * rate * count) || 0).toFixed(2);
+      });
+      // console.log("Distribution:", distribution);
+
       const totalDistributed = Object.values(distribution)
         .reduce((sum, value) => sum + parseFloat(value), 0)
         .toFixed(2);
+      // console.log("Total Distributed:", totalDistributed);
 
       const summary2 = {
-        Total: `${turnover.toFixed(2)}`,              // Total turnover
-        to_distribute: `${totalDistributed}`,          // Sum of all distributed amounts
+        Total: turnover.toFixed(2),
+        to_distribute: totalDistributed,
         ...distribution
       };
+      // console.log("summary2", summary2);
 
       setdailySummaryRow(summary2);
-      // console.log("Summary Row:", summary2);
-
     } catch (error) {
-      console.error('Error fetching turnover:', error);
-      notification.error({
-        message: 'Error',
-        description: 'Failed to fetch daily turnover.'
-      });
-    } finally {
-      setLoading(false);
+      // console.error('Error fetching turnover:', error);
+      notification.error({ message: 'Error', description: 'Failed to fetch daily turnover.' });
     }
   };
 
   //////for weekly
-  const fetchWeeklyTurnover = async () => {
+  const fetchWeeklyTurnover = async (eligible50) => {
     try {
       setLoading(true);
 
@@ -343,14 +385,14 @@ export default function DistributionAndClosing() {
       // console.log("API Response:", data);
       // console.log(data);
 
-      const weekTurnover = parseFloat(data.weeklyIncome || 0);
-      // const weekTurnover = 100; // Mock turnover value
+      // const weekTurnover = parseFloat(data.weeklyIncome || 0);
+      const weekTurnover = 100; // Mock turnover value
 
       // Setting weekly turnover to 2 decimal places
       setWeeklyTurnover(parseFloat(weekTurnover).toFixed(2));
 
       // Setting total distribute value
-      setWeekTotalDistribute((weekTurnover * 0.02).toFixed(2));
+      setWeekTotalDistribute((weekTurnover * 0.02*eligible50.length).toFixed(2));
 
       const weekUsers = eligible50DirectsDataSource.length;
       // console.log(eligible50DirectsDataSource);
@@ -375,59 +417,91 @@ export default function DistributionAndClosing() {
   };
 
 
-  const fetchMonthlyData = async () => {
+  const fetchMonthlyData = async (eligibleUsers) => {
     try {
-      const response = await axios.post(`${Src}/api/auth/closing-route-get-month-data`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMonthlyData(response.data);
-      // console.log("monthly" + response.data);
-      const turnover = parseFloat(response.data.monthlyIncome);
-      // console.log("turnover->>>>" + turnover);
-      // const turnover = 100  // Mock turnover value
+        const response = await axios.post(`${Src}/api/auth/closing-route-get-month-data`, {}, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        setMonthlyData(response.data);
+        const turnover = parseFloat(response.data.monthlyIncome);
+        // const turnover=1000
 
-      // Calculate the distribution for each rank using the fixed commission rates
-      const distribution = Object.keys(DAILY_COMMISSION_RATES).reduce((acc, rank) => {
-        acc[rank] = (turnover * DAILY_COMMISSION_RATES[rank]).toFixed(2);
-        return acc;
-      }, {});
+        // Calculate rank counts from eligible users
+        const rankCounts = {
+            OPAL: 0,
+            TOPAZ: 0,
+            JASPER: 0,
+            ALEXANDER: 0,
+            DIAMOND: 0,
+            BLUE_DIAMOND: 0,
+        };
 
-      // Create summary row
-      // Calculate the total distribution amount by summing all rank commissions
-      const totalDistributed = Object.values(distribution)
-        .reduce((sum, value) => sum + parseFloat(value), 0)
-        .toFixed(2);
+        eligibleUsers.forEach((member) => {
+            Object.keys(rankCounts).forEach((rank) => {
+                if (member[rank] !== '--') rankCounts[rank]++;
+            });
+        });
 
-      const summary2 = {
-        Total: `${turnover.toFixed(2)}`,              // Total turnover
-        to_distribute: `${totalDistributed}`,          // Sum of all distributed amounts
-        ...distribution
-      };
+        // Calculate distribution using MONTHLY rates
+        const distribution = {};
+        Object.entries(rankCounts).forEach(([rank, count]) => {
+            const index = monthlyRankToIndex[rank];
+            const rate = MONTHLY_COMMISSION_RATES[index];
+            distribution[index] = (turnover * rate * count).toFixed(2);
+        });
 
-      setmonthlySummaryRow(summary2);
-      // console.log("Summary Row:", summary2);
+        const totalDistributed = Object.values(distribution)
+            .reduce((sum, value) => sum + parseFloat(value), 0)
+            .toFixed(2);
+
+        const summary2 = {
+            Total: turnover.toFixed(2),
+            to_distribute: totalDistributed,
+            ...distribution,
+            // Store counts for dynamic calculation
+            OPAL_count: rankCounts.OPAL,
+            TOPAZ_count: rankCounts.TOPAZ,
+            JASPER_count: rankCounts.JASPER,
+            ALEXANDER_count: rankCounts.ALEXANDER,
+            DIAMOND_count: rankCounts.DIAMOND,
+            BLUE_DIAMOND_count: rankCounts.BLUE_DIAMOND
+        };
+
+        setmonthlySummaryRow(summary2);
     } catch (error) {
-      notification.error({ message: 'Error', description: 'Failed to fetch monthly data.' });
+      console.error('Error fetching monthly data:', error);
+        notification.error({ message: 'Error', description: 'Failed to fetch monthly data.' });
     }
-  };
+};
 
-  const [dynamicMonthly, setDynamicMonthly] = useState(monthlySummaryRow);
-
-  useEffect(() => {
+// 4. Modified dynamic monthly effect
+useEffect(() => {
+    if (!monthlySummaryRow) return; // Don't run if no monthly data yet
+    
     const amount = parseFloat(customMonthlyAmount) || parseFloat(monthlyData.monthlyIncome || 0);
+    
+    // Use rank counts from monthly summary
+    const rankCounts = {
+        1: monthlySummaryRow.OPAL_count || 0,
+        2: monthlySummaryRow.TOPAZ_count || 0,
+        3: monthlySummaryRow.JASPER_count || 0,
+        4: monthlySummaryRow.ALEXANDER_count || 0,
+        5: monthlySummaryRow.DIAMOND_count || 0,
+        6: monthlySummaryRow.BLUE_DIAMOND_count || 0
+    };
 
-    // Use Object.entries to iterate over the object
-    const distribution = Object.entries(DAILY_COMMISSION_RATES).reduce((acc, [idx, rate]) => {
-      acc[idx] = (amount * rate).toFixed(2); // Create key-value pairs for the distribution
-      return acc;
+    const distribution = Object.entries(MONTHLY_COMMISSION_RATES).reduce((acc, [idx, rate]) => {
+        acc[idx] = (amount * rate * rankCounts[idx]).toFixed(2);
+        return acc;
     }, {});
 
     setDynamicMonthly({
-      Total: amount.toFixed(2),
-      to_distribute: Object.values(distribution).reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2),
-      ...distribution
+        Total: amount.toFixed(2),
+        to_distribute: Object.values(distribution).reduce((sum, val) => sum + parseFloat(val), 0).toFixed(2),
+        ...distribution
     });
-  }, [customMonthlyAmount, monthlyData]);
+}, [customMonthlyAmount, monthlyData, monthlySummaryRow]);
 
 
 
@@ -1023,7 +1097,7 @@ export default function DistributionAndClosing() {
               dataSource={[dynamicMonthly]}
               columns={[
                 { title: 'Turnover', dataIndex: 'Total', render: v => `${v}` },
-                { title: 'To Distribute', dataIndex: 'to_distribute', render: v => `Rs.${v}` },
+                { title: 'To Distribute', dataIndex: 'to_distribute', render: v => `${v}` },
                 ...RANKS.map((r, i) => ({
                   title: r,
                   dataIndex: i + 1,
@@ -1036,7 +1110,7 @@ export default function DistributionAndClosing() {
             <Row gutter={16} style={{ marginTop: '16px' }}> {/* Increased space between the table and row */}
               <Col span={8}>
                 <Text strong>Total Amount: </Text>
-                <Text>{`Rs. ${monthlyData.monthlyIncome || 0}`}</Text>
+                <Text>{` ${monthlyData.monthlyIncome || 0}`}</Text>
               </Col>
               <Col span={8}>
                 <Text strong>Start Date: </Text>
