@@ -136,37 +136,66 @@ router.post('/passbookTransactions', authenticateToken, async (req, res) => {
 });
 
 
-router.get("/user-all-transactions",authenticateToken,async(req,res)=>{
-    try{
-        // Get all users transactions from the univarsal_transactions_table
-        const [transactions]=await pool.query(`SELECT * FROM universal_transaction_table`);
-        res.status(200).json({success:true,transactions});
-    }catch(error){
-        res.status(500).json({success:false,message:"Error getting all transactions",error});
+router.get("/user-all-transactions", authenticateToken, async (req, res) => {
+    try {
+      const query = `
+        SELECT 
+          ut.*, 
+          ud.username 
+        FROM 
+          universal_transaction_table ut
+        JOIN 
+          usersdetails ud 
+        ON 
+          ut.member_id = ud.memberid
+      `;
+      const [transactions] = await pool.query(query);
+      res.status(200).json({ success: true, transactions });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Error getting all transactions", error });
     }
-});
+  });
+  
 
 
-router.get("/user-flexi-wallet-all-transactions",authenticateToken,async(req,res)=>{
-    try{
-        // Get all users transactions from the univarsal_transactions_table
-        const [transactions]=await pool.query(`SELECT * FROM flexi_wallet`);
-        res.status(200).json({success:true,transactions});
-    }catch(error){
-        res.status(500).json({success:false,message:"Error getting all transactions",error});
+  router.get("/user-flexi-wallet-all-transactions", authenticateToken, async (req, res) => {
+    try {
+      const query = `
+        SELECT 
+          f.*, 
+          ud.username 
+        FROM 
+          flexi_wallet f
+        JOIN 
+          usersdetails ud 
+        ON 
+          f.member_id = ud.memberid
+      `;
+      const [transactions] = await pool.query(query);
+      res.status(200).json({ success: true, transactions });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Error getting all transactions", error });
     }
-});
-
-router.get("/user-commission-wallet-all-transactions",authenticateToken,async(req,res)=>{
-    try{
-        // Get all users transactions from the univarsal_transactions_table
-        const [transactions]=await pool.query(`SELECT * FROM commission_wallet`);
-        res.status(200).json({success:true,transactions});
-    }catch(error){
-        res.status(500).json({success:false,message:"Error getting all transactions",error});
+  });
+  
+  router.get("/user-commission-wallet-all-transactions", authenticateToken, async (req, res) => {
+    try {
+      const query = `
+        SELECT 
+          c.*, 
+          ud.username 
+        FROM 
+          commission_wallet c
+        JOIN 
+          usersdetails ud ON c.member_id = ud.memberid
+      `;
+      const [transactions] = await pool.query(query);
+      res.status(200).json({ success: true, transactions });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Error getting all transactions", error });
     }
-});
-
+  });
+  
 //get user flexi wallet total and cummission wallet total 
 router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
     const { member_id } = req.body;
@@ -234,15 +263,15 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
 
 
 
-  router.post("/all-user-wallet-wise-balance",authenticateToken, async (req, res) => {
+  router.post("/all-user-wallet-wise-balance", authenticateToken, async (req, res) => {
     try {
-      // Fetch all member IDs from the usersdetails table
-      const [members] = await pool.query('SELECT memberid FROM usersdetails');
+      // Fetch all member IDs and usernames from the usersdetails table
+      const [members] = await pool.query('SELECT memberid, username FROM usersdetails');
       if (members.length === 0) {
         return res.status(404).json({ status: "false", message: "No members found" });
       }
   
-      // Initialize an array to store wallet balances
+      // Initialize an array to store wallet balances along with usernames
       const results = [];
   
       // Fetch wallet balances for each member
@@ -252,9 +281,10 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
           const flexi_wallet = await getFlexiWalletBalance(member_id);
           const commission_wallet = await getCommisionWalletBalance(member_id);
   
-          // Add the results to the array
+          // Add the results along with username to the array
           results.push({
             member_id,
+            username: member.username,
             flexi_wallet,
             commission_wallet,
           });
@@ -263,6 +293,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
           console.error(`Error fetching wallet for member_id: ${member_id}`, error);
           results.push({
             member_id,
+            username: member.username,
             flexi_wallet: null,
             commission_wallet: null,
             error: "Error fetching wallet data",
@@ -270,7 +301,7 @@ router.post("/user-wallet-wise-balance",authenticateToken, async (req, res) => {
         }
       }
   
-      // Return all wallet balances
+      // Return all wallet balances along with usernames
       return res.status(200).json({ success: "true", data: results });
     } catch (error) {
       console.error("Error fetching user wallets:", error);

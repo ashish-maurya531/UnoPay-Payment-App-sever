@@ -108,7 +108,7 @@ const TeamHierarchy = () => {
       }
     } catch (err) {
       notification.error({ 
-        message: 'Error fetching team data',
+        message: 'No team data',
         description: err.response?.data?.message || 'Please check the Member ID and try again'
       });
       setTeamData([]);

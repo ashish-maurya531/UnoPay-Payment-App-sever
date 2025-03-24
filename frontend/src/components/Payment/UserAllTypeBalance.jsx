@@ -12,7 +12,7 @@ const WalletTable = () => {
   const [searchText, setSearchText] = useState(''); // State to manage search input
   const [currentPagination, setCurrentPagination] = useState({
     current: 1,
-    pageSize: 12,
+    pageSize: 400,
   });
   const [token] = useState(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'));
 
@@ -50,6 +50,7 @@ const WalletTable = () => {
   const filteredData = data.filter(
     (item) =>
       item.member_id.toString().toLowerCase().includes(searchText) ||
+      item.username.toLowerCase().includes(searchText) ||
       item.flexi_wallet.toString().includes(searchText) ||
       item.commission_wallet.toString().includes(searchText)
   );
@@ -64,22 +65,34 @@ const WalletTable = () => {
         (currentPagination.current - 1) * currentPagination.pageSize + index + 1,
     },
     {
+      title: 'Username',
+      dataIndex: 'username',
+      key: 'username',
+      width: '20%',
+      // render: renderEmptyValue,
+    },
+    {
       title: 'Member ID',
       dataIndex: 'member_id',
       key: 'member_id',
-      width: '30%',
+      width: '10%',
     },
     {
       title: 'Flexi Wallet',
       dataIndex: 'flexi_wallet',
       key: 'flexi_wallet',
       width: '35%',
+      sorter: (a, b) => a.flexi_wallet - b.flexi_wallet,
+      //  defaultSortOrder: 'descend'
+      
     },
     {
       title: 'Commission Wallet',
       dataIndex: 'commission_wallet',
       key: 'commission_wallet',
       width: '35%',
+      sorter: (a, b) => a.commission_wallet - b.commission_wallet,
+       defaultSortOrder: 'descend'
     },
   ];
 
