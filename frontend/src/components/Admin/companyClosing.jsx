@@ -385,8 +385,8 @@ const monthlyRankToIndex = {
       // console.log("API Response:", data);
       // console.log(data);
 
-      // const weekTurnover = parseFloat(data.weeklyIncome || 0);
-      const weekTurnover = 100; // Mock turnover value
+      const weekTurnover = parseFloat(data.weeklyIncome || 0);
+      // const weekTurnover = 100; // Mock turnover value
 
       // Setting weekly turnover to 2 decimal places
       setWeeklyTurnover(parseFloat(weekTurnover).toFixed(2));

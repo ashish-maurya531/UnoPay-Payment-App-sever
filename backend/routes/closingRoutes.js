@@ -8,7 +8,9 @@ const {
 const { 
     getMembershipTransactionsForToday, 
     getMembershipTransactionsForWeek, 
-    getMembershipTransactionsForMonth 
+    getMembershipTransactionsForMonth ,
+    getMembershipTransactionsForRealToday,
+    getMembershipTransactionsForRealWeek
 } = require('../utills/companyTurnover');
 const { pool } = require('../config/database');
 const authenticateToken = require('../middleware/auth');
@@ -55,7 +57,7 @@ router.post('/check-distribute/weekly',authenticateToken,async (req, res) => {
 
 router.post('/closing-route-get-today-data', async (req, res) => {
     try {
-        const result = await getMembershipTransactionsForToday(req, res);
+        const result = await getMembershipTransactionsForRealToday(req, res);
         return res.status(200).json(result);
     } catch (err) {
         console.error('Error in closing-route-get-today-data:', err);
@@ -69,7 +71,7 @@ router.post('/closing-route-get-today-data', async (req, res) => {
 // Route to fetch weekly transactions
 router.post('/closing-route-get-week-data', async (req, res) => {
     try {
-        const result = await getMembershipTransactionsForWeek(req, res);
+        const result = await getMembershipTransactionsForRealWeek(req, res);
         return res.status(200).json(result);
     } catch (err) {
         console.error('Error in closing-route-get-week-data:', err);
