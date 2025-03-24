@@ -44,7 +44,7 @@ async function getCommisionWalletBalance(member_id) {
         // console.log(rows[0].total_credit- rows[0].total_debit);
         const totalBalance = rows[0]?.total_balance || 0;
 
-        console.log(totalBalance-0);
+        // console.log(totalBalance-0);
         return parseFloat(totalBalance) || 0;
 
     } catch (error) {
