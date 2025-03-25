@@ -379,7 +379,7 @@ router.post('/user-withdraw-request', authenticateToken,async (req, res) => {
 
         await connection.commit();
         res.status(200).json({ status: "true", message: "Withdraw request created successfully." });
-        await universalSmsSender(member_id,"withdrawal",amount);
+        // await universalSmsSender(member_id,"withdrawal",amount);
 
     } catch (error) {
         await connection.rollback();
@@ -826,16 +826,16 @@ async function handleManualWithdrawal(transaction_id, member_id, amount, bankDet
         console.log('Database transaction committed successfully');
         
         // Send email notification
-        const emailData = {
-            member_id,
-            amount,
-            email: bankDetail.email,
-            Bank_Name: bankDetail.Bank_Name,
-            Account_number: bankDetail.Account_number,
-            status: "sent to bank"
-        };
+        // const emailData = {
+        //     member_id,
+        //     amount,
+        //     email: bankDetail.email,
+        //     Bank_Name: bankDetail.Bank_Name,
+        //     Account_number: bankDetail.Account_number,
+        //     status: "sent to bank"
+        // };
         
-        await sendWithdrawalEmail(emailData);
+        // await sendWithdrawalEmail(emailData);
        
         console.log('Withdrawal confirmation email sent to user');
         
