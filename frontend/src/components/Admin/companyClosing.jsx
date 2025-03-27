@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Table, notification, Row, Col, Button, Statistic, Tabs, DatePicker, Card, Input, Typography } from 'antd';
+import { Table, notification, Row, Col, Button, Statistic, Tabs, DatePicker, Card, Input, Typography,Popconfirm} from 'antd';
 import axios from 'axios';
 import { LineChart, Line, PieChart, Pie, Tooltip, ResponsiveContainer, Cell, XAxis, YAxis } from 'recharts';
 import moment from 'moment-timezone';
@@ -80,10 +80,14 @@ export default function DistributionAndClosing() {
   const [monthlySummaryRow, setmonthlySummaryRow] = useState(null);
   const [dynamicMonthly, setDynamicMonthly] = useState(null)
 
+  const [selectedFilter, setSelectedFilter] = useState('range');
+const [dateRange, setDateRange] = useState(null);
 
 
   const [weeklyTurnover, setWeeklyTurnover] = useState(null);
   const [weekTotalDistribute, setWeekTotalDistribute] = useState(null);
+  const [weekTotal2Per, setWeekTotal2Per] = useState(null);
+
   const [weekPerDistribute, setWeekPerDistribute] = useState(null);
 
   const [eligible50DirectsDataSource, setEligible50DirectsDataSource] = useState([]);
@@ -393,15 +397,16 @@ const monthlyRankToIndex = {
 
       // Setting total distribute value
       setWeekTotalDistribute((weekTurnover * 0.02*eligible50.length).toFixed(2));
+      setWeekTotal2Per((weekTurnover * 0.02).toFixed(2));
 
-      const weekUsers = eligible50DirectsDataSource.length;
+      const weekUsers = eligible50.length;
       // console.log(eligible50DirectsDataSource);
       // console.log("->>>>>>>>>>>>>>>>>>>>>" + weekUsers);
 
       // Check if weekUsers is greater than 0 before calculating
       setWeekPerDistribute(
-        weekUsers > 0
-          ? (parseFloat(((weekTurnover * 0.02) / weekUsers).toFixed(2)))
+        eligible50.length > 0
+          ? (parseFloat((weekTurnover * 0.02).toFixed(2)))
           : 0  // Set 0 if no users
       );
 
@@ -544,23 +549,38 @@ useEffect(() => {
       return acc;
     }, {});
 
-  const handleDateFilter = (dates) => {
-    if (!dates?.length) {
-      setFilteredData(closingData);
-      return;
-    }
-
-    const [start, end] = dates;
-    const startDate = moment(start).startOf('day');
-    const endDate = moment(end).endOf('day');
-
-    const filtered = closingData.filter(item => {
-      const itemDate = moment(item.date_and_time_of_closing);
-      return itemDate.isBetween(startDate, endDate, 'day', '[]');
-    });
-
-    setFilteredData(filtered);
-  };
+    const handleDateFilter = (dates, dateStrings) => {
+      setDateRange(dates);
+      if (!dates) {
+        setFilteredData(closingData);
+        return;
+      }
+    
+      let filtered = [...closingData];
+      
+      if (selectedFilter === 'today') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        filtered = closingData.filter(item => {
+          const itemDate = new Date(item.date_and_time_of_closing);
+          itemDate.setHours(0, 0, 0, 0);
+          return itemDate.getTime() === today.getTime();
+        });
+      } else if (selectedFilter === 'range' && dates) {
+        const [start, end] = dates;
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        
+        filtered = closingData.filter(item => {
+          const itemDate = new Date(item.date_and_time_of_closing);
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+    
+      setFilteredData(filtered);
+    };
 
   const handleTypeFilter = (type) => {
     setSelectedType(type);
@@ -930,7 +950,7 @@ useEffect(() => {
         {[
           { title: "Total Turnover", value: stats.totalTurnover },
           { title: "Total Distributed", value: stats.totalDistributed },
-          { title: "Total Members", value: stats.totalMembers }
+          // { title: "Total Members", value: stats.totalMembers }
         ].map((stat, i) => (
           <Col span={8} key={i}>
             <Card>
@@ -946,12 +966,13 @@ useEffect(() => {
 
       <Row gutter={16} className="mb-5">
         <Col span={12}>
-          <RangePicker
-            format="YYYY-MM-DD"
-            onChange={handleDateFilter}
-            className="w-full"
-            placeholder={['Start date (IST)', 'End date (IST)']}
-          />
+        <RangePicker
+        format="YYYY-MM-DD"
+        onChange={handleDateFilter}
+        value={dateRange}
+        className="w-full"
+        placeholder={['Start date', 'End date']}
+      />
         </Col>
         <Col span={12}>
           <Button.Group className="float-right">
@@ -1018,69 +1039,20 @@ useEffect(() => {
               }}
             />
 
-            <Button
-              type="primary"
-              onClick={() => handleManualClosing('daily')}
-              className="mt-2"
-            >
-              Run Daily Closing
-            </Button>
+            <Popconfirm
+                title="Run Daily Closing"
+                description="Are you sure you want to run the daily closing?"
+                onConfirm={() => handleManualClosing('daily')}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button type="primary" className="mt-2">
+                  Run Daily Closing
+                </Button>
+              </Popconfirm>
           </Card>
 
-          {/* <Card
-            title="Manual Monthly Closing"
-            // bordered={false}
-            style={{
-              marginTop: '16px', // Added more space on top
-            }}
-          >
-             <Table
-              columns={dailyBreakdown}
-              dataSource={monthlySummaryRow ? [monthlySummaryRow] : []}
-              pagination={false}
-              rowKey="Total"
-              bordered={true}
-              style={{
-                marginTop: '16px', 
-                fontWeight: 'bold',
-              }}
-            />
-
-            <Row gutter={16} style={{ marginTop: '16px' }}> 
-              <Col span={8}>
-                <Text strong>Total Amount: </Text>
-                <Text>{`Rs. ${monthlyData.monthlyIncome || 0}`}</Text>
-              </Col>
-              <Col span={8}>
-                <Text strong>Start Date: </Text>
-                <Text>{monthlyData.startOfMonth || 'N/A'}</Text>
-              </Col>
-              <Col span={8}>
-                <Text strong>End Date: </Text>
-                <Text>{monthlyData.endOfMonth || 'N/A'}</Text>
-              </Col>
-            </Row>
-
-            <Row gutter={16} style={{ marginTop: '24px' }}> 
-              <Col span={18}>
-                <Input
-                  value={customMonthlyAmount}
-                  onChange={handleCustomMonthlyAmountChange}
-                  addonBefore="Custom Monthly Amount"
-                  placeholder="Enter custom amount"
-                />
-              </Col>
-              <Col span={6}>
-                <Button
-                  type="primary"
-                  onClick={handleRunCustomMonthlyDistribution}
-                  style={{ width: '100%' }}
-                >
-                  Monthly Distribution
-                </Button>
-              </Col>
-            </Row>
-          </Card>  */}
+        
 
           <Card title="Monthly Closing" style={{
             marginTop: '16px', // Added more space on top
@@ -1122,13 +1094,17 @@ useEffect(() => {
               </Col>
             </Row>
 
-            <Button
-              type="primary"
-              onClick={handleRunCustomMonthlyDistribution}
-              className="mt-4"
+            <Popconfirm
+              title="Run Monthly Closing"
+              description="Are you sure you want to execute the monthly closing?"
+              onConfirm={handleRunCustomMonthlyDistribution}
+              okText="Yes"
+              cancelText="No"
             >
-              Execute Monthly Closing
-            </Button>
+              <Button type="primary" className="mt-4">
+                Execute Monthly Closing
+              </Button>
+            </Popconfirm>
           </Card>
 
 
@@ -1150,18 +1126,23 @@ useEffect(() => {
             />
             <div style={{ display: 'flex', justifyContent: 'space-evenly', fontSize: '18px', alignItems: 'flex-start' }}>
               <span>Week Turnover:  {weeklyTurnover}</span>
-              <span>To Distribute: {weekTotalDistribute}</span>
-              {/* <span>Per User:  {weekPerDistribute}</span> */}
+              <span>2 % of Turnover: {weekTotal2Per}</span>
+              <span>Total money to Distribute: {weekTotalDistribute}</span>
+              <span>Per User:  {weekPerDistribute}</span>
             </div>
 
 
-            <Button
-              type="primary"
-              onClick={() => handleManualClosing('weekly')}
-              className="mt-2"
-            >
-              Run weekly Closing
-            </Button>
+            <Popconfirm
+    title="Run Weekly Closing"
+    description="Are you sure you want to run the weekly closing?"
+    onConfirm={() => handleManualClosing('weekly')}
+    okText="Yes"
+    cancelText="No"
+  >
+    <Button type="primary" className="mt-2">
+      Run Weekly Closing
+    </Button>
+  </Popconfirm>
           </Card>
 
 

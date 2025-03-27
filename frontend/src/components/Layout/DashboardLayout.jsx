@@ -26,6 +26,11 @@ export default function DashboardLayout({ children }) {
       onClick: () => navigate('/dashboard/users'),
     },
     {
+      key: 'activationReport',
+      label: 'Activation Report',
+      onClick: () => navigate('/dashboard/activation-report'),
+    },
+    {
       key: 'TeamList',
       label: 'Team List',
       onClick: () => navigate('/dashboard/team-list'),

@@ -155,6 +155,38 @@ router.get("/user-all-transactions", authenticateToken, async (req, res) => {
       res.status(500).json({ success: false, message: "Error getting all transactions", error });
     }
   });
+
+  router.get("/user-activation-report-transactions", authenticateToken, async (req, res) => {
+    try {
+      const query = `
+          SELECT 
+              ut.transaction_id,
+              ut.member_id,
+              ut.type,
+              ut.subType,
+              ut.created_at AS activation_date,
+              ud.username,
+              ud.created_at AS date_of_joining
+          FROM 
+              universal_transaction_table ut
+          JOIN 
+              usersdetails ud ON ut.member_id = ud.memberid
+          WHERE 
+              ut.type = 'Membership' 
+              AND (ut.subType = 'BASIC' OR ut.subType = 'PREMIUM')
+          ORDER BY 
+              ut.created_at DESC
+      `;
+
+      const [transactions] = await pool.query(query);
+      
+      res.status(200).json({ success: true, transactions });
+
+  } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ success: false, message: "Error getting membership activation transactions", error });
+  }
+});
   
 
 

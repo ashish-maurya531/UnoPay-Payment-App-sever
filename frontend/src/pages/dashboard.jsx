@@ -32,6 +32,8 @@ import MainPage from '../pages/mainPage.jsx';
 import EditUserDetails from '../components/Admin/EditUserDetails.jsx';
 import AddRemoveFundCommission from '../components/Admin/AddRemoveFundCommission.jsx';
 import ManageMeeting from '../components/Admin/ManageMeeting.jsx';
+import ActivationReport from '../components/Users/ActivationReport.jsx';
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -75,6 +77,7 @@ export default function Dashboard() {
         <Route path="edit-user-details" element={<EditUserDetails/>} />
         <Route path="add-remove-fund-commission" element={<AddRemoveFundCommission />} />
         <Route path="manage-meeting" element={<ManageMeeting />} />
+        <Route path="activation-report" element={<ActivationReport/>} />
 
       </Routes>
     </DashboardLayout>
