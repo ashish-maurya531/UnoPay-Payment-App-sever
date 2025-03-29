@@ -42,6 +42,16 @@ const MONTHLY_LEVEL_LIMITS = {
     6: 25000000
 };
 
+const rankCounts11 = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+    6: 0,
+    7: 0
+};
+
 const GEMSTONE_COLUMNS = ['OPAL', 'TOPAZ', 'JASPER', 'ALEXANDER', 'DIAMOND', 'BLUE_DIAMOND'];
 
 // Helper Functions
@@ -74,122 +84,7 @@ const updateDailyWeeklyMonthlyTable = async (connection, memberId, updates) => {
     );
 };
 
-// // Daily Distribution
-// const distributeDailyRankIncome = async () => {
-//     let connection;
-//     try {
-//         connection = await pool.getConnection();
-//         await connection.beginTransaction();
 
-//         if (await checkPeriodClosingExists('day')) {
-//             await connection.rollback();
-//             return { success: false, message: 'Daily closing already completed' };
-//         }
-//         const incomeResult = await getMembershipTransactionsForToday();
-//         const dailyIncome = incomeResult.todayIncome;
-//         // const dailyIncome = 550;
-
-//         if (!dailyIncome || dailyIncome <= 0) {
-//             await connection.rollback();
-//             await createZeroAmountClosing('daily');
-//             return { success: true, message: 'Daily income was zero, closing recorded' };
-//         }
-
-//         const [members] = await connection.query(
-//             'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
-//         );
-
-//         const memberIds = members.map(member => member.member_id);
-//         // console.log("member ids->>>"+memberIds)
-//         if (!memberIds ||memberIds==""){
-//             await connection.query(
-//                 `INSERT INTO company_closing 
-//                 (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
-//                 VALUES (?, NOW(), ?, ?, ?)`,
-//                 ['daily', dailyIncome, 0, "{}"]
-//             );
-//             await connection.commit();
-//             return { 
-//                 success: true, 
-//                 message: 'Daily distribution completed || to 0 members',
-//                 data: {
-//                     totalIncome: dailyIncome,
-//                     distributedAmount:0,
-//                     membersCount:0
-//                 }
-//             };
-//         }
-//         const [userDetails] = await connection.query(
-//             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
-//             [memberIds]
-//         );
-
-//         const nameMap = {};
-//         userDetails.forEach(user => {
-//             nameMap[user.member_id] = user.name;
-//         });
-//         console.log(nameMap);
-
-//         let distributedAmount = 0;
-//         const membersMap = {};
-
-//         for (const member of members) {
-//             const { member_id, rank_no } = member;
-            
-//             // Skip processing for member UP100010
-//             if (member_id === 'UP100010') {
-//                 continue;
-//             }
-
-//             let memberTotal = 0;
-//             const rankDetails = {
-//                 name: nameMap[member_id] || 'Unknown'
-//             };
-
-//             for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
-//                 const rate = DAILY_COMMISSION_RATES[currentRank] || 0;
-//                 const amount = parseFloat((dailyIncome * rate).toFixed(6));
-                
-//                 if (amount > 0) {
-//                     rankDetails[`rank${currentRank}`] = amount;
-//                     memberTotal += amount;
-//                 }
-//             }
-
-//             if (memberTotal > 0) {
-//                 await updateMemberBalance(connection, member_id, rankDetails, 'daily');
-//                 await updateDailyWeeklyMonthlyTable(connection, member_id, { daily: memberTotal });
-//                 distributedAmount += memberTotal;
-//                 membersMap[member_id] = rankDetails;
-//             }
-//         }
-
-//         await connection.query(
-//             `INSERT INTO company_closing 
-//             (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
-//             VALUES (?, NOW(), ?, ?, ?)`,
-//             ['daily', dailyIncome, distributedAmount, JSON.stringify(membersMap)]
-//         );
-
-//         await connection.commit();
-//         return { 
-//             success: true, 
-//             message: 'Daily distribution completed',
-//             data: {
-//                 totalIncome: dailyIncome,
-//                 distributedAmount,
-//                 membersCount: Object.keys(membersMap).length
-//             }
-//         };
-
-//     } catch (error) {
-//         if (connection) await connection.rollback();
-//         console.error('Daily distribution error:', error);
-//         return { success: false, message: 'Daily distribution failed' };
-//     } finally {
-//         if (connection) connection.release();
-//     }
-// };
 // Daily Distribution
 const distributeDailyRankIncome = async (custom_daily_amount_distribution) => {
     let connection;
@@ -221,6 +116,50 @@ const distributeDailyRankIncome = async (custom_daily_amount_distribution) => {
 
         // Get member names from usersdetails table
         const memberIds = members.map(member => member.member_id);
+        console.log(memberIds)
+
+       // Fetch member data
+    const [members11] = await connection.query(
+        'SELECT rank_array FROM ranktable WHERE rank_no > 0'
+    );
+
+    // Initialize rank counter with keys as numbers
+    
+
+    // Loop through members and count occurrences
+    members11.forEach(member => {
+        const rankArrayStr = String(member.rank_array || '').trim();  // Ensure string format
+    
+        let ranks11 = [];
+    
+        try {
+            // Try parsing as JSON array
+            if (rankArrayStr.startsWith('[') && rankArrayStr.endsWith(']')) {
+                ranks11 = JSON.parse(rankArrayStr);
+            } else if (rankArrayStr.includes(',')) {
+                // Handle comma-separated strings (e.g., "1,3,4")
+                ranks11 = rankArrayStr.split(',').map(num => parseInt(num.trim(), 10));
+            } else {
+                console.warn(`Invalid JSON format: ${rankArrayStr}`);
+            }
+    
+            // Count occurrences
+            ranks11.forEach(rank => {
+                if (rankCounts11[rank] !== undefined) {
+                    rankCounts11[rank]++;
+                }
+            });
+    
+        } catch (error) {
+            console.error(`Error parsing JSON: ${error.message}`);
+        }
+    });
+    
+    console.log('Rank->>>', rankCounts11);
+    
+    
+    console.log("Rank->>>")
+    console.log(rankCounts11);
         if (!memberIds || memberIds.length === 0) {
             await connection.query(
                 `INSERT INTO company_closing 
@@ -285,7 +224,13 @@ const distributeDailyRankIncome = async (custom_daily_amount_distribution) => {
             // Process only the ranks in the rank array
             for (const currentRank of rankLevels) {
                 const rate = DAILY_COMMISSION_RATES[currentRank] || 0;
-                const fullAmount = parseFloat((dailyIncome * rate).toFixed(6));
+                const fullAmount = rankCounts11[currentRank] > 0
+                    ? +(dailyIncome * rate / rankCounts11[currentRank]).toFixed(6)
+                    : 0;
+                console.log("current rank: " + currentRank)
+                console.log("Rank Count: " + rankCounts11[currentRank])
+                console.log("Full Amount", fullAmount)
+
                 const gemstoneColumn = GEMSTONE_COLUMNS[currentRank - 1];
                 const limit = Infinity; // No limit for daily distribution
 
@@ -415,7 +360,11 @@ const distributeWeeklyRankIncome = async () => {
 
         let distributedAmount = 0;
         const membersMap = {};
-        const commissionPerMember = parseFloat((weeklyIncome * WEEKLY_COMMISSION_RATE).toFixed(6));
+        // const commissionPerMember = parseFloat((weeklyIncome * WEEKLY_COMMISSION_RATE/memberIds.length).toFixed(6));
+        const commissionPerMember = memberIds.length > 0
+            ? parseFloat((weeklyIncome * WEEKLY_COMMISSION_RATE / memberIds.length).toFixed(6))
+            : 0;  
+
         console.log(`[WEEKLY] Commission per member: ${commissionPerMember}`);
 
         for (const member of members) {
@@ -488,220 +437,7 @@ const distributeWeeklyRankIncome = async () => {
         }
     }
 };
-// Monthly Distribution
-// const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) => {
-//     let connection;
-//     try {
-//         connection = await pool.getConnection();
-//         await connection.beginTransaction();
 
-//         if (await checkPeriodClosingExists('month')) {
-//             await connection.rollback();
-//             return { success: false, message: 'Monthly closing already completed' };
-//         }
-
-//         const monthlyIncome = (custom_monthly_amount_distribution && custom_monthly_amount_distribution > 0) 
-//             ? custom_monthly_amount_distribution
-//             : (await getMembershipTransactionsForMonth()).monthlyIncome;
-
-//         if (!monthlyIncome || monthlyIncome <= 0) {
-//             await connection.rollback();
-//             await createZeroAmountClosing('monthly');
-//             return { success: true, message: 'Monthly income was zero, closing recorded' };
-//         }
-
-//         const [members] = await connection.query(
-//             'SELECT member_id, rank_no FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
-//         );
-
-//         // Get member names from usersdetails table
-//         const memberIds = members.map(member => member.member_id);
-//         if (!memberIds ||memberIds==""){
-//             await connection.query(
-//                 `INSERT INTO company_closing 
-//                 (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
-//                 VALUES (?, NOW(), ?, ?, ?)`,
-//                 ['monthly', monthlyIncome, 0, "{}"]
-//             );
-//             await connection.commit();
-//             return { 
-//                 success: true, 
-//                 message: 'No eligible members for Monthly distribution',
-//                 data: {
-//                     totalIncome: dailyIncome,
-//                     distributedAmount:0,
-//                     membersCount:0
-//                 }
-//             };
-//         }
-//         const [userDetails] = await connection.query(
-//             'SELECT username as name, memberid as member_id FROM usersdetails WHERE memberid IN (?)',
-//             [memberIds]
-//         );
-
-//         // Create name mapping object
-//         const nameMap = {};
-//         userDetails.forEach(user => {
-//             nameMap[user.member_id] = user.name;
-//         });
-
-//         let distributedAmount = 0;
-//         const membersMap = {};
-
-//         for (const member of members) {
-//             const { member_id, rank_no } = member;
-            
-//             // Skip processing for member UP100010
-//             if (member_id === 'UP100010') {
-//                 continue;
-//             }
-
-//             const rankDetails = {
-//                 name: nameMap[member_id] || 'Unknown' // Add member name
-//             };
-//             const gemstoneUpdates = {};
-
-//             for (let currentRank = 1; currentRank <= rank_no; currentRank++) {
-//                 const rate = MONTHLY_COMMISSION_RATES[currentRank] || 0;
-//                 const fullAmount = parseFloat((monthlyIncome * rate).toFixed(6));
-//                 const gemstoneColumn = GEMSTONE_COLUMNS[currentRank - 1];
-//                 const limit = MONTHLY_LEVEL_LIMITS[currentRank] || 0;
-
-//                 if (fullAmount > 0) {
-//                     const [currentTotals] = await connection.query(
-//                         `SELECT ${gemstoneColumn} 
-//                         FROM daily_weekly_monthly_total 
-//                         WHERE member_id = ?`,
-//                         [member_id]
-//                     );
-
-//                     const currentAmount = currentTotals[0]?.[gemstoneColumn] || 0;
-//                     const remainingLimit = Math.max(0, limit - currentAmount);
-//                     const payableAmount = Math.min(fullAmount, remainingLimit);
-
-//                     if (payableAmount > 0) {
-//                         rankDetails[`rank${currentRank}`] = payableAmount;
-//                         gemstoneUpdates[gemstoneColumn] = payableAmount;
-//                     }
-//                 }
-//             }
-
-//             if (Object.keys(gemstoneUpdates).length > 0) {
-//                 const memberTotal = Object.values(gemstoneUpdates).reduce((sum, val) => sum + val, 0);
-//                 await updateMemberBalance(connection, member_id, rankDetails, 'monthly');
-//                 await updateDailyWeeklyMonthlyTable(connection, member_id, gemstoneUpdates);
-//                 distributedAmount += memberTotal;
-//                 membersMap[member_id] = rankDetails;
-//             }
-//         }
-
-//         await connection.query(
-//             `INSERT INTO company_closing 
-//             (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
-//             VALUES (?, NOW(), ?, ?, ?)`,
-//             ['monthly', monthlyIncome, distributedAmount, JSON.stringify(membersMap)]
-//         );
-
-//         await connection.commit();
-//         return { 
-//             success: true, 
-//             message: 'Monthly distribution completed',
-//             data: {
-//                 totalIncome: monthlyIncome,
-//                 distributedAmount,
-//                 membersCount: Object.keys(membersMap).length
-//             }
-//         };
-
-//     } catch (error) {
-//         if (connection) await connection.rollback();
-//         console.error('Monthly distribution error:', error);
-//         return { success: false, message: 'Monthly distribution failed' };
-//     } finally {
-//         if (connection) connection.release();
-//     }
-// };
-
-
-// // Shared Functions with Enhanced Logging
-// const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
-//     try {
-//         console.log(`[${type}] Starting balance update for ${memberId}`);
-//         let totalAmount = 0;
-        
-//         // Filter only rank-related entries (rank0, rank1, rank2, etc.)
-//         const rankEntries = Object.entries(rankDetails).filter(
-//             ([key]) => key.startsWith('rank')
-//         );
-
-//         console.log(`[${type}] Processing ranks:`, rankEntries);
-
-//         for (const [rankKey, amount] of rankEntries) {
-//             const rankNumber = parseInt(rankKey.replace('rank', '')) || 0; // Handle rank0
-//             const txnId = generateTransactionId();
-            
-//             if (typeof amount !== 'number' || isNaN(amount)) {
-//                 console.error(`[${type}] Invalid amount for ${rankKey}:`, amount);
-//                 continue;
-//             }
-
-//             totalAmount += amount;
-
-//             // Insert into universal transaction table
-//             console.log(`[${type}] Logging transaction for ${rankKey}: ${amount}`);
-//             await connection.query(
-//                 `INSERT INTO universal_transaction_table 
-//                 (transaction_id, member_id, type, subType, amount, status, message) 
-//                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-//                 [
-//                     txnId, 
-//                     memberId, 
-//                     'Rank Income', 
-//                     type,
-//                     amount, 
-//                     'success', 
-//                     `${type} income${rankNumber > 0 ? ` for rank ${rankNumber}` : ''}`
-//                 ]
-//             );
-
-//             // Insert into commission wallet
-//             console.log(`[${type}] Updating commission wallet for level ${rankNumber}`);
-//             await connection.query(
-//                 `INSERT INTO commission_wallet 
-//                 (member_id, commissionBy, transaction_id_for_member_id, 
-//                  transaction_id_of_commissionBy, credit, level) 
-//                 VALUES (?, ?, ?, ?, ?, ?)`,
-//                 [memberId, 'Rank Income', txnId, txnId, amount, rankNumber]
-//             );
-//         }
-
-//         // Update total balance only if there's valid amount
-//         if (totalAmount > 0) {
-//             console.log(`[${type}] Updating total balance with ${totalAmount}`);
-//             await connection.query(
-//                 `UPDATE users_total_balance 
-//                 SET user_total_balance = user_total_balance + ? 
-//                 WHERE member_id = ?`,
-//                 [totalAmount, memberId]
-//             );
-//         } else {
-//             console.log(`[${type}] No valid amounts to update for ${memberId}`);
-//         }
-
-//         console.log(`[${type}] Successfully processed ${memberId}`);
-//     } catch (error) {
-//         console.error(`[${type}] Update error:`, error);
-//         throw error;
-//     }
-// };
-// const createZeroAmountClosing = async (type) => {
-//     await pool.query(
-//         `INSERT INTO company_closing 
-//         (type, date_and_time_of_closing, turnover, distributed_amount, list_of_members) 
-//         VALUES (?, NOW(), 0, 0, '{}')`,
-//         [type]
-//     );
-// };
 
 
 const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) => {
@@ -718,7 +454,7 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
         const monthlyIncome = (custom_monthly_amount_distribution && custom_monthly_amount_distribution > 0) 
             ? custom_monthly_amount_distribution
             : (await getMembershipTransactionsForMonth()).monthlyIncome;
-
+        // const monthlyIncome = 2000000;
         if (!monthlyIncome || monthlyIncome <= 0) {
             await connection.rollback();
             await createZeroAmountClosing('monthly');
@@ -729,6 +465,47 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
         const [members] = await connection.query(
             'SELECT member_id, rank_no, rank_array FROM ranktable WHERE rank_no > 0 ORDER BY rank_no DESC'
         );
+        const [members11] = await connection.query(
+            'SELECT rank_array FROM ranktable WHERE rank_no > 0'
+        );
+    
+        // Initialize rank counter with keys as numbers
+        
+    
+        // Loop through members and count occurrences
+        members11.forEach(member => {
+            const rankArrayStr = String(member.rank_array || '').trim();  // Ensure string format
+        
+            let ranks11 = [];
+        
+            try {
+                // Try parsing as JSON array
+                if (rankArrayStr.startsWith('[') && rankArrayStr.endsWith(']')) {
+                    ranks11 = JSON.parse(rankArrayStr);
+                } else if (rankArrayStr.includes(',')) {
+                    // Handle comma-separated strings (e.g., "1,3,4")
+                    ranks11 = rankArrayStr.split(',').map(num => parseInt(num.trim(), 10));
+                } else {
+                    console.warn(`Invalid JSON format: ${rankArrayStr}`);
+                }
+        
+                // Count occurrences
+                ranks11.forEach(rank => {
+                    if (rankCounts11[rank] !== undefined) {
+                        rankCounts11[rank]++;
+                    }
+                });
+        
+            } catch (error) {
+                console.error(`Error parsing JSON: ${error.message}`);
+            }
+        });
+        
+        console.log('Rank->>>', rankCounts11);
+        
+        
+        console.log("Rank->>>")
+        console.log(rankCounts11);
 
         // Get member names from usersdetails table
         const memberIds = members.map(member => member.member_id);
@@ -796,7 +573,16 @@ const distributeMonthlyRankIncome = async (custom_monthly_amount_distribution) =
             // Process only the ranks in the rank array
             for (const currentRank of rankLevels) {
                 const rate = MONTHLY_COMMISSION_RATES[currentRank] || 0;
-                const fullAmount = parseFloat((monthlyIncome * rate).toFixed(6));
+                //const fullAmount = parseFloat((monthlyIncome * rate).toFixed(6));
+                ////////
+                const fullAmount = rankCounts11[currentRank] > 0
+                    ? +(monthlyIncome * rate / rankCounts11[currentRank]).toFixed(6)
+                    : 0;
+                console.log("current rank: " + currentRank)
+                console.log("Rank Count: " + rankCounts11[currentRank])
+                console.log("Full Amount", fullAmount)
+                //////
+
                 const gemstoneColumn = GEMSTONE_COLUMNS[currentRank - 1];
                 const limit = MONTHLY_LEVEL_LIMITS[currentRank] || 0;
 
@@ -888,13 +674,15 @@ const updateMemberBalance = async (connection, memberId, rankDetails, type) => {
                 (transaction_id, member_id, type, subType, amount, status, message) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    txnId, 
-                    memberId, 
-                    'Rank Income', 
+                    txnId,
+                    memberId,
+                    'Rank Income',
                     type,
-                    amount, 
-                    'success', 
-                    `${type} income for L${rankNumber}|${GEMSTONE_COLUMNS[rankNumber-1]}|(achieved levels: ${levels})`
+                    amount,
+                    'success',
+                    type === 'weekly'
+                        ? `Weekly income`
+                        : `${type} income for L${rankNumber}|${GEMSTONE_COLUMNS[rankNumber - 1]}|(achieved levels: ${levels})`
                 ]
             );
 
