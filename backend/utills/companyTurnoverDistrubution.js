@@ -129,33 +129,40 @@ const distributeDailyRankIncome = async (custom_daily_amount_distribution) => {
     // Loop through members and count occurrences
     members11.forEach(member => {
         const rankArrayStr = String(member.rank_array || '').trim();  // Ensure string format
-    
+        
         let ranks11 = [];
-    
+        
         try {
             // Try parsing as JSON array
             if (rankArrayStr.startsWith('[') && rankArrayStr.endsWith(']')) {
-                ranks11 = JSON.parse(rankArrayStr);
+                try {
+                    ranks11 = JSON.parse(rankArrayStr);
+                } catch (e) {
+                    console.error(`JSON parse error: ${e.message}`);
+                }
             } else if (rankArrayStr.includes(',')) {
                 // Handle comma-separated strings (e.g., "1,3,4")
                 ranks11 = rankArrayStr.split(',').map(num => parseInt(num.trim(), 10));
+            } else if (rankArrayStr !== '' && !isNaN(parseInt(rankArrayStr))) {
+                // Handle single number as string
+                ranks11 = [parseInt(rankArrayStr, 10)];
             } else {
-                console.warn(`Invalid JSON format: ${rankArrayStr}`);
+                console.warn(`Invalid rank format: ${rankArrayStr}`);
             }
-    
+            
             // Count occurrences
             ranks11.forEach(rank => {
                 if (rankCounts11[rank] !== undefined) {
                     rankCounts11[rank]++;
                 }
             });
-    
+            
         } catch (error) {
-            console.error(`Error parsing JSON: ${error.message}`);
+            console.error(`Error processing ranks: ${error.message}`);
         }
     });
     
-    console.log('Rank->>>', rankCounts11);
+    // console.log('Rank->>>', rankCounts11);
     
     
     console.log("Rank->>>")

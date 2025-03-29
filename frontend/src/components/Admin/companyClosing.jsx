@@ -317,8 +317,8 @@ const monthlyRankToIndex = {
 
       // Fetch daily turnover from the API
       const { data } = await axios.post(`${Src}/api/auth/closing-route-get-today-data`);
-      const turnover = parseFloat(data.todayIncome || 0);
-      // const turnover = 3575; // Fixed turnover amount
+      // const turnover = parseFloat(data.todayIncome || 0);
+      const turnover = 1000; // Fixed turnover amount
 
       // Map RANKS array indices to their corresponding commission rates
       const rankToIndex = {
@@ -355,7 +355,7 @@ const monthlyRankToIndex = {
       Object.entries(rankCounts).forEach(([rank, count]) => {
         const index = rankToIndex[rank];
         const rate = DAILY_COMMISSION_RATES[index];
-        distribution[index] = ((turnover * rate * count) || 0).toFixed(2);
+        distribution[index] = ((turnover * rate *(count>0?1:0)) || 0).toFixed(2);
       });
       // console.log("Distribution:", distribution);
 
@@ -389,15 +389,19 @@ const monthlyRankToIndex = {
       // console.log("API Response:", data);
       // console.log(data);
 
-      const weekTurnover = parseFloat(data.weeklyIncome || 0);
-      // const weekTurnover = 100; // Mock turnover value
+      // const weekTurnover = parseFloat(data.weeklyIncome || 0);
+      const weekTurnover = 100; // Mock turnover value
 
       // Setting weekly turnover to 2 decimal places
       setWeeklyTurnover(parseFloat(weekTurnover).toFixed(2));
 
       // Setting total distribute value
-      setWeekTotalDistribute((weekTurnover * 0.02*eligible50.length).toFixed(2));
-      setWeekTotal2Per((weekTurnover * 0.02).toFixed(2));
+      setWeekTotalDistribute((weekTurnover * 0.02).toFixed(2));
+      setWeekTotal2Per(eligible50.length > 0 
+        ? (weekTurnover * 0.02 / eligible50.length).toFixed(2) 
+        : '0.00'
+    );
+    
 
       const weekUsers = eligible50.length;
       // console.log(eligible50DirectsDataSource);
@@ -429,8 +433,8 @@ const monthlyRankToIndex = {
         });
         
         setMonthlyData(response.data);
-        const turnover = parseFloat(response.data.monthlyIncome);
-        // const turnover=1000
+        // const turnover = parseFloat(response.data.monthlyIncome);
+        const turnover=1000
 
         // Calculate rank counts from eligible users
         const rankCounts = {
@@ -453,7 +457,7 @@ const monthlyRankToIndex = {
         Object.entries(rankCounts).forEach(([rank, count]) => {
             const index = monthlyRankToIndex[rank];
             const rate = MONTHLY_COMMISSION_RATES[index];
-            distribution[index] = (turnover * rate * count).toFixed(2);
+            distribution[index] = (turnover * rate).toFixed(2);
         });
 
         const totalDistributed = Object.values(distribution)
