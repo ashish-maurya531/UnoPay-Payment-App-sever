@@ -317,8 +317,8 @@ const monthlyRankToIndex = {
 
       // Fetch daily turnover from the API
       const { data } = await axios.post(`${Src}/api/auth/closing-route-get-today-data`);
-      // const turnover = parseFloat(data.todayIncome || 0);
-      const turnover = 1000; // Fixed turnover amount
+      const turnover = parseFloat(data.todayIncome || 0);
+      // const turnover = 1000; // Fixed turnover amount
 
       // Map RANKS array indices to their corresponding commission rates
       const rankToIndex = {
@@ -377,7 +377,7 @@ const monthlyRankToIndex = {
       notification.error({ message: 'Error', description: 'Failed to fetch daily turnover.' });
     }
   };
-
+ 
   //////for weekly
   const fetchWeeklyTurnover = async (eligible50) => {
     try {
@@ -389,17 +389,15 @@ const monthlyRankToIndex = {
       // console.log("API Response:", data);
       // console.log(data);
 
-      // const weekTurnover = parseFloat(data.weeklyIncome || 0);
-      const weekTurnover = 100; // Mock turnover value
+      const weekTurnover = parseFloat(data.weeklyIncome || 0);
+      // const weekTurnover = 20000; // Mock turnover value
 
       // Setting weekly turnover to 2 decimal places
       setWeeklyTurnover(parseFloat(weekTurnover).toFixed(2));
 
       // Setting total distribute value
       setWeekTotalDistribute((weekTurnover * 0.02).toFixed(2));
-      setWeekTotal2Per(eligible50.length > 0 
-        ? (weekTurnover * 0.02 / eligible50.length).toFixed(2) 
-        : '0.00'
+      setWeekTotal2Per((weekTurnover * 0.02 ).toFixed(2)    
     );
     
 
@@ -410,7 +408,7 @@ const monthlyRankToIndex = {
       // Check if weekUsers is greater than 0 before calculating
       setWeekPerDistribute(
         eligible50.length > 0
-          ? (parseFloat((weekTurnover * 0.02).toFixed(2)))
+          ? (parseFloat(((weekTurnover * 0.02)/eligible50.length).toFixed(2)))
           : 0  // Set 0 if no users
       );
 
@@ -433,8 +431,9 @@ const monthlyRankToIndex = {
         });
         
         setMonthlyData(response.data);
-        // const turnover = parseFloat(response.data.monthlyIncome);
-        const turnover=1000
+        // setMonthlyData({"monthlyIncome":1000})
+        const turnover = parseFloat(response.data.monthlyIncome);
+        // const turnover=1000
 
         // Calculate rank counts from eligible users
         const rankCounts = {
@@ -457,12 +456,15 @@ const monthlyRankToIndex = {
         Object.entries(rankCounts).forEach(([rank, count]) => {
             const index = monthlyRankToIndex[rank];
             const rate = MONTHLY_COMMISSION_RATES[index];
-            distribution[index] = (turnover * rate).toFixed(2);
+            console.log(count, rate);
+            distribution[index] = (turnover * rate*(count>0?1:0)).toFixed(2);
         });
+        // console.log("Distribution:", distribution);
 
         const totalDistributed = Object.values(distribution)
             .reduce((sum, value) => sum + parseFloat(value), 0)
             .toFixed(2);
+        // console.log("Total Distributed:", totalDistributed);
 
         const summary2 = {
             Total: turnover.toFixed(2),
@@ -476,6 +478,7 @@ const monthlyRankToIndex = {
             DIAMOND_count: rankCounts.DIAMOND,
             BLUE_DIAMOND_count: rankCounts.BLUE_DIAMOND
         };
+        // console.log("summary2", summary2);
 
         setmonthlySummaryRow(summary2);
     } catch (error) {
@@ -499,11 +502,12 @@ useEffect(() => {
         5: monthlySummaryRow.DIAMOND_count || 0,
         6: monthlySummaryRow.BLUE_DIAMOND_count || 0
     };
-
+    // console.log("Rank Counts:", rankCounts);
     const distribution = Object.entries(MONTHLY_COMMISSION_RATES).reduce((acc, [idx, rate]) => {
-        acc[idx] = (amount * rate * rankCounts[idx]).toFixed(2);
+        acc[idx] = (amount * rate *(rankCounts[idx]>0?1:0)).toFixed(2);
         return acc;
     }, {});
+    // console.log("Dynamic Distribution:", distribution);
 
     setDynamicMonthly({
         Total: amount.toFixed(2),
@@ -1131,8 +1135,8 @@ useEffect(() => {
             <div style={{ display: 'flex', justifyContent: 'space-evenly', fontSize: '18px', alignItems: 'flex-start' }}>
               <span>Week Turnover:  {weeklyTurnover}</span>
               <span>2 % of Turnover: {weekTotal2Per}</span>
-              <span>Total money to Distribute: {weekTotalDistribute}</span>
-              <span>Per User:  {weekPerDistribute}</span>
+              {/* <span>Total money to Distribute: {weekTotalDistribute}</span> */}
+              <span>Per User:   {weekPerDistribute}</span>
             </div>
 
 
